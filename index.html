@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Focaccia & Coffee ERP</title>
+  <link rel="stylesheet" href="css/modern-theme.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <header class="nav-bar">
+    <button class="nav-btn" data-tab="dashboard">📊 Dashboard</button>
+    <button class="nav-btn" data-tab="suministros">🥫 Suministros</button>
+    <button class="nav-btn" data-tab="gastos">💸 Gastos</button>
+    <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
+    <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
+    <button class="nav-btn" data-tab="exchange">💱 Tasas BCV</button>
+    <button class="nav-btn" data-tab="plan">🚀 Estrategia</button>
+    <button class="nav-btn" data-tab="reportes"> Reportes</button>
+
+  </header>
+
+  <main id="app-content">
+    <div class="stat-card" style="text-align:center;">
+      <p>Iniciando sistema inteligente...</p>
+    </div>
+  </main>
+
+  <script type="module">
+    // IMPORTANTE: Asegúrate de que la ruta sea correcta
+    import { initRouter } from './js/core/router.js';
+    
+    window.addEventListener('load', () => {
+      initRouter().catch(err => {
+        console.error("Error de inicio:", err);
+        document.getElementById('app-content').innerHTML = `
+          <div class="stat-card" style="border:2px solid red;">
+            <h3>❌ Error al cargar módulos</h3>
+            <p>Verifica que los archivos en <b>js/modules/</b> existan.</p>
+            <pre>${err.message}</pre>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>
