@@ -1,16 +1,16 @@
 // js/core/router.js
 
 const routes = {
-    dashboard:   () => import('../modules/dashboard.js'),
-    suministros: () => import('../modules/ingredients.js'),
-    produccion:  () => import('../modules/production.js'), 
-    gastos:      () => import('../modules/expenses.js'),
-    recetas:     () => import('../modules/recipes.js'),
-    historial :  () => import('../modules/history.js'),
-    ventas:      () => import('../modules/sales.js'),
-    exchange:    () => import('../modules/exchange.js'),
-    plan:        () => import('../modules/plan.js'),
-    reportes:    () => import('../modules/reports.js'),
+    dashboard:      () => import('../modules/dashboard.js'),
+    tasas:          () => import('../modules/settings.js'),
+    suministros:    () => import('../modules/ingredients.js'),
+    recetas:        () => import('../modules/recipes.js'),
+    produccion:     () => import('../modules/production.js'), 
+    ventas:         () => import('../modules/sales.js'),
+    administracion: () => import('../modules/admin.js'),
+    plan:           () => import('../modules/plan.js'),
+    reportes:       () => import('../modules/reports.js'),
+    calculadora:    () => import('../modules/calculator.js'),
 };
 
 export async function initRouter() {
@@ -27,24 +27,23 @@ export async function initRouter() {
             container.innerHTML = '<div class="stat-card">Cargando...</div>';
 
             try {
-                // Verificamos que la ruta exista en nuestro objeto
                 if (!routes[tab]) {
                     throw new Error(`La ruta "${tab}" no está configurada en el router.`);
                 }
 
                 const module = await routes[tab]();
                 
-                // Llamada a la función correspondiente según el módulo cargado
-                if (tab === 'dashboard')   await module.loadDashboard();
-                if (tab === 'suministros') await module.loadIngredients(); 
-                if (tab === 'gastos')      await module.loadExpenses();
-                if (tab === 'recetas')     await module.loadRecipes();
-                if (tab === 'produccion')  await module.loadProduction();
-                if (tab === 'historial')     await module.loadHistory();
-                if (tab === 'ventas')      await module.loadSales();
-                if (tab === 'exchange')    await module.loadExchange();
-                if (tab === 'plan')        await module.loadPlan();
-                if (tab === 'reportes')    await module.loadReports();
+                // Ejecución dinámica según el tab
+                if (tab === 'dashboard')      await module.loadDashboard();
+                if (tab === 'tasas')          await module.loadSettings();
+                if (tab === 'suministros')    await module.loadIngredients(); 
+                if (tab === 'recetas')        await module.loadRecipes();
+                if (tab === 'produccion')     await module.loadProduction();
+                if (tab === 'ventas')         await module.loadSales();
+                if (tab === 'administracion') await module.loadAdmin();
+                if (tab === 'plan')           await module.loadPlan();
+                if (tab === 'reportes')       await module.loadReports();
+                if (tab === 'calculadora')    await module.loadCalculator();
 
             } catch (err) {
                 container.innerHTML = `
@@ -58,6 +57,6 @@ export async function initRouter() {
         };
     });
 
-    // Cargar la primera pestaña por defecto (Dashboard)
+    // Cargar la primera pestaña por defecto
     if (navButtons[0]) navButtons[0].click();
 }
