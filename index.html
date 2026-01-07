@@ -11,38 +11,41 @@
 </head>
 <body>
 
-  <header class="nav-bar">
+  <header class="nav-bar" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 15px; background: #0f172a; justify-content: center;">
+    
     <button class="nav-btn" data-tab="dashboard">📊 Dashboard</button>
-    <button class="nav-btn" data-tab="suministros">🥫 Suministros</button>
-    <button class="nav-btn" data-tab="gastos">💸 Gastos</button>
+    <button class="nav-btn" data-tab="tasas">🪙 Tasas</button>
+    
+    <div style="width: 1px; background: #334155; margin: 0 10px;"></div> <button class="nav-btn" data-tab="suministros">📦 Suministros</button>
     <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
-    <button class="nav-btn" data-tab="produccion">📦 produccion</button>
-    <button class="nav-btn" data-tab="historial">📦 historial</button>
+    <button class="nav-btn" data-tab="produccion">🥣 Producción</button>
     <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
-    <button class="nav-btn" data-tab="exchange">💱 Tasas BCV</button>
+
+    <div style="width: 1px; background: #334155; margin: 0 10px;"></div> <button class="nav-btn" data-tab="administracion">💼 Admin</button>
     <button class="nav-btn" data-tab="plan">🚀 Estrategia</button>
-    <button class="nav-btn" data-tab="reportes"> Reportes</button>
+    <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
+    <button class="nav-btn" data-tab="calculadora">🧮 Calc</button>
 
   </header>
 
-  <main id="app-content">
-    <div class="stat-card" style="text-align:center;">
-      <p>Iniciando sistema inteligente...</p>
+  <main id="app-content" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <div class="stat-card" style="text-align:center; padding: 50px;">
+      <h2 style="color: #64748b;">🍞 Preparando la masa...</h2>
+      <p style="color: #94a3b8;">Iniciando sistema de inteligencia artesanal</p>
     </div>
   </main>
 
   <script type="module">
-    // IMPORTANTE: Asegúrate de que la ruta sea correcta
     import { initRouter } from './js/core/router.js';
     
     window.addEventListener('load', () => {
       initRouter().catch(err => {
         console.error("Error de inicio:", err);
         document.getElementById('app-content').innerHTML = `
-          <div class="stat-card" style="border:2px solid red;">
-            <h3>❌ Error al cargar módulos</h3>
-            <p>Verifica que los archivos en <b>js/modules/</b> existan.</p>
-            <pre>${err.message}</pre>
+          <div class="stat-card" style="border:2px solid #ef4444; background: #fef2f2;">
+            <h3 style="color: #b91c1c;">❌ Error de Sistema</h3>
+            <p>No se pudo conectar con los módulos internos.</p>
+            <pre style="font-size: 0.8rem; background: #fee2e2; padding: 10px; border-radius: 8px;">${err.message}</pre>
           </div>
         `;
       });
