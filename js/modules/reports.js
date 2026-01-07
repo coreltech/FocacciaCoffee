@@ -8,29 +8,29 @@ export async function loadReports() {
 
     container.innerHTML = `
         <div class="main-container" id="report-content">
-            <header class="header-flex">
+            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <div>
                     <h1>📄 Reporte Ejecutivo de Gestión</h1>
-                    <p id="report-date">Análisis de Rendimiento Operativo</p>
+                    <p id="report-date">Análisis de Rendimiento Operativo (Consolidado USD)</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-secondary" id="btn-set-meta" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a;">🎯 Definir Meta</button>
-                    <button class="btn-primary" id="btn-pdf" style="background:#dc2626; border:none;">📥 Descargar PDF</button>
+                    <button class="btn-secondary" id="btn-set-meta" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; cursor:pointer; padding:8px 15px; border-radius:8px;">🎯 Definir Meta</button>
+                    <button class="btn-primary" id="btn-pdf" style="background:#dc2626; border:none; padding:8px 15px; border-radius:8px; color:white; cursor:pointer;">📥 Descargar PDF</button>
                 </div>
             </header>
 
-            <div class="main-grid" id="kpi-section">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px;" id="kpi-section">
                 <div class="stat-card">
-                    <small>VALOR DEL INVENTARIO (COSTO)</small>
-                    <div id="inv-value" class="stat-value">$0.00</div>
+                    <small style="color:#64748b; font-weight:bold;">VALOR DEL INVENTARIO (COSTO)</small>
+                    <div id="inv-value" style="font-size:1.5rem; font-weight:bold; color:#0f172a; margin-top:5px;">$0.00</div>
                 </div>
                 <div class="stat-card">
-                    <small>TICKET PROMEDIO DE VENTA</small>
-                    <div id="avg-ticket" class="stat-value">$0.00</div>
+                    <small style="color:#64748b; font-weight:bold;">TICKET PROMEDIO</small>
+                    <div id="avg-ticket" style="font-size:1.5rem; font-weight:bold; color:#0f172a; margin-top:5px;">$0.00</div>
                 </div>
                 <div class="stat-card">
-                    <small>VENTAS TOTALES PERIODO</small>
-                    <div id="total-period-sales" class="stat-value">$0.00</div>
+                    <small style="color:#64748b; font-weight:bold;">VENTAS TOTALES</small>
+                    <div id="total-period-sales" style="font-size:1.5rem; font-weight:bold; color:#10b981; margin-top:5px;">$0.00</div>
                 </div>
             </div>
 
@@ -42,19 +42,19 @@ export async function loadReports() {
                     <canvas id="topProductsChart"></canvas>
                 </div>
                 <div class="stat-card">
-                    <h3>📊 Estructura de Egresos</h3>
+                    <h3>📊 Estructura de Gastos</h3>
                     <canvas id="costStructureChart"></canvas>
                 </div>
             </div>
 
             <div class="stat-card" style="margin-top:20px;">
-                <h3>📑 Estado de Resultados (Consolidado USD)</h3>
+                <h3>📑 Estado de Resultados (Resumen USD)</h3>
                 <table style="width:100%; border-collapse: collapse; margin-top:15px; font-size:0.95rem;">
                     <thead>
                         <tr style="border-bottom:2px solid #e2e8f0; text-align:left; color:#64748b;">
                             <th style="padding:12px;">CONCEPTO</th>
-                            <th>MONTO USD</th>
-                            <th>% PARTICIPACIÓN</th>
+                            <th style="text-align:right;">MONTO USD</th>
+                            <th style="text-align:right;">%</th>
                         </tr>
                     </thead>
                     <tbody id="financial-body"></tbody>
@@ -63,62 +63,75 @@ export async function loadReports() {
         </div>
     `;
 
-    // Lógica para cambiar la meta
     document.getElementById('btn-set-meta').onclick = () => {
         const newMeta = prompt("Ingresa la meta de venta mensual (USD):", currentMeta);
         if (newMeta !== null && !isNaN(newMeta)) {
             localStorage.setItem('business-meta', newMeta);
-            loadReports(); // Recargar el módulo para aplicar cambios
+            loadReports(); 
         }
     };
 
     await generateProfessionalReport(parseFloat(currentMeta));
-    document.getElementById('btn-pdf').onclick = exportToPDF;
+    
+    // El botón PDF requiere html2canvas y jspdf cargados en el index.html
+    document.getElementById('btn-pdf').onclick = () => {
+        if (window.html2canvas && window.jspdf) {
+            exportToPDF();
+        } else {
+            alert("Las librerías de PDF aún no han cargado completamente.");
+        }
+    };
 }
 
 async function generateProfessionalReport(metaMensual) {
-    const { data: sales } = await supabase.from('sales').select('*, recipes(*)');
-    const { data: expenses } = await supabase.from('expenses').select('*');
+    // 1. OBTENCIÓN DE DATOS (Ajustado a tus tablas reales)
+    const { data: sales } = await supabase.from('sales_orders').select('*');
+    const { data: expenses } = await supabase.from('operational_expenses').select('*');
     const { data: ingredients } = await supabase.from('ingredients').select('*');
 
-    const totalVentas = sales?.reduce((acc, s) => acc + parseFloat(s.total_usd), 0) || 0;
-    const totalGastosFijos = expenses?.reduce((acc, e) => acc + parseFloat(e.monto_usd), 0) || 0;
-    const valorInv = ingredients?.reduce((acc, i) => acc + (i.stock_actual * i.costo_unidad_medida * (i.unit_type === 'unidad' ? 1 : 1000)), 0) || 0;
+    const totalVentas = sales?.reduce((acc, s) => acc + (parseFloat(s.total_amount) || 0), 0) || 0;
+    const totalGastos = expenses?.reduce((acc, e) => acc + (parseFloat(e.amount_usd) || 0), 0) || 0;
+    
+    // Valor del inventario: Cantidad * Costo Unitario
+    const valorInv = ingredients?.reduce((acc, i) => {
+        const costo = parseFloat(i.costo_unidad_medida) || 0;
+        const stock = parseFloat(i.stock_actual) || 0;
+        return acc + (costo * stock);
+    }, 0) || 0;
+    
     const avgTicket = sales?.length > 0 ? (totalVentas / sales.length) : 0;
 
+    // Actualizar KPIs
     document.getElementById('inv-value').innerText = `$${valorInv.toFixed(2)}`;
     document.getElementById('avg-ticket').innerText = `$${avgTicket.toFixed(2)}`;
     document.getElementById('total-period-sales').innerText = `$${totalVentas.toFixed(2)}`;
 
-    // Lógica visual de la meta
+    // 2. LÓGICA DE BARRA DE META
     const porcentajeLogrado = Math.min((totalVentas / metaMensual) * 100, 100);
     const colorBarra = porcentajeLogrado < 40 ? '#ef4444' : (porcentajeLogrado < 80 ? '#f59e0b' : '#10b981');
     
     document.getElementById('goals-container').innerHTML = `
-        <div class="stat-card" style="margin-top:20px; background: #ffffff; border: 1px solid #e2e8f0; border-left: 6px solid ${colorBarra};">
+        <div class="stat-card" style="margin-top:20px; border-left: 6px solid ${colorBarra};">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; font-size:1.1rem; color:#1e293b;">🎯 Objetivo Mensual</h3>
+                <h3 style="margin:0;">🎯 Objetivo Mensual</h3>
                 <span style="font-weight:bold; color:${colorBarra}; font-size:1.2rem;">${porcentajeLogrado.toFixed(1)}%</span>
             </div>
-            <div style="width:100%; background:#f1f5f9; height:14px; border-radius:10px; margin:15px 0; overflow:hidden; border:1px solid #e2e8f0;">
-                <div style="width:${porcentajeLogrado}%; background:${colorBarra}; height:100%; transition:width 1.5s ease-in-out;"></div>
+            <div style="width:100%; background:#f1f5f9; height:12px; border-radius:10px; margin:15px 0; overflow:hidden;">
+                <div style="width:${porcentajeLogrado}%; background:${colorBarra}; height:100%; transition:width 1s;"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <p style="font-size:0.9rem; color:#64748b; margin:0;">
-                    Vendido: <b>$${totalVentas.toFixed(2)}</b>
-                </p>
-                <p style="font-size:0.9rem; color:#64748b; margin:0;">
-                    Meta: <b>$${metaMensual.toFixed(2)}</b>
-                </p>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
+                <span>Progreso: $${totalVentas.toFixed(2)}</span>
+                <span>Meta: $${metaMensual.toFixed(2)}</span>
             </div>
         </div>
     `;
 
-    // --- GRÁFICAS (Chart.js) ---
+    // 3. GRÁFICAS (Chart.js)
+    // Agrupar ventas por producto
     const productData = {};
     sales?.forEach(s => {
-        const nombre = s.recipes?.nombre || 'Desconocido';
-        productData[nombre] = (productData[nombre] || 0) + parseFloat(s.total_usd);
+        const nombre = s.product_name || 'Otros';
+        productData[nombre] = (productData[nombre] || 0) + parseFloat(s.total_amount);
     });
 
     new Chart(document.getElementById('topProductsChart'), {
@@ -128,16 +141,17 @@ async function generateProfessionalReport(metaMensual) {
             datasets: [{
                 label: 'Ventas USD',
                 data: Object.values(productData),
-                backgroundColor: '#3b82f6',
-                borderRadius: 5
+                backgroundColor: '#3b82f6'
             }]
         },
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
+    // Agrupar gastos por categoría
     const expenseCats = {};
     expenses?.forEach(e => {
-        expenseCats[e.categoria] = (expenseCats[e.categoria] || 0) + parseFloat(e.monto_usd);
+        const cat = e.category || 'Otros';
+        expenseCats[cat] = (expenseCats[cat] || 0) + parseFloat(e.amount_usd);
     });
 
     new Chart(document.getElementById('costStructureChart'), {
@@ -146,46 +160,27 @@ async function generateProfessionalReport(metaMensual) {
             labels: Object.keys(expenseCats),
             datasets: [{
                 data: Object.values(expenseCats),
-                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1']
+                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#7c3aed']
             }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        options: { responsive: true }
     });
 
-    // --- TABLA FINANCIERA ---
-    const utilidadNeta = totalVentas - totalGastosFijos; 
+    // 4. ESTADO DE RESULTADOS
+    const utilidadNeta = totalVentas - totalGastos;
+    const marginPct = totalVentas > 0 ? (utilidadNeta / totalVentas * 100).toFixed(1) : 0;
+
     const rows = [
-        { label: 'INGRESOS POR VENTAS', val: totalVentas, pct: 100, bold: true, color: '#0f172a' },
-        { label: 'GASTOS OPERATIVOS (Fijos)', val: totalGastosFijos, pct: totalVentas > 0 ? (totalGastosFijos/totalVentas*100).toFixed(1) : 0, bold: false, color: '#ef4444' },
-        { label: 'UTILIDAD NETA ESTIMADA', val: utilidadNeta, pct: totalVentas > 0 ? (utilidadNeta/totalVentas*100).toFixed(1) : 0, bold: true, color: '#10b981' }
+        { label: 'INGRESOS TOTALES', val: totalVentas, pct: 100, color: '#0f172a' },
+        { label: 'GASTOS OPERATIVOS', val: totalGastos, pct: totalVentas > 0 ? (totalGastos/totalVentas*100).toFixed(1) : 0, color: '#ef4444' },
+        { label: 'UTILIDAD NETA ESTIMADA', val: utilidadNeta, pct: marginPct, color: '#10b981' }
     ];
 
     document.getElementById('financial-body').innerHTML = rows.map(r => `
-        <tr style="border-bottom:1px solid #f1f5f9; font-weight: ${r.bold ? '700' : '400'}; color: ${r.color};">
+        <tr style="border-bottom:1px solid #f1f5f9; font-weight:bold; color:${r.color};">
             <td style="padding:15px;">${r.label}</td>
-            <td>$${r.val.toFixed(2)}</td>
-            <td>${r.pct}%</td>
+            <td style="text-align:right;">$${r.val.toFixed(2)}</td>
+            <td style="text-align:right;">${r.pct}%</td>
         </tr>
     `).join('');
-}
-
-async function exportToPDF() {
-    const { jsPDF } = window.jspdf;
-    const element = document.getElementById('report-content');
-    const btnContainer = document.querySelector('.header-flex div:last-child');
-
-    btnContainer.style.opacity = '0'; // Ocultar botones
-
-    const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Reporte_Negocio_${new Date().toISOString().split('T')[0]}.pdf`);
-    
-    btnContainer.style.opacity = '1';
 }

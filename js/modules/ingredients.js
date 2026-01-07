@@ -1,229 +1,203 @@
 import { supabase } from '../supabase.js';
-import { convert } from '../core/currency.js';
+import { getGlobalRates } from './settings.js';
 
 export async function loadIngredients() {
+    // 1. Obtener el objeto con ambas tasas (USD y EUR)
+    const rates = await getGlobalRates();
+
     const container = document.getElementById('app-content');
-    
     container.innerHTML = `
         <div class="main-container">
-            <header class="header-flex">
+            <header style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
                 <div>
-                    <h1>🥫 Almacén de Insumos</h1>
-                    <p style="color: #64748b;">Materia Prima y Toppings Elaborados (Sub-recetas)</p>
+                    <h1 style="margin:0;">📦 Gestión de Insumos</h1>
+                    <p style="margin:5px 0 0; color:#64748b;">Materia prima y empaques (Multimoneda)</p>
                 </div>
-                <button class="btn-primary" id="btn-nuevo-ingrediente">+ Registrar Compra/Elaborado</button>
+                
+                <div style="display:flex; gap:15px;">
+                    <div style="background:#f0f9ff; padding:10px 15px; border-radius:10px; border:1px solid #bae6fd; text-align:right;">
+                        <small style="display:block; font-size:0.6rem; font-weight:bold; color:#0369a1; text-transform:uppercase;">Tasa USD</small>
+                        <span style="font-size:1.1rem; font-weight:bold; color:#0c4a6e;">Bs ${rates.tasa_usd_ves.toFixed(2)}</span>
+                    </div>
+                    <div style="background:#f5f3ff; padding:10px 15px; border-radius:10px; border:1px solid #ddd6fe; text-align:right;">
+                        <small style="display:block; font-size:0.6rem; font-weight:bold; color:#5b21b6; text-transform:uppercase;">Tasa EUR</small>
+                        <span style="font-size:1.1rem; font-weight:bold; color:#4c1d95;">Bs ${rates.tasa_eur_ves.toFixed(2)}</span>
+                    </div>
+                </div>
             </header>
 
-            <div id="ing-grid" class="main-grid">
-                <div class="stat-card">Cargando inventario...</div>
-            </div>
-        </div>
-
-        <div id="modal-ing" class="modal-overlay" style="display:none;">
-            <div class="modal-card" style="width: 550px;">
-                <h3>📦 Registro de Insumo</h3>
-                <form id="ing-form">
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:25px;">
+                <div class="stat-card">
+                    <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">Nuevo Insumo</h3>
+                    <form id="ing-form">
                         <div class="input-group">
                             <label>Nombre del Insumo</label>
-                            <input type="text" id="ing-name" class="input-field" placeholder="Ej: Tomates Confitados" required>
+                            <input type="text" id="i-name" class="input-field" placeholder="Ej: Harina de Trigo" required>
                         </div>
-                        <div class="input-group">
-                            <label>Tipo de Suministro</label>
-                            <select id="ing-tipo-suministro" class="input-field" style="border: 2px solid #8b5cf6;">
-                                <option value="materia_prima">Materia Prima</option>
-                                <option value="elaborado">Topping Elaborado</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div class="input-group">
-                            <label>Marca / Origen</label>
-                            <input type="text" id="ing-marca" class="input-field" placeholder="Ej: Producción Propia">
-                        </div>
-                        <div class="input-group">
-                            <label>Empaque / Presentación</label>
-                            <select id="ing-pres-tipo" class="input-field">
-                                <option value="Bolsa">Bolsa</option>
-                                <option value="Saco">Saco</option>
-                                <option value="Frasco">Frasco</option>
-                                <option value="Contenedor">Contenedor</option>
-                                <option value="Unidad">Unidad Individual</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div class="input-group">
-                            <label>Contenido Neto</label>
-                            <div style="display:flex; gap:5px;">
-                                <input type="number" id="ing-qty" step="0.01" class="input-field" placeholder="Cant." required>
-                                <select id="ing-unit" class="input-field" style="width:90px;">
-                                    <option value="g">Gramos</option>
-                                    <option value="ml">Mililitros</option>
-                                    <option value="unid">Unid.</option>
-                                    <option value="kg">Kilos</option>
-                                    <option value="L">Litros</option>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="input-group">
+                                <label>Categoría</label>
+                                <select id="i-cat" class="input-field">
+                                    <option value="masa">Sólidos (kg/g)</option>
+                                    <option value="volumen">Líquidos (L/ml)</option>
+                                    <option value="conteo">Unidades</option>
+                                    <option value="empaque">Empaque</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Moneda Pago</label>
+                                <select id="i-moneda" class="input-field" style="background:#fff9f0; font-weight:bold;">
+                                    <option value="USD">Dólares ($)</option>
+                                    <option value="EUR">Euros (€)</option>
+                                    <option value="VES">Bolívares (Bs.)</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label>Precio Total o Costo Prod.</label>
-                            <div style="display:flex; gap:5px;">
-                                <input type="number" id="ing-price" step="0.01" class="input-field" required style="flex:1;">
-                                <select id="ing-currency" class="input-field" style="width:80px;">
-                                    <option value="USD">USD</option>
-                                    <option value="VES">VES</option>
-                                </select>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="input-group">
+                                <label>Monto Factura</label>
+                                <input type="number" id="i-costo-total" step="0.01" class="input-field" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Cantidad</label>
+                                <input type="number" id="i-cantidad" step="0.001" class="input-field" required>
                             </div>
                         </div>
-                    </div>
 
-                    <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button type="button" class="btn-primary" id="close-modal" style="background:#64748b;">Cancelar</button>
-                        <button type="submit" class="btn-primary" style="flex:1;">Guardar en Inventario</button>
-                    </div>
-                </form>
+                        <div class="input-group" style="margin-top:10px;">
+                            <label>Unidad de la Factura</label>
+                            <select id="i-unit-fact" class="input-field"></select>
+                        </div>
+                        
+                        <div id="preview-calc" style="margin-top:20px; padding:15px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+                            <span style="font-size:0.8rem; color:#166534; display:block; font-weight:bold;">Costo convertido a USD:</span>
+                            <div id="res-val" style="font-size:1.5rem; font-weight:bold; color:#14532d;">$0.00</div>
+                            <small id="res-detail" style="color:#166534; font-size:0.75rem; display:block; margin-top:5px;"></small>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="width:100%; margin-top:20px; padding:15px; font-weight:bold;">💾 Guardar Insumo</button>
+                    </form>
+                </div>
+
+                <div class="stat-card">
+                    <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">Maestro de Precios (USD)</h3>
+                    <div id="ing-list-container" style="max-height: 600px; overflow-y: auto;"></div>
+                </div>
             </div>
         </div>
     `;
 
-    document.getElementById('btn-nuevo-ingrediente').onclick = () => {
-        document.getElementById('ing-form').reset();
-        document.getElementById('modal-ing').style.display = 'flex';
-    };
-    document.getElementById('close-modal').onclick = () => document.getElementById('modal-ing').style.display = 'none';
-    document.getElementById('ing-form').onsubmit = saveIngredient;
-
-    renderIngredientsList();
+    setupEvents(rates);
+    renderList();
 }
 
-async function renderIngredientsList() {
-    const grid = document.getElementById('ing-grid');
-    const { data, error } = await supabase.from('ingredients').select('*').order('tipo_suministro', { ascending: false }).order('name');
+function setupEvents(rates) {
+    const form = document.getElementById('ing-form');
+    const iCat = document.getElementById('i-cat');
+    const iUnitFact = document.getElementById('i-unit-fact');
+    const preview = document.getElementById('res-val');
+    const previewDetail = document.getElementById('res-detail');
 
-    if (error) {
-        grid.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+    const updateUnits = () => {
+        const cat = iCat.value;
+        if (cat === 'masa') iUnitFact.innerHTML = '<option value="kg">Kilogramos (kg)</option><option value="g">Gramos (g)</option>';
+        else if (cat === 'volumen') iUnitFact.innerHTML = '<option value="l">Litros (L)</option><option value="ml">Mililitros (ml)</option>';
+        else iUnitFact.innerHTML = '<option value="unid">Unidades</option>';
+    };
+
+    iCat.onchange = updateUnits;
+    updateUnits();
+
+    const calculate = () => {
+        const monto = parseFloat(document.getElementById('i-costo-total').value) || 0;
+        const cant = parseFloat(document.getElementById('i-cantidad').value) || 0;
+        const moneda = document.getElementById('i-moneda').value;
+        const unit = iUnitFact.value;
+        
+        // LÓGICA DE CONVERSIÓN MULTIMONEDA
+        let costoUSD = monto;
+        let infoTasa = "Valor directo en USD";
+
+        if (moneda === 'VES') {
+            costoUSD = monto / rates.tasa_usd_ves;
+            infoTasa = `Tasa: Bs ${rates.tasa_usd_ves}`;
+        } else if (moneda === 'EUR') {
+            // Convertimos EUR a VES y luego a USD (o directo si tienes la relación)
+            const montoEnVES = monto * rates.tasa_eur_ves;
+            costoUSD = montoEnVES / rates.tasa_usd_ves;
+            infoTasa = `Tasa EUR/USD: ${(rates.tasa_eur_ves / rates.tasa_usd_ves).toFixed(3)}`;
+        }
+        
+        const costoBaseMin = (unit === 'kg' || unit === 'l') ? (costoUSD / (cant * 1000)) : (costoUSD / cant);
+
+        if (costoBaseMin > 0) {
+            const esUnid = (iCat.value === 'conteo' || (iCat.value === 'empaque' && unit === 'unid'));
+            preview.innerText = esUnid ? `$${costoBaseMin.toFixed(4)} / Unid` : `$${(costoBaseMin * 1000).toFixed(4)} / Kg-L`;
+            previewDetail.innerText = infoTasa;
+        }
+        return costoBaseMin;
+    };
+
+    form.oninput = calculate;
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const base = calculate();
+        
+        const { error } = await supabase.from('ingredients').insert([{
+            name: document.getElementById('i-name').value,
+            categoria: iCat.value,
+            costo_base_usd_unidad_minima: base,
+            moneda_compra: document.getElementById('i-moneda').value,
+            costo_compra_total: parseFloat(document.getElementById('i-costo-total').value),
+            cantidad_compra: parseFloat(document.getElementById('i-cantidad').value),
+            unidad_compra: iUnitFact.value
+        }]);
+
+        if (!error) { 
+            form.reset(); 
+            updateUnits(); 
+            renderList();
+            alert("✅ Guardado con éxito.");
+        }
+    };
+}
+
+async function renderList() {
+    const { data } = await supabase.from('ingredients').select('*').order('name');
+    const container = document.getElementById('ing-list-container');
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#94a3b8;'>No hay datos.</p>";
         return;
     }
 
-    grid.innerHTML = data.map(i => {
-        const isElaborado = i.tipo_suministro === 'elaborado';
-        const badgeColor = isElaborado ? '#8b5cf6' : '#94a3b8';
-        const badgeText = isElaborado ? 'PRODUCCIÓN INTERNA' : 'MATERIA PRIMA';
-        const cardBorder = isElaborado ? '4px solid #8b5cf6' : '4px solid #3b82f6';
-
-        let displayStock = i.stock_actual || 0;
-        let displayUnit = i.unit_type === 'peso' ? 'kg' : (i.unit_type === 'volumen' ? 'L' : 'unid');
-        
-        return `
-            <div class="stat-card" style="border-top: ${cardBorder}; position:relative;">
-                <div style="position:absolute; top:10px; right:10px; display:flex; gap:8px;">
-                    <button onclick="editIngredient('${i.id}', '${i.name}', ${i.stock_actual})" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">✏️</button>
-                    <button onclick="deleteIngredient('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">🗑️</button>
-                </div>
-
-                <div style="margin-bottom:10px;">
-                    <span style="background:${badgeColor}; color:white; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:bold; display:inline-block; margin-bottom:5px;">${badgeText}</span>
-                    <div style="font-weight:bold; font-size:1.1rem; color: #0f172a; padding-right:50px;">${i.name}</div>
-                    <small style="color:#64748b; font-weight:bold; text-transform:uppercase;">${i.marca || 'Genérico'} | ${i.presentacion_tipo || 'N/A'}</small>
-                </div>
-
-                <div style="margin:15px 0;">
-                    <div class="stat-value" style="font-size:1.6rem; color:#1e293b;">${displayStock.toFixed(2)} <small style="font-size:0.9rem; color:#64748b;">${displayUnit}</small></div>
-                    <small style="color:#64748b;">Contenido Neto: ${i.contenido_neto || 0}${i.unit_type === 'peso' ? 'g' : (i.unit_type === 'volumen' ? 'ml' : 'u')}</small>
-                </div>
-
-                <div style="color:#64748b; font-size:0.8rem; border-top:1px solid #f1f5f9; padding-top:10px; display:flex; justify-content:space-between;">
-                    <span>Costo por ${i.unit_type === 'peso' ? 'gramo' : 'unidad'}:</span>
-                    <b style="color:#10b981;">$${(i.costo_unidad_medida || 0).toFixed(4)}</b>
-                </div>
-            </div>
-        `;
-    }).join('');
+    container.innerHTML = `
+        <table style="width:100%; border-collapse:collapse;">
+            <tr style="text-align:left; border-bottom:2px solid #f1f5f9; color:#64748b; font-size:0.75rem;">
+                <th style="padding:10px;">INSUMO</th>
+                <th>REF. KG/L/U</th>
+                <th>ELIMINAR</th>
+            </tr>
+            ${data.map(i => {
+                const esUnid = (i.categoria === 'conteo' || i.unidad_compra === 'unid');
+                const refPrice = esUnid ? i.costo_base_usd_unidad_minima : i.costo_base_usd_unidad_minima * 1000;
+                return `
+                <tr style="border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
+                    <td style="padding:10px;"><strong>${i.name}</strong></td>
+                    <td style="font-weight:bold;">$${refPrice.toFixed(3)}</td>
+                    <td><button onclick="deleteIng('${i.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
+                </tr>`;
+            }).join('')}
+        </table>
+    `;
 }
 
-async function saveIngredient(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-
-    const name = document.getElementById('ing-name').value;
-    const tipoSuministro = document.getElementById('ing-tipo-suministro').value;
-    const marca = document.getElementById('ing-marca').value;
-    const presTipo = document.getElementById('ing-pres-tipo').value;
-    const qtyInput = parseFloat(document.getElementById('ing-qty').value);
-    const unitInput = document.getElementById('ing-unit').value;
-    const rawPrice = parseFloat(document.getElementById('ing-price').value);
-    const currency = document.getElementById('ing-currency').value;
-
-    try {
-        const priceInUSD = await convert(rawPrice, currency, 'USD');
-
-        let stockInBaseUnit = 0; 
-        let costPerMinUnit = 0;  
-        let contenidoNetoGramos = 0;
-
-        if (unitInput === 'kg' || unitInput === 'L') {
-            stockInBaseUnit = qtyInput; 
-            contenidoNetoGramos = qtyInput * 1000;
-            costPerMinUnit = priceInUSD / contenidoNetoGramos;
-        } else if (unitInput === 'g' || unitInput === 'ml') {
-            stockInBaseUnit = qtyInput / 1000;
-            contenidoNetoGramos = qtyInput;
-            costPerMinUnit = priceInUSD / qtyInput;
-        } else {
-            stockInBaseUnit = qtyInput;
-            contenidoNetoGramos = qtyInput;
-            costPerMinUnit = priceInUSD / qtyInput;
-        }
-
-        const { error } = await supabase.from('ingredients').insert([{
-            name: name,
-            tipo_suministro: tipoSuministro,
-            marca: marca,
-            presentacion_tipo: presTipo,
-            contenido_neto: contenidoNetoGramos,
-            costo_presentacion: priceInUSD,
-            unit_type: (unitInput === 'kg' || unitInput === 'g') ? 'peso' : ((unitInput === 'L' || unitInput === 'ml') ? 'volumen' : 'unidad'),
-            stock_actual: stockInBaseUnit,
-            costo_unidad_medida: costPerMinUnit,
-            ultima_compra_precio: priceInUSD
-        }]);
-
-        if (error) throw error;
-
-        document.getElementById('modal-ing').style.display = 'none';
-        renderIngredientsList();
-    } catch (err) {
-        alert("Error: " + err.message);
-    } finally {
-        btn.disabled = false;
+window.deleteIng = async (id) => {
+    if (confirm('¿Eliminar?')) {
+        await supabase.from('ingredients').delete().eq('id', id);
+        renderList();
     }
-}
-
-// Ventanas globales de edición y eliminación se mantienen igual...
-window.deleteIngredient = async (id) => {
-    if (confirm("¿Eliminar este insumo? Si está en una receta, podría causar errores.")) {
-        const { error } = await supabase.from('ingredients').delete().eq('id', id);
-        if (error) alert("Error: El insumo está siendo usado en una receta activa.");
-        else renderIngredientsList();
-    }
-};
-
-window.editIngredient = async (id, currentName, currentStock) => {
-    const newName = prompt("Editar nombre del insumo:", currentName);
-    if (newName === null) return;
-
-    const newStock = prompt("Ajustar stock actual (Base: kg/L/unid):", currentStock);
-    if (newStock === null || isNaN(newStock)) return;
-
-    const { error } = await supabase.from('ingredients').update({
-        name: newName,
-        stock_actual: parseFloat(newStock)
-    }).eq('id', id);
-
-    if (error) alert("Error al actualizar: " + error.message);
-    else renderIngredientsList();
 };

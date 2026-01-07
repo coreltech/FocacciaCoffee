@@ -1,193 +1,321 @@
 import { supabase } from '../supabase.js';
 
-let currentRecipeId = null;
+let currentItems = [];
+let editingRecipeId = null;
 
 export async function loadRecipes() {
+    const { data: allIngredients } = await supabase.from('ingredients').select('*').order('name');
     const container = document.getElementById('app-content');
+
     container.innerHTML = `
         <div class="main-container">
-            <header class="header-flex">
-                <div>
-                    <h1>👩‍🍳 Fórmulas de Producción</h1>
-                    <p style="color: #64748b;">Costeo y manual de elaboración</p>
-                </div>
-                <button class="btn-primary" id="btn-nueva-receta">+ Crear Nueva Receta</button>
+            <header style="margin-bottom:20px;">
+                <h1>📜 Recetario y Procedimientos</h1>
+                <p style="color:#64748b;">Administra tus fórmulas panaderas y métodos de preparación.</p>
             </header>
-            
-            <div id="recipes-grid" class="main-grid"></div>
-        </div>
 
-        <div id="modal-recipe" class="modal-overlay" style="display:none;">
-            <div class="modal-card" style="width: 700px; max-height: 95vh; overflow-y: auto;">
-                <h3 id="modal-title">🛠️ Configurar Ficha Técnica</h3>
-                <form id="recipe-form">
+            <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:25px;">
+                <div class="stat-card">
+                    <h3 id="form-title">Crear Nueva Receta</h3>
                     <div class="input-group">
-                        <label>Nombre de la Variedad</label>
-                        <input type="text" id="r-nombre" class="input-field" placeholder="Ej: Focaccia de Romero" required>
+                        <label>Nombre de la preparación</label>
+                        <input type="text" id="r-name" class="input-field" placeholder="Ej: Focaccia Tradicional">
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                        <div class="input-group">
-                            <label>Precio de Venta (USD $)</label>
-                            <input type="number" id="r-precio" step="0.01" class="input-field" required>
+                    <div class="input-group">
+                        <label>Método de Costeo</label>
+                        <select id="r-tipo" class="input-field">
+                            <option value="panadera">Fórmula Panadera (% sobre Harina)</option>
+                            <option value="estandar">Receta Estándar (Gramos/Unidades)</option>
+                        </select>
+                    </div>
+
+                    <div id="section-estandar" style="display:none; background:#f0fdf4; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #bbf7d0;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:#166534;">Peso Final del Proceso (g)</label>
+                        <input type="number" id="r-peso-final" class="input-field" placeholder="Ej: 450">
+                    </div>
+
+                    <hr style="margin:20px 0; opacity:0.1;">
+                    
+                    <h4>1. Ingredientes</h4>
+                    <div style="display:grid; grid-template-columns: 1.5fr 1fr 0.5fr; gap:10px;">
+                        <select id="r-select-ing" class="input-field">
+                            <option value="">-- Seleccionar Insumo --</option>
+                            ${allIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('')}
+                        </select>
+                        <input type="number" id="r-valor" class="input-field" placeholder="Cant.">
+                        <button id="btn-add-item" class="btn-primary" style="background:#0f172a; cursor:pointer;">+</button>
+                    </div>
+
+                    <table style="width:100%; margin-top:15px; font-size:0.85rem; border-collapse:collapse;">
+                        <thead id="table-head" style="background:#f8fafc; border-bottom:2px solid #e2e8f0;"></thead>
+                        <tbody id="recipe-items-body"></tbody>
+                    </table>
+
+                    <div id="summary-box" style="margin-top:20px; padding:15px; background:#0f172a; color:#fff; border-radius:8px; display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="label-costo" style="font-size:0.9rem; opacity:0.8;">Costo Ref:</span>
+                            <span id="total-cost" style="color:#4ade80; font-weight:bold; font-size:1.3rem;">$0.00</span>
                         </div>
-                        <div class="input-group" style="background: #f0f9ff; padding: 5px 10px; border-radius: 8px; border: 1px solid #bae6fd;">
-                            <label style="color: #0369a1;"><b>Rendimiento (Unid.)</b></label>
-                            <input type="number" id="r-rendimiento" class="input-field" value="1" required>
-                        </div>
                     </div>
 
-                    <div style="margin-top:15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <label><b>📝 Instrucciones de Elaboración</b></label>
-                        <textarea id="r-instrucciones" class="input-field" style="height: 100px; margin-top:8px; font-family: inherit; resize: vertical;" placeholder="1. Mezclar harina con agua... 2. Dejar fermentar 24h..."></textarea>
+                    <h4 style="margin-top:25px;">2. Pasos de Preparación</h4>
+                    <textarea id="r-pasos" class="input-field" style="min-height:120px; font-family:sans-serif; padding:10px;" placeholder="Describe el proceso..."></textarea>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button id="btn-cancel-edit" class="btn-primary" style="background:#64748b; display:none; cursor:pointer;">Cancelar</button>
+                        <button id="btn-save-recipe" class="btn-primary" style="flex:1; background:#0284c7; display:none; cursor:pointer;">💾 Guardar Receta</button>
                     </div>
+                </div>
 
-                    <div style="margin-top:20px; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <label><b>🧂 Ingredientes para el LOTE</b></label>
-                        <div id="ingredients-rows" style="margin-top:10px;"></div>
-                        <button type="button" id="add-row" class="btn-secondary" style="width:100%; margin-top:10px;">+ Vincular Insumo</button>
-                    </div>
-
-                    <div class="modal-footer" style="margin-top:25px; display:flex; gap:10px;">
-                        <button type="button" class="btn-primary" id="close-modal-r" style="background:#64748b;">Cancelar</button>
-                        <button type="submit" class="btn-primary" style="flex:1;">Guardar Ficha Técnica</button>
-                    </div>
-                </form>
+                <div class="stat-card">
+                    <h3>Recetas Guardadas</h3>
+                    <div id="recipes-list" style="display:grid; gap:10px;"></div>
+                </div>
             </div>
         </div>
     `;
 
-    setupEvents();
-    renderRecipes();
+    setupEvents(allIngredients);
+    renderRecipesList();
 }
 
-async function renderRecipes() {
-    const { data: recipes, error } = await supabase.from('recipes').select(`
-        *,
-        recipe_ingredients (
-            ingredient_id,
-            cantidad_necesaria,
-            ingredients (name, costo_unidad_medida, unit_type)
-        )
-    `).order('nombre');
+function setupEvents(allIngredients) {
+    const rTipo = document.getElementById('r-tipo');
+    const secEst = document.getElementById('section-estandar');
+    const btnAdd = document.getElementById('btn-add-item');
+    const btnSave = document.getElementById('btn-save-recipe');
+    const btnCancel = document.getElementById('btn-cancel-edit');
 
-    if (error) return;
+    rTipo.onchange = () => {
+        secEst.style.display = rTipo.value === 'estandar' ? 'block' : 'none';
+        // Solo limpiamos si NO estamos editando, para evitar que el render inicial de edición se borre
+        if (!editingRecipeId) {
+            currentItems = []; 
+            renderTable();
+        }
+    };
 
-    const grid = document.getElementById('recipes-grid');
-    grid.innerHTML = recipes.map(r => {
-        const costoLote = r.recipe_ingredients.reduce((acc, ri) => acc + (ri.cantidad_necesaria * (ri.ingredients?.costo_unidad_medida || 0)), 0);
-        const costoUnit = costoLote / (r.rendimiento || 1);
-        const margen = r.precio_venta_usd > 0 ? ((r.precio_venta_usd - costoUnit) / r.precio_venta_usd * 100).toFixed(1) : 0;
+    btnAdd.onclick = () => {
+        const select = document.getElementById('r-select-ing');
+        const id = select.value;
+        const valor = parseFloat(document.getElementById('r-valor').value);
+        if(!id || !valor) return;
 
-        const listaIng = r.recipe_ingredients.map(ri => `• ${ri.ingredients?.name}: ${ri.cantidad_necesaria} ${ri.ingredients?.unit_type === 'peso' ? 'g' : 'ml'}`).join('<br>');
+        const ing = allIngredients.find(i => i.id === id);
+        currentItems.push({ 
+            id: ing.id, 
+            name: ing.name, 
+            costo_base_usd_unidad_minima: ing.costo_base_usd_unidad_minima, 
+            valor 
+        });
+        renderTable();
+        document.getElementById('r-valor').value = "";
+    };
 
-        return `
-            <div class="stat-card">
-                <div style="display:flex; justify-content:space-between;">
-                    <div>
-                        <h3 style="margin:0;">${r.nombre}</h3>
-                        <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-top:5px;">Rinde: ${r.rendimiento} u.</span>
-                    </div>
-                    <div>
-                        <button onclick='editRecipe(${JSON.stringify(r)})' style="border:none; background:none; cursor:pointer;">✏️</button>
-                        <button onclick="deleteRecipe('${r.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button>
-                    </div>
-                </div>
-                
-                <div style="margin:15px 0; border-left: 4px solid #ef4444; padding-left:10px;">
-                    <small>COSTO UNITARIO</small>
-                    <div style="font-size:1.4rem; font-weight:bold; color:#b91c1c;">$${costoUnit.toFixed(2)}</div>
-                </div>
+    btnCancel.onclick = () => { resetForm(); };
 
-                <details style="margin-bottom: 10px; background:#f1f5f9; padding:8px; border-radius:8px;">
-                    <summary style="font-size: 0.85rem; font-weight: bold; cursor:pointer;">📖 Ver Ingredientes e Instrucciones</summary>
-                    <div style="font-size: 0.8rem; padding-top:10px;">
-                        <strong>Insumos:</strong><br>${listaIng || 'Ninguno'}<br><br>
-                        <strong>Pasos:</strong><br>${r.instrucciones || '<i>No hay instrucciones registradas.</i>'}
-                    </div>
-                </details>
+    btnSave.onclick = async () => {
+        const name = document.getElementById('r-name').value;
+        const tipo = rTipo.value;
+        const pesoFinal = parseFloat(document.getElementById('r-peso-final').value) || 0;
+        const pasos = document.getElementById('r-pasos').value;
 
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; padding-top:10px; border-top:1px solid #eee;">
-                    <span>Utilidad: <b>$${(r.precio_venta_usd - costoUnit).toFixed(2)}</b></span>
-                    <span style="color:#10b981;"><b>${margen}% Margen</b></span>
-                </div>
-            </div>
-        `;
+        if(!name || currentItems.length === 0) return alert("Faltan datos.");
+
+        let recipeId = editingRecipeId;
+
+        if (editingRecipeId) {
+            await supabase.from('recipes').update({ 
+                name, tipo_receta: tipo, peso_final_esperado: pesoFinal, pasos_preparacion: pasos 
+            }).eq('id', editingRecipeId);
+            await supabase.from('recipe_ingredients').delete().eq('recipe_id', editingRecipeId);
+        } else {
+            const { data, error } = await supabase.from('recipes').insert([{ 
+                name, tipo_receta: tipo, peso_final_esperado: pesoFinal, pasos_preparacion: pasos 
+            }]).select().single();
+            if(error) return alert("Error al crear receta");
+            recipeId = data.id;
+        }
+
+        const insIngredients = currentItems.map(item => ({
+            recipe_id: recipeId,
+            ingredient_id: item.id,
+            cantidad_o_porcentaje: item.valor
+        }));
+
+        await supabase.from('recipe_ingredients').insert(insIngredients);
+        alert("¡Receta guardada!");
+        resetForm();
+        renderRecipesList();
+    };
+}
+
+function renderTable() {
+    const body = document.getElementById('recipe-items-body');
+    const head = document.getElementById('table-head');
+    const summary = document.getElementById('summary-box');
+    const btnSave = document.getElementById('btn-save-recipe');
+    const tipo = document.getElementById('r-tipo').value;
+    const isPan = tipo === 'panadera';
+
+    head.innerHTML = `<tr><th align="left" style="padding:10px;">Insumo</th><th>Cant/%</th><th align="right"></th></tr>`;
+
+    let totalCostoTemp = 0;
+    let totalPorcentaje = 0;
+
+    body.innerHTML = currentItems.map((i, index) => {
+        let costoItem = isPan ? (i.valor * 10 * i.costo_base_usd_unidad_minima) : (i.valor * i.costo_base_usd_unidad_minima);
+        totalCostoTemp += costoItem;
+        if(isPan) totalPorcentaje += i.valor;
+
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 0;">${i.name}</td>
+            <td align="center">${i.valor}</td>
+            <td align="right"><button onclick="removeItem(${index})" style="background:none; border:none; cursor:pointer;">❌</button></td>
+        </tr>`;
     }).join('');
+
+    if (currentItems.length > 0) {
+        summary.style.display = 'block';
+        btnSave.style.display = 'block';
+        btnSave.innerText = editingRecipeId ? "💾 Actualizar Receta" : "💾 Guardar Receta";
+        
+        const costDisp = document.getElementById('total-cost');
+        const label = document.getElementById('label-costo');
+        
+        if (isPan && totalPorcentaje > 0) {
+            const costKg = (totalCostoTemp / totalPorcentaje) * 1000;
+            label.innerText = "Costo/Kg Masa:";
+            costDisp.innerText = `$${costKg.toFixed(2)}`;
+        } else {
+            label.innerText = "Costo Total:";
+            costDisp.innerText = `$${totalCostoTemp.toFixed(2)}`;
+        }
+    } else {
+        summary.style.display = 'none';
+        btnSave.style.display = 'none';
+    }
 }
 
-window.editRecipe = async (recipe) => {
-    currentRecipeId = recipe.id;
-    document.getElementById('modal-title').innerText = "✏️ Editar Ficha";
-    document.getElementById('r-nombre').value = recipe.nombre;
-    document.getElementById('r-precio').value = recipe.precio_venta_usd;
-    document.getElementById('r-rendimiento').value = recipe.rendimiento;
-    document.getElementById('r-instrucciones').value = recipe.instrucciones || '';
-    
-    const container = document.getElementById('ingredients-rows');
-    container.innerHTML = '';
-    for (const ri of recipe.recipe_ingredients) {
-        await addRow(ri.ingredient_id, ri.cantidad_necesaria);
-    }
-    document.getElementById('modal-recipe').style.display = 'flex';
+window.removeItem = (index) => {
+    currentItems.splice(index, 1);
+    renderTable();
 };
 
-async function addRow(selectedId = '', quantity = '') {
-    const { data: ings } = await supabase.from('ingredients').select('id, name, unit_type');
-    const container = document.getElementById('ingredients-rows');
-    const div = document.createElement('div');
-    div.className = 'ingredient-row';
-    div.style = "display:grid; grid-template-columns: 2fr 1fr 40px; gap:8px; margin-bottom:5px;";
-    div.innerHTML = `
-        <select class="ing-select input-field">
-            ${ings.map(i => `<option value="${i.id}" ${i.id === selectedId ? 'selected' : ''}>${i.name}</option>`).join('')}
-        </select>
-        <input type="number" step="0.001" class="ing-qty input-field" value="${quantity}" placeholder="Cant.">
-        <button type="button" onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">❌</button>
-    `;
-    container.appendChild(div);
+async function renderRecipesList() {
+    const { data: recipes } = await supabase.from('recipes').select(`
+        *,
+        recipe_ingredients (
+            cantidad_o_porcentaje,
+            ingredients (*)
+        )
+    `);
+
+    const list = document.getElementById('recipes-list');
+    if(!recipes || recipes.length === 0) return list.innerHTML = "No hay recetas.";
+
+    list.innerHTML = recipes.map(r => `
+        <div style="background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:10px; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="cursor:pointer;" onclick="viewRecipeDetail('${r.id}')">
+                    <strong style="font-size:1rem; color:#0f172a;">${r.name} 👁️</strong>
+                    <div style="font-size:0.7rem; color:#0284c7; font-weight:bold; margin-top:2px;">${r.tipo_receta.toUpperCase()}</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="editRecipe('${r.id}')" style="background:#f1f5f9; border:none; border-radius:6px; padding:5px 8px; cursor:pointer;">✏️</button>
+                    <button onclick="deleteRecipe('${r.id}')" style="background:#fff1f2; border:none; border-radius:6px; padding:5px 8px; cursor:pointer;">🗑️</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-async function saveRecipe(e) {
-    e.preventDefault();
-    const recipeData = {
-        nombre: document.getElementById('r-nombre').value,
-        precio_venta_usd: document.getElementById('r-precio').value,
-        rendimiento: parseInt(document.getElementById('r-rendimiento').value),
-        instrucciones: document.getElementById('r-instrucciones').value
-    };
-
-    let recipeId = currentRecipeId;
-    if (currentRecipeId) {
-        await supabase.from('recipes').update(recipeData).eq('id', currentRecipeId);
-        await supabase.from('recipe_ingredients').delete().eq('recipe_id', currentRecipeId);
-    } else {
-        const { data } = await supabase.from('recipes').insert([recipeData]).select();
-        recipeId = data[0].id;
-    }
-
-    const rows = document.querySelectorAll('.ingredient-row');
-    const links = Array.from(rows).map(row => ({
-        recipe_id: recipeId,
-        ingredient_id: row.querySelector('.ing-select').value,
-        cantidad_necesaria: parseFloat(row.querySelector('.ing-qty').value)
-    }));
-
-    if (links.length > 0) await supabase.from('recipe_ingredients').insert(links);
+window.editRecipe = async (id) => {
+    const { data: r } = await supabase.from('recipes').select('*, recipe_ingredients(*, ingredients(*))').eq('id', id).single();
     
-    document.getElementById('modal-recipe').style.display = 'none';
-    currentRecipeId = null;
-    renderRecipes();
-}
+    editingRecipeId = id;
+    document.getElementById('form-title').innerText = "Editando: " + r.name;
+    document.getElementById('r-name').value = r.name;
+    document.getElementById('r-tipo').value = r.tipo_receta;
+    document.getElementById('r-pasos').value = r.pasos_preparacion || "";
+    document.getElementById('r-peso-final').value = r.peso_final_esperado;
+    
+    document.getElementById('section-estandar').style.display = r.tipo_receta === 'estandar' ? 'block' : 'none';
+    document.getElementById('btn-cancel-edit').style.display = "block";
+    
+    currentItems = r.recipe_ingredients.map(ri => ({
+        id: ri.ingredient_id,
+        name: ri.ingredients.name,
+        costo_base_usd_unidad_minima: ri.ingredients.costo_base_usd_unidad_minima,
+        valor: ri.cantidad_o_porcentaje
+    }));
+    
+    renderTable();
+};
 
-function setupEvents() {
-    document.getElementById('btn-nueva-receta').onclick = () => {
-        currentRecipeId = null;
-        document.getElementById('recipe-form').reset();
-        document.getElementById('ingredients-rows').innerHTML = '';
-        document.getElementById('modal-recipe').style.display='flex';
-    };
-    document.getElementById('close-modal-r').onclick = () => document.getElementById('modal-recipe').style.display='none';
-    document.getElementById('add-row').onclick = () => addRow();
-    document.getElementById('recipe-form').onsubmit = saveRecipe;
+window.deleteRecipe = async (id) => {
+    if (confirm("¿Seguro que quieres borrar esta receta?")) {
+        await supabase.from('recipes').delete().eq('id', id);
+        renderRecipesList();
+    }
+};
+
+function resetForm() {
+    editingRecipeId = null;
+    currentItems = [];
+    document.getElementById('r-name').value = "";
+    document.getElementById('r-pasos').value = "";
+    document.getElementById('r-peso-final').value = "";
+    document.getElementById('form-title').innerText = "Crear Nueva Receta";
+    document.getElementById('btn-cancel-edit').style.display = "none";
+    document.getElementById('section-estandar').style.display = "none";
+    renderTable();
 }
+window.viewRecipeDetail = async (id) => {
+    const { data: r } = await supabase.from('recipes').select('*, recipe_ingredients(*, ingredients(*))').eq('id', id).single();
+    
+    // Crear el fondo oscuro del modal
+    const overlay = document.createElement('div');
+    overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;";
+    
+    // Calcular costo para mostrarlo
+    let totalCosto = 0;
+    r.recipe_ingredients.forEach(ri => {
+        totalCosto += (r.tipo_receta === 'panadera') 
+            ? (ri.cantidad_o_porcentaje * 10 * ri.ingredients.costo_base_usd_unidad_minima)
+            : (ri.cantidad_o_porcentaje * ri.ingredients.costo_base_usd_unidad_minima);
+    });
+
+    const modal = document.createElement('div');
+    modal.style = "background:#fff; width:100%; max-width:600px; max-height:90vh; border-radius:15px; overflow-y:auto; padding:30px; position:relative; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);";
+    
+    modal.innerHTML = `
+        <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:20px; right:20px; border:none; background:none; font-size:1.5rem; cursor:pointer;">✕</button>
+        <h2 style="margin-top:0; color:#0f172a;">${r.name}</h2>
+        <span style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">${r.tipo_receta}</span>
+        
+        <div style="margin-top:25px; display:grid; grid-template-columns:1fr 1fr; gap:20px; border-bottom:1px solid #f1f5f9; padding-bottom:20px;">
+            <div>
+                <h4 style="margin-bottom:10px; color:#64748b;">Ingredientes</h4>
+                <ul style="padding-left:15px; font-size:0.9rem; margin:0;">
+                    ${r.recipe_ingredients.map(ri => `<li>${ri.ingredients.name}: <strong>${ri.cantidad_o_porcentaje}${r.tipo_receta === 'panadera' ? '%' : 'g'}</strong></li>`).join('')}
+                </ul>
+            </div>
+            <div style="background:#f8fafc; padding:15px; border-radius:10px; text-align:center;">
+                <span style="font-size:0.8rem; color:#64748b;">Costo Ref.</span>
+                <div style="font-size:1.5rem; font-weight:bold; color:#10b981;">$${totalCosto.toFixed(2)}</div>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <h4 style="color:#0f172a; margin-bottom:10px;">Procedimiento:</h4>
+            <div style="white-space:pre-wrap; line-height:1.6; color:#334155; font-size:0.95rem; background:#fffbeb; padding:15px; border-left:4px solid #f59e0b; border-radius:4px;">
+                ${r.pasos_preparacion || "<i>No hay instrucciones registradas para esta receta.</i>"}
+            </div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+};

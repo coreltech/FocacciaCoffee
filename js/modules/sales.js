@@ -1,205 +1,242 @@
 import { supabase } from '../supabase.js';
-import { getLatestRates } from '../core/currency.js';
+import { getGlobalRates } from './settings.js';
 
 export async function loadSales() {
+    // 1. CARGA DE DATOS INICIALES
+    const rates = await getGlobalRates();
+    const { data: catalog } = await supabase.from('sales_prices').select('*').order('product_name');
+    const { data: customers } = await supabase.from('customers').select('*').order('name');
+    
     const container = document.getElementById('app-content');
-    const rates = await getLatestRates();
 
+    // 2. ESTRUCTURA DEL MÓDULO (HTML)
     container.innerHTML = `
         <div class="main-container">
-            <header class="header-flex">
+            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <div>
-                    <h1>🥖 Punto de Venta</h1>
-                    <p style="color: #64748b;">Registro detallado de pedidos y cobranza</p>
+                    <h1>🛒 Punto de Venta</h1>
+                    <p style="color: #64748b;">Gestión de ventas y cobros</p>
                 </div>
-                <div class="badge" style="background:var(--dark); color:white; padding:10px;">
-                    Tasa BCV: <b>${rates.ves_per_usd} Bs.</b>
+                <div style="display:flex; gap:10px;">
+                    <div style="background:#fefce8; border:1px solid #facc15; padding:8px 15px; border-radius:10px; text-align:center;">
+                        <small style="display:block; font-size:0.6rem; font-weight:bold; color:#854d0e;">USD/VES</small>
+                        <span style="font-weight:bold;">${rates.tasa_usd_ves.toFixed(2)}</span>
+                    </div>
+                    <div style="background:#f5f3ff; border:1px solid #ddd6fe; padding:8px 15px; border-radius:10px; text-align:center;">
+                        <small style="display:block; font-size:0.6rem; font-weight:bold; color:#5b21b6;">EUR/VES</small>
+                        <span style="font-weight:bold;">${rates.tasa_eur_ves.toFixed(2)}</span>
+                    </div>
                 </div>
             </header>
 
-            <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
                 <div class="stat-card">
-                    <h3>🛒 Nueva Venta</h3>
-                    <form id="venta-form" style="margin-top:15px;">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                            <div class="input-group">
-                                <label>Nombre del Cliente</label>
-                                <input type="text" id="v-cliente" class="input-field" placeholder="Ej: Juan Pérez" value="Cliente Eventual">
-                            </div>
-                            <div class="input-group">
-                                <label>Método de Pago</label>
-                                <select id="v-metodo" class="input-field" required>
-                                    <option value="Efectivo USD">💵 Efectivo USD</option>
-                                    <option value="Pago Móvil">📱 Pago Móvil</option>
-                                    <option value="Zelle">💳 Zelle</option>
-                                    <option value="Efectivo BS">💸 Efectivo Bs.</option>
-                                    <option value="Punto de Venta">🏧 Punto de Venta</option>
+                    <h3 style="margin-bottom:15px;">📝 Nueva Venta</h3>
+
+                    <div class="input-group" style="margin-bottom:15px;">
+                        <label>Producto</label>
+                        <select id="v-catalog-select" class="input-field">
+                            <option value="">-- Seleccionar del Catálogo --</option>
+                            ${catalog?.map(p => `<option value="${p.precio_venta_final}">${p.product_name}</option>`).join('')}
+                            <option value="manual">-- ESCRIBIR MANUALMENTE --</option>
+                        </select>
+                    </div>
+
+                    <div id="manual-product-div" style="display:none;" class="input-group" style="margin-bottom:15px;">
+                        <input type="text" id="v-manual-name" class="input-field" placeholder="Nombre del producto">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <div class="input-group">
+                            <label>Precio Unitario ($)</label>
+                            <input type="number" id="v-final-price" class="input-field" step="0.01" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Cantidad</label>
+                            <input type="number" id="v-qty" class="input-field" value="1">
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom:15px;">
+                        <label>Cliente</label>
+                        <select id="v-customer-id" class="input-field">
+                            <option value="">Cliente Genérico</option>
+                            ${customers?.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;">
+                        <label style="font-weight:bold; display:block; margin-bottom:10px; font-size:0.9rem;">💳 Registro de Pagos</label>
+                        <div id="payment-container">
+                            <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1.3fr; gap:8px; margin-bottom:8px;">
+                                <input type="number" class="p-amt input-field" placeholder="Monto $" step="0.01">
+                                <select class="p-meth input-field">
+                                    <option value="Efectivo $">Efectivo $</option>
+                                    <option value="Zelle $">Zelle $</option>
+                                    <option value="Pago Móvil Bs">Pago Móvil Bs</option>
+                                    <option value="Efectivo Bs">Efectivo Bs</option>
+                                    <option value="Efectivo €">Efectivo €</option>
                                 </select>
                             </div>
                         </div>
+                        <button id="add-pay-row" style="width:100%; border:1px dashed #cbd5e1; background:none; padding:8px; cursor:pointer; font-size:0.75rem; color:#64748b; border-radius:8px;">+ Otro medio de pago</button>
+                    </div>
 
-                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; margin-top:10px;">
-                            <div class="input-group">
-                                <label>Producto / Receta</label>
-                                <select id="v-recipe" class="input-field" required>
-                                    <option value="">Seleccione un producto...</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Cantidad</label>
-                                <input type="number" id="v-qty" value="1" min="1" class="input-field" required>
-                            </div>
+                    <div style="background:#0f172a; color:white; padding:20px; border-radius:12px; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span>Total USD:</span>
+                            <span id="txt-total-usd" style="font-weight:bold; color:#4ade80; font-size:1.2rem;">$0.00</span>
                         </div>
-                        
-                        <div id="price-display" style="margin:20px 0; padding:15px; background:#f0f9ff; border: 1px solid #bae6fd; border-radius:12px; display:none;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <p style="margin:5px 0; color:#0369a1;">Total a Cobrar:</p>
-                                    <h2 id="t-usd" style="margin:0; color:#0c4a6e;">$0.00</h2>
-                                </div>
-                                <div style="text-align:right;">
-                                    <p style="margin:5px 0; font-weight:bold; color:#059669;" id="t-ves">0.00 Bs.</p>
-                                    <p style="margin:5px 0; color:#1e40af; font-size:0.9rem;" id="t-eur">0.00 €</p>
-                                </div>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#94a3b8;">
+                            <span>Bs: <span id="txt-total-bs">0.00</span></span>
+                            <span>€: <span id="txt-total-eur">0.00</span></span>
                         </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px solid #334155; padding-top:10px; font-size:0.9rem;">
+                            <span>Resta cobrar:</span>
+                            <span id="txt-balance-usd" style="color:#f87171; font-weight:bold;">$0.00</span>
+                        </div>
+                    </div>
 
-                        <button type="submit" id="btn-finalizar" class="btn-primary" style="width:100%; padding:15px; font-weight:bold; font-size:1rem;">
-                            ✅ Confirmar Venta y Bajar Stock
-                        </button>
-                    </form>
+                    <button id="btn-submit-sale" class="btn-primary" style="width:100%; padding:15px; font-size:1.1rem;">✅ Finalizar Venta</button>
                 </div>
 
                 <div class="stat-card">
-                    <h3>📅 Ventas de Hoy</h3>
-                    <div id="sales-today-list" style="max-height:500px; overflow-y:auto; margin-top:15px;">
-                        <p>Cargando transacciones...</p>
-                    </div>
+                    <h3 style="margin-bottom:15px;">📊 Últimas 10 Ventas</h3>
+                    <div id="sales-history"></div>
                 </div>
             </div>
         </div>
     `;
 
-    setupSalesEvents(rates);
-    renderTodaySales();
+    setupSalesLogic(rates);
+    renderSalesHistory();
 }
 
-async function setupSalesEvents(rates) {
-    const select = document.getElementById('v-recipe');
+function setupSalesLogic(rates) {
+    const catalogSelect = document.getElementById('v-catalog-select');
+    const priceInput = document.getElementById('v-final-price');
     const qtyInput = document.getElementById('v-qty');
-    const display = document.getElementById('price-display');
 
-    const { data: recipes } = await supabase.from('recipes').select('id, nombre, precio_venta_usd');
-    if (recipes) {
-        recipes.forEach(r => {
-            select.innerHTML += `<option value="${r.id}" data-price="${r.precio_venta_usd}">${r.nombre}</option>`;
+    const calculateTotals = () => {
+        const totalUsd = (parseFloat(priceInput.value) || 0) * (parseFloat(qtyInput.value) || 0);
+        const totalBs = totalUsd * rates.tasa_usd_ves;
+        const totalEur = totalBs / rates.tasa_eur_ves;
+
+        let totalPaid = 0;
+        document.querySelectorAll('.p-amt').forEach(input => {
+            totalPaid += parseFloat(input.value) || 0;
         });
-    }
 
-    const updatePrices = () => {
-        const option = select.selectedOptions[0];
-        if (!option || !option.value) { display.style.display = 'none'; return; }
-        
-        display.style.display = 'block';
-        const priceUSD = parseFloat(option.dataset.price);
-        const qty = parseInt(qtyInput.value) || 0;
-        const totalUSD = priceUSD * qty;
-
-        document.getElementById('t-usd').innerText = `$${totalUSD.toFixed(2)}`;
-        document.getElementById('t-ves').innerText = `${(totalUSD * rates.ves_per_usd).toFixed(2)} Bs.`;
-        document.getElementById('t-eur').innerText = `${((totalUSD * rates.ves_per_usd) / rates.ves_per_eur).toFixed(2)} €`;
+        document.getElementById('txt-total-usd').innerText = `$${totalUsd.toFixed(2)}`;
+        document.getElementById('txt-total-bs').innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits:2})}`;
+        document.getElementById('txt-total-eur').innerText = `${totalEur.toLocaleString('de-DE', {minimumFractionDigits:2})}`;
+        document.getElementById('txt-balance-usd').innerText = `$${(totalUsd - totalPaid).toFixed(2)}`;
     };
 
-    select.onchange = updatePrices;
-    qtyInput.oninput = updatePrices;
+    [priceInput, qtyInput].forEach(el => el.oninput = calculateTotals);
 
-    document.getElementById('venta-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btn-finalizar');
-        const cliente = document.getElementById('v-cliente').value;
-        const metodo = document.getElementById('v-metodo').value;
+    catalogSelect.onchange = (e) => {
+        const manualDiv = document.getElementById('manual-product-div');
+        if(e.target.value === 'manual') {
+            manualDiv.style.display = 'block';
+            priceInput.value = 0;
+        } else {
+            manualDiv.style.display = 'none';
+            priceInput.value = e.target.value;
+        }
+        calculateTotals();
+    };
+
+    document.getElementById('add-pay-row').onclick = () => {
+        const container = document.getElementById('payment-container');
+        const row = document.querySelector('.pay-row').cloneNode(true);
+        row.querySelector('input').value = "";
+        row.querySelector('input').oninput = calculateTotals;
+        container.appendChild(row);
+    };
+
+    document.querySelectorAll('.p-amt').forEach(input => input.oninput = calculateTotals);
+
+    document.getElementById('btn-submit-sale').onclick = async () => {
+        const price = parseFloat(priceInput.value);
+        const qty = parseFloat(qtyInput.value);
+        const totalUsd = price * qty;
         
-        btn.disabled = true;
-        btn.innerText = "Registrando...";
-
-        const recipeId = select.value;
-        const qty = parseInt(qtyInput.value);
-        const totalUSD = parseFloat(select.selectedOptions[0].dataset.price) * qty;
-
-        try {
-            // 1. DESCONTAR STOCK (Se mantiene tu lógica corregida)
-            const { data: formula } = await supabase.from('recipe_ingredients')
-                .select('ingredient_id, cantidad_necesaria, ingredients(stock_actual, unit_type)')
-                .eq('recipe_id', recipeId);
-
-            if (formula) {
-                for (const item of formula) {
-                    let descuento = item.cantidad_necesaria * qty;
-                    // Tu lógica de unidades base (kg/L)
-                    if (item.ingredients.unit_type === 'peso' || item.ingredients.unit_type === 'volumen') {
-                        // Si guardamos en kg/L pero la receta pide g/ml, dividimos entre 1000
-                        descuento = descuento / 1000;
-                    }
-                    const nuevoStock = (item.ingredients.stock_actual || 0) - descuento;
-                    await supabase.from('ingredients').update({ stock_actual: nuevoStock }).eq('id', item.ingredient_id);
-                }
+        let details = [];
+        let totalPaid = 0;
+        document.querySelectorAll('.pay-row').forEach(row => {
+            const amt = parseFloat(row.querySelector('.p-amt').value) || 0;
+            const meth = row.querySelector('.p-meth').value;
+            if(amt > 0) {
+                totalPaid += amt;
+                details.push({ 
+                    method: meth, 
+                    amount_usd: amt,
+                    rate_used: meth.includes('€') ? rates.tasa_eur_ves : rates.tasa_usd_ves
+                });
             }
+        });
 
-            // 2. INSERTAR VENTA CON NUEVOS CAMPOS
-            await supabase.from('sales').insert([{
-                recipe_id: recipeId,
-                cantidad: qty,
-                total_usd: totalUSD,
-                total_ves: totalUSD * rates.ves_per_usd,
-                cliente_nombre: cliente,
-                metodo_pago: metodo,
-                fecha: new Date().toISOString().split('T')[0]
-            }]);
+        const { error } = await supabase.from('sales_orders').insert([{
+            product_name: catalogSelect.value === 'manual' ? document.getElementById('v-manual-name').value : catalogSelect.options[catalogSelect.selectedIndex].text,
+            unit_price: price,
+            quantity: qty,
+            total_amount: totalUsd,
+            total_amount_bs: totalUsd * rates.tasa_usd_ves,
+            exchange_rate: rates.tasa_usd_ves,
+            amount_paid: totalPaid,
+            balance_due: totalUsd - totalPaid,
+            payment_status: totalPaid >= totalUsd ? 'Pagado' : 'Pendiente',
+            payment_details: details,
+            payment_method: details[0]?.method || 'Efectivo',
+            customer_id: document.getElementById('v-customer-id').value || null
+        }]);
 
-            alert("✅ ¡Venta registrada!");
+        if(!error) {
+            alert("✅ Venta registrada");
             loadSales();
-
-        } catch (err) {
-            alert("Error: " + err.message);
-            btn.disabled = false;
-            btn.innerText = "Finalizar y Descontar Stock";
+        } else {
+            alert("❌ Error: " + error.message);
         }
     };
 }
 
-async function renderTodaySales() {
-    const { data: sales } = await supabase.from('sales')
-        .select('*, recipes(nombre)')
-        .eq('fecha', new Date().toISOString().split('T')[0])
-        .order('created_at', {ascending: false});
+async function renderSalesHistory() {
+    const { data } = await supabase.from('sales_orders').select('*, customers(name)').order('sale_date', { ascending: false }).limit(10);
+    const div = document.getElementById('sales-history');
+    if (!div || !data) return;
 
-    const list = document.getElementById('sales-today-list');
-    if (!sales || sales.length === 0) {
-        list.innerHTML = "<p style='color:#64748b; text-align:center;'>No hay ventas hoy.</p>";
-        return;
-    }
-
-    list.innerHTML = sales.map(s => `
-        <div style="padding:12px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:white;">
-            <div>
-                <div style="font-weight:bold; color:#0f172a;">${s.recipes?.nombre} (x${s.cantidad})</div>
-                <div style="font-size:0.8rem; color:#64748b;">👤 ${s.cliente_nombre || 'Cliente Eventual'}</div>
-                <div style="font-size:0.8rem; margin-top:4px;">
-                    <span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.7rem;">${s.metodo_pago}</span>
-                    <b style="color:#10b981; margin-left:5px;">$${s.total_usd.toFixed(2)}</b>
+    div.innerHTML = data.map(s => `
+        <div style="padding:12px; border-bottom:1px solid #f1f5f9; margin-bottom:10px; border-left:4px solid ${s.payment_status === 'Pendiente' ? '#f87171' : '#10b981'}; background:#fff; border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <div>
+                    <strong style="font-size:0.9rem; display:block;">${s.quantity}x ${s.product_name}</strong>
+                    <span style="font-size:0.7rem; color:#64748b;">${s.customers?.name || 'Cliente Genérico'}</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="display:block; font-weight:bold;">$${s.total_amount.toFixed(2)}</span>
+                    <span style="font-size:0.65rem; color:${s.payment_status === 'Pendiente' ? '#ef4444' : '#10b981'}; font-weight:bold;">${s.payment_status.toUpperCase()}</span>
                 </div>
             </div>
-            <div style="display:flex; gap:5px;">
-                <button onclick="deleteSale('${s.id}')" style="border:none; background:none; cursor:pointer; opacity:0.6;">🗑️</button>
+            <div style="margin-top:8px; display:flex; gap:12px; border-top:1px solid #f8fafc; padding-top:8px;">
+                ${s.payment_status === 'Pendiente' ? `<button onclick="window.markAsPaid('${s.id}')" style="background:none; border:none; color:#10b981; cursor:pointer; font-size:0.7rem; font-weight:bold; padding:0;">✔ COBRAR</button>` : ''}
+                <button onclick="window.deleteSale('${s.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.7rem; font-weight:bold; padding:0;">🗑 BORRAR</button>
             </div>
         </div>
     `).join('');
 }
 
-// Se mantienen las funciones globales deleteSale y editSale del usuario...
+// FUNCIONES GLOBALES PARA ACCIONES
+window.markAsPaid = async (id) => {
+    if(confirm("¿Confirmar cobro total de esta venta?")) {
+        const { error } = await supabase.from('sales_orders').update({ payment_status: 'Pagado', balance_due: 0 }).eq('id', id);
+        if(!error) loadSales();
+    }
+};
+
 window.deleteSale = async (id) => {
-    if (confirm("¿Anular esta venta? El stock NO se recuperará automáticamente.")) {
-        await supabase.from('sales').delete().eq('id', id);
-        loadSales();
+    if(confirm("⚠️ ¿Eliminar este registro de venta definitivamente?")) {
+        const { error } = await supabase.from('sales_orders').delete().eq('id', id);
+        if(!error) loadSales();
     }
 };
