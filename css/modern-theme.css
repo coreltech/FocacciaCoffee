@@ -1,206 +1,191 @@
 /* ================================================================
-   SISTEMA DE DISEÑO: PANADERÍA TECH (AZUL TECNOLÓGICO)
-   Descripción: Interfaz moderna con tonos Deep Navy y Electric Blue.
-================================================================
-*/
+   SISTEMA DE DISEÑO: FOCACCIA & COFFEE (ARTESANAL TECH)
+   Unifica la calidez del dorado con la potencia del azul oscuro.
+================================================================ */
 
 :root {
-    /* --- PALETA DE COLORES (TECH BLUE) --- */
-    --primary: #3b82f6;        /* Azul Eléctrico (Principal) */
-    --accent: #e07f55;         /* Esmeralda para éxitos/positivo */
-    --dark: #0f172a;           /* Navy Profundo (Base tecnológica) */
-    --dark-muted: #1e293b;     /* Slate Navy (Botones y tarjetas) */
-    --light: #f8fafc;          /* Fondo de página claro */
-    --card: #ffffff;           /* Fondo de tarjetas puro */
-    --border: #e2e8f0;         /* Bordes suaves */
-    --text-muted: #94a3b8;     /* Texto secundario */
+    /* --- COLORES IDENTIDAD --- */
+    --dorado: #f59e0b;        /* Color corteza de pan */
+    --dorado-hover: #d97706;
+    --primary: #0f172a;       /* Azul Navy (Seriedad) */
+    --accent: #1e293b;        /* Slate para botones */
+    --light: #f8fafc;         /* Fondo limpio */
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text-muted: #64748b;
+    --exito: #10b981;
+    --error: #ef4444;
 
-    /* --- EFECTOS Y ESTRUCTURA --- */
+    /* --- ESTRUCTURA --- */
     --radius: 12px;
-    --radius-pill: 99px;
     --shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
     --transition: all 0.3s ease;
 }
 
-/* --- ESTILOS BASE --- */
+/* --- BASE --- */
 body { 
     font-family: 'Inter', system-ui, -apple-system, sans-serif; 
     background: var(--light); 
-    color: var(--dark); 
+    color: var(--primary); 
     margin: 0; 
     line-height: 1.5;
 }
 
-
-:root {
-    /* --- PALETA TECH UNIFICADA --- */
-    --primary: #3b82f6;        /* Azul Eléctrico */
-    --tech-blue: #1e40af;      /* Azul Real Profundo */
-    --tech-cyan: #00f2fe;      /* EL NUEVO COLOR ACTIVO (Cian Tech) */
-    --light: #f1f5f9;
-    --card: #ffffff;
-    --transition: all 0.3s ease;
-}
-
 /* ================================================================
-   NAVEGACIÓN AZUL VIBRANTE (SIN VERDE)
+   NAVEGACIÓN PREMIUM
 ================================================================ */
 .nav-bar { 
     display: flex; 
-    gap: 12px; 
+    gap: 10px; 
     padding: 15px 25px; 
-    background: rgba(30, 64, 175, 0.98); /* Azul Real Intenso */
+    background: var(--primary); 
     backdrop-filter: blur(10px);
     overflow-x: auto; 
     position: sticky; 
     top: 0; 
-    z-index: 100;
-    border-bottom: 3px solid var(--tech-cyan); /* Línea inferior Cian */
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    border-bottom: 3px solid var(--dorado); 
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+    justify-content: center;
 }
 
 .nav-btn {
-    background: rgba(255, 255, 255, 0.1); 
-    color: rgba(255, 255, 255, 0.7); /* Texto blanco suavizado */
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 10px 24px;
-    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.05); 
+    color: rgba(255, 255, 255, 0.7); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 0.85rem;
     transition: var(--transition);
+    white-space: nowrap;
 }
 
 .nav-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     color: white;
+    border-color: var(--dorado);
 }
 
-/* EL BOTÓN ACTIVO AHORA ES CIAN TECNOLÓGICO */
 .nav-btn.active { 
-    background: var(--tech-cyan); 
-    color: #0f172a; /* Texto oscuro para máxima legibilidad */
-    border-color: var(--tech-cyan); 
+    background: var(--dorado); 
+    color: var(--primary); 
+    border-color: var(--dorado); 
     font-weight: 800;
-    box-shadow: 0 0 20px rgba(0, 242, 254, 0.5); /* Resplandor Cian */
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
 }
 
 /* ================================================================
-   DASHBOARD Y TARJETAS
-================================================================
-*/
+   CONTENEDORES Y TARJETAS
+================================================================ */
+.main-container {
+    padding: 30px 20px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
 .main-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 24px; 
-    padding: 20px; 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 20px; 
 }
 
 .stat-card {
     background: var(--card); 
     border-radius: var(--radius); 
-    padding: 25px;
+    padding: 24px;
     box-shadow: var(--shadow); 
     border: 1px solid var(--border);
-    animation: fadeIn 0.5s ease-out forwards;
     transition: var(--transition);
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
 }
 
 .stat-value { 
-    font-size: 2.2rem; 
+    font-size: 2rem; 
     font-weight: 800; 
-    color: var(--dark); 
-    margin: 10px 0; 
-    letter-spacing: -1px;
+    color: var(--primary); 
+    margin: 5px 0; 
 }
 
 /* ================================================================
-   FORMULARIOS Y ENTRADAS
-================================================================
-*/
-.input-group { margin-bottom: 20px; }
+   TABLAS Y FORMULARIOS
+================================================================ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 15px;
+}
 
-.input-group label { 
-    display: block; 
-    font-size: 0.85rem; 
-    font-weight: 600; 
-    margin-bottom: 8px; 
-    color: #475569;
+.data-table th {
+    background: #f1f5f9;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.data-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .input-field { 
     width: 100%; 
-    padding: 14px; 
+    padding: 12px; 
     border: 1px solid #cbd5e1; 
-    border-radius: 10px; 
-    font-size: 1rem; 
-    box-sizing: border-box;
+    border-radius: 8px; 
+    font-size: 0.95rem;
     transition: var(--transition);
 }
 
 .input-field:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--dorado);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
 }
 
-/* ================================================================
-   BOTONES Y ELEMENTOS DE ACCIÓN
-================================================================
-*/
 .btn-primary {
-    background: var(--primary);
-    color: white;
+    background: var(--dorado);
+    color: var(--primary);
     border: none;
-    padding: 14px 28px;
-    border-radius: var(--radius);
-    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .btn-primary:hover {
-    background: #2563eb;
-    transform: scale(1.03);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    background: var(--dorado-hover);
+    transform: scale(1.02);
 }
 
-/* ================================================================
-   COMPONENTES AUXILIARES
-================================================================
-*/
-.main-container {
-    padding: 40px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.header-flex {
+/* MODAL MODERNIZADO */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(5px);
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 40px;
+    justify-content: center;
+    z-index: 2000;
 }
 
-.badge {
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    display: inline-block;
-    letter-spacing: 0.5px;
-}
-
-/* --- ANIMACIONES --- */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
