@@ -1,31 +1,56 @@
 import { supabase } from '../supabase.js';
 import { getGlobalRates } from './settings.js';
 
-let isEditing = null; // Variable para controlar si estamos editando
+let isEditing = null;
 
 export async function loadIngredients() {
     const rates = await getGlobalRates();
     const container = document.getElementById('app-content');
     
+    // Inyectamos el CSS específico para Ingredientes
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+        .ing-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; }
+        .ing-tabs { display: none; margin-bottom: 20px; gap: 10px; }
+        .ing-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        @media (max-width: 850px) {
+            .ing-layout { grid-template-columns: 1fr; }
+            .ing-tabs { display: flex; }
+            .section-panel { display: none; }
+            .section-panel.active { display: block; }
+            .ing-header { flex-direction: column; gap: 15px; text-align: center; }
+            .rates-container { width: 100%; justify-content: center; }
+            .ing-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+            .desktop-table { display: none; }
+        }
+    `;
+    document.head.appendChild(styleTag);
+    
     container.innerHTML = `
         <div class="main-container">
-            <header style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+            <header class="ing-header">
                 <div>
                     <h1 style="margin:0;">📦 Gestión de Insumos</h1>
-                    <p style="margin:5px 0 0; color:#64748b;">Materia prima, Preparados y Empaques</p>
+                    <p style="margin:5px 0 0; color:#64748b;">Materia prima y Preparados</p>
                 </div>
-                <div style="display:flex; gap:15px;">
-                    <div class="stat-card" style="padding:5px 15px; margin:0; border:1px solid #bae6fd;">
+                <div style="display:flex; gap:10px;" class="rates-container">
+                    <div class="stat-card" style="padding:5px 12px; margin:0; border:1px solid #bae6fd;">
                         <small style="color:#0369a1; font-weight:bold;">USD: Bs ${rates.tasa_usd_ves.toFixed(2)}</small>
                     </div>
-                    <div class="stat-card" style="padding:5px 15px; margin:0; border:1px solid #ddd6fe;">
+                    <div class="stat-card" style="padding:5px 12px; margin:0; border:1px solid #ddd6fe;">
                         <small style="color:#5b21b6; font-weight:bold;">EUR: Bs ${rates.tasa_eur_ves.toFixed(2)}</small>
                     </div>
                 </div>
             </header>
 
-            <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:25px;">
-                <div class="stat-card">
+            <div class="ing-tabs">
+                <button class="tab-btn active" id="tab-ing-form" onclick="switchIngTab('form')">➕ Nuevo</button>
+                <button class="tab-btn" id="tab-ing-list" onclick="switchIngTab('list')">📋 Lista</button>
+            </div>
+
+            <div class="ing-layout">
+                <div id="panel-ing-form" class="stat-card section-panel active">
                     <h3 id="form-title" style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">Nuevo Insumo</h3>
                     <form id="ing-form">
                         <div class="input-group">
@@ -43,12 +68,12 @@ export async function loadIngredients() {
                                 <label>Tipo</label>
                                 <select id="i-type" class="input-field">
                                     <option value="materia_prima">Materia Prima</option>
-                                    <option value="preparado">Preparado (Focaccia, Crema...)</option>
-                                    <option value="empaque">Empaque / Desechable</option>
+                                    <option value="preparado">Preparado</option>
+                                    <option value="empaque">Empaque</option>
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>Categoría Medida</label>
+                                <label>Categoría</label>
                                 <select id="i-cat" class="input-field">
                                     <option value="masa">Sólidos (kg/g)</option>
                                     <option value="volumen">Líquidos (L/ml)</option>
@@ -67,7 +92,7 @@ export async function loadIngredients() {
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>Unidad de Compra</label>
+                                <label>Unidad Compra</label>
                                 <select id="i-unit-fact" class="input-field"></select>
                             </div>
                         </div>
@@ -78,7 +103,7 @@ export async function loadIngredients() {
                                 <input type="number" id="i-costo-total" step="0.01" class="input-field" required>
                             </div>
                             <div class="input-group">
-                                <label>Cantidad en Factura</label>
+                                <label>Cantidad</label>
                                 <input type="number" id="i-cantidad" step="0.001" class="input-field" required>
                             </div>
                         </div>
@@ -89,19 +114,34 @@ export async function loadIngredients() {
                         </div>
 
                         <div style="display:flex; gap:10px; margin-top:20px;">
-                            <button type="submit" id="btn-save" class="btn-primary" style="flex:2;">💾 Guardar Insumo</button>
+                            <button type="submit" id="btn-save" class="btn-primary" style="flex:2; height: 45px;">💾 Guardar Insumo</button>
                             <button type="button" id="btn-cancel" style="flex:1; display:none; background:#94a3b8; color:white; border:none; border-radius:8px; cursor:pointer;">Cancelar</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="stat-card">
+                <div id="panel-ing-list" class="stat-card section-panel">
                     <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">Lista de Insumos</h3>
-                    <div id="ing-list-container" style="max-height: 600px; overflow-y: auto;"></div>
+                    <div id="ing-list-container"></div>
                 </div>
             </div>
         </div>
     `;
+
+    // Función de cambio de pestaña
+    window.switchIngTab = (target) => {
+        const pForm = document.getElementById('panel-ing-form');
+        const pList = document.getElementById('panel-ing-list');
+        const tForm = document.getElementById('tab-ing-form');
+        const tList = document.getElementById('tab-ing-list');
+        if(target === 'form') {
+            pForm.classList.add('active'); pList.classList.remove('active');
+            tForm.classList.add('active'); tList.classList.remove('active');
+        } else {
+            pForm.classList.remove('active'); pList.classList.add('active');
+            tForm.classList.remove('active'); tList.classList.add('active');
+        }
+    };
 
     setupEvents(rates);
     renderList();
@@ -136,34 +176,23 @@ function setupEvents(rates) {
         
         const costoBaseMin = (unit === 'kg' || unit === 'l') ? (costoUSD / (cant * 1000)) : (costoUSD / cant);
         
-        // --- Lógica de etiquetas personalizada ---
-        let label = "";
-        let precioMostrado = 0;
-
-        if (cat === 'masa') {
-            label = "/ kg";
-            precioMostrado = costoBaseMin * 1000;
-        } else if (cat === 'volumen') {
-            label = "/ Litro";
+        let label = ""; let precioMostrado = 0;
+        if (cat === 'masa' || cat === 'volumen') {
+            label = cat === 'masa' ? "/ kg" : "/ Litro";
             precioMostrado = costoBaseMin * 1000;
         } else {
-            label = "/ Unid";
-            precioMostrado = costoBaseMin;
+            label = "/ Unid"; precioMostrado = costoBaseMin;
         }
-
         document.getElementById('res-val').innerText = `$${precioMostrado.toFixed(4)} ${label}`;
-        
         return costoBaseMin;
     };
 
     form.oninput = calculate;
 
     btnCancel.onclick = () => {
-        isEditing = null;
-        form.reset();
+        isEditing = null; form.reset();
         document.getElementById('form-title').innerText = "Nuevo Insumo";
-        btnCancel.style.display = "none";
-        updateUnits();
+        btnCancel.style.display = "none"; updateUnits();
     };
 
     form.onsubmit = async (e) => {
@@ -181,19 +210,14 @@ function setupEvents(rates) {
             unidad_compra: iUnitFact.value
         };
 
-        let error;
-        if (isEditing) {
-            const result = await supabase.from('ingredients').update(payload).eq('id', isEditing);
-            error = result.error;
-        } else {
-            const result = await supabase.from('ingredients').insert([payload]);
-            error = result.error;
-        }
+        const { error } = isEditing 
+            ? await supabase.from('ingredients').update(payload).eq('id', isEditing)
+            : await supabase.from('ingredients').insert([payload]);
 
         if (!error) {
             alert(isEditing ? "✅ Actualizado" : "✅ Guardado");
-            btnCancel.click();
-            renderList();
+            btnCancel.click(); renderList();
+            if(window.innerWidth <= 850) switchIngTab('list');
         }
     };
 }
@@ -201,48 +225,63 @@ function setupEvents(rates) {
 async function renderList() {
     const { data } = await supabase.from('ingredients').select('*').order('name');
     const container = document.getElementById('ing-list-container');
-    
     if (!data) return;
 
-    container.innerHTML = `
-        <table style="width:100%; border-collapse:collapse;">
-            <tr style="text-align:left; border-bottom:2px solid #f1f5f9; color:#64748b; font-size:0.75rem;">
-                <th style="padding:10px;">INSUMO / MARCA</th>
-                <th>TIPO</th>
-                <th>PRECIO REF.</th>
-                <th style="text-align:right;">ACCIONES</th>
-            </tr>
-            ${data.map(i => {
-                let label = "";
-                let refPrice = 0;
-
-                if (i.categoria === 'masa') {
-                    label = "kg";
-                    refPrice = i.costo_base_usd_unidad_minima * 1000;
-                } else if (i.categoria === 'volumen') {
-                    label = "Litro";
-                    refPrice = i.costo_base_usd_unidad_minima * 1000;
-                } else {
-                    label = "Unid";
-                    refPrice = i.costo_base_usd_unidad_minima;
-                }
-
-                return `
-                <tr style="border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
-                    <td style="padding:10px;">
-                        <strong style="display:block;">${i.name}</strong>
-                        <small style="color:#64748b;">${i.brand || 'Sin marca'}</small>
-                    </td>
-                    <td><span style="font-size:0.7rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${i.tipo || 'materia_prima'}</span></td>
-                    <td style="font-weight:bold;">$${refPrice.toFixed(3)} <small style="color:#94a3b8; font-weight:normal;">/${label}</small></td>
-                    <td style="text-align:right;">
-                        <button onclick="editIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1rem; margin-right:10px;">✏️</button>
-                        <button onclick="deleteIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1rem;">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('')}
-        </table>
+    // Vista de escritorio (Tabla)
+    let html = `
+        <div class="desktop-table">
+            <table style="width:100%; border-collapse:collapse;">
+                <tr style="text-align:left; border-bottom:2px solid #f1f5f9; color:#64748b; font-size:0.75rem;">
+                    <th style="padding:10px;">INSUMO / MARCA</th>
+                    <th>TIPO</th>
+                    <th>PRECIO REF.</th>
+                    <th style="text-align:right;">ACCIONES</th>
+                </tr>
+                ${data.map(i => {
+                    let label = i.categoria === 'masa' ? 'kg' : (i.categoria === 'volumen' ? 'Litro' : 'Unid');
+                    let refPrice = (i.categoria === 'masa' || i.categoria === 'volumen') ? i.costo_base_usd_unidad_minima * 1000 : i.costo_base_usd_unidad_minima;
+                    return `
+                    <tr style="border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
+                        <td style="padding:10px;"><strong>${i.name}</strong><br><small style="color:#64748b;">${i.brand || 'Sin marca'}</small></td>
+                        <td><span style="font-size:0.7rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${i.tipo}</span></td>
+                        <td style="font-weight:bold;">$${refPrice.toFixed(3)} <small style="color:#94a3b8;">/${label}</small></td>
+                        <td style="text-align:right;">
+                            <button onclick="editIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1.1rem; margin-right:10px;">✏️</button>
+                            <button onclick="deleteIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">🗑️</button>
+                        </td>
+                    </tr>`;
+                }).join('')}
+            </table>
+        </div>
     `;
+
+    // Vista móvil (Tarjetas)
+    html += `<div class="mobile-only">`;
+    data.forEach(i => {
+        let label = i.categoria === 'masa' ? 'kg' : (i.categoria === 'volumen' ? 'Litro' : 'Unid');
+        let refPrice = (i.categoria === 'masa' || i.categoria === 'volumen') ? i.costo_base_usd_unidad_minima * 1000 : i.costo_base_usd_unidad_minima;
+        html += `
+            <div class="ing-card">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <strong style="font-size:1rem; display:block;">${i.name}</strong>
+                        <small style="color:#64748b;">${i.brand || 'Sin marca'} • ${i.tipo}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:bold; color:#10b981; font-size:1.1rem;">$${refPrice.toFixed(3)}</div>
+                        <small style="color:#94a3b8;">por ${label}</small>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
+                    <button onclick="editIng('${i.id}')" style="flex:1; padding:10px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer;">✏️ Editar</button>
+                    <button onclick="deleteIng('${i.id}')" style="flex:1; padding:10px; border-radius:8px; border:1px solid #fee2e2; background:#fff1f2; color:#b91c1c; cursor:pointer;">🗑️ Borrar</button>
+                </div>
+            </div>
+        `;
+    });
+    html += `</div>`;
+    
+    container.innerHTML = html;
 }
 
 window.editIng = async (id) => {
@@ -251,10 +290,9 @@ window.editIng = async (id) => {
         isEditing = id;
         document.getElementById('form-title').innerText = "📝 Editando Insumo";
         document.getElementById('btn-cancel').style.display = "block";
-        
         document.getElementById('i-name').value = data.name;
         document.getElementById('i-brand').value = data.brand || '';
-        document.getElementById('i-type').value = data.tipo || 'materia_prima';
+        document.getElementById('i-type').value = data.tipo;
         document.getElementById('i-cat').value = data.categoria;
         
         const iUnitFact = document.getElementById('i-unit-fact');
@@ -267,6 +305,7 @@ window.editIng = async (id) => {
         document.getElementById('i-costo-total').value = data.costo_compra_total;
         document.getElementById('i-cantidad').value = data.cantidad_compra;
         
+        if(window.innerWidth <= 850) switchIngTab('form');
         document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
     }
 };

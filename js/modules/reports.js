@@ -3,58 +3,62 @@ import { supabase } from '../supabase.js';
 export async function loadReports() {
     const container = document.getElementById('app-content');
     
-    // Recuperar la meta guardada o usar 3000 por defecto
+    // Recuperar la meta configurada
     let currentMeta = localStorage.getItem('business-meta') || 3000;
 
     container.innerHTML = `
-        <div class="main-container" id="report-content">
-            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div class="main-container" id="report-to-print">
+            <header style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px;">
                 <div>
-                    <h1>📄 Reporte Ejecutivo de Gestión</h1>
-                    <p id="report-date">Análisis de Rendimiento Operativo (Consolidado USD)</p>
+                    <h1 style="font-size: 1.8rem; margin:0;">📊 Reporte de Gestión Ejecutiva</h1>
+                    <p style="color: #64748b; margin-top:5px;">${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-secondary" id="btn-set-meta" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; cursor:pointer; padding:8px 15px; border-radius:8px;">🎯 Definir Meta</button>
-                    <button class="btn-primary" id="btn-pdf" style="background:#dc2626; border:none; padding:8px 15px; border-radius:8px; color:white; cursor:pointer;">📥 Descargar PDF</button>
+                    <button id="btn-set-meta" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">🎯 Meta</button>
+                    <button id="btn-pdf" style="background:#0f172a; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">📥 Exportar PDF</button>
                 </div>
             </header>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px;" id="kpi-section">
-                <div class="stat-card">
-                    <small style="color:#64748b; font-weight:bold;">VALOR DEL INVENTARIO (COSTO)</small>
-                    <div id="inv-value" style="font-size:1.5rem; font-weight:bold; color:#0f172a; margin-top:5px;">$0.00</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px;">
+                <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+                    <small style="color:#64748b; font-weight:bold; letter-spacing:0.5px;">INVENTARIO (VALOR COSTO)</small>
+                    <div id="inv-value" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-top:8px;">$0.00</div>
                 </div>
-                <div class="stat-card">
-                    <small style="color:#64748b; font-weight:bold;">TICKET PROMEDIO</small>
-                    <div id="avg-ticket" style="font-size:1.5rem; font-weight:bold; color:#0f172a; margin-top:5px;">$0.00</div>
+                <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+                    <small style="color:#64748b; font-weight:bold; letter-spacing:0.5px;">TICKET PROMEDIO</small>
+                    <div id="avg-ticket" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-top:8px;">$0.00</div>
                 </div>
-                <div class="stat-card">
-                    <small style="color:#64748b; font-weight:bold;">VENTAS TOTALES</small>
-                    <div id="total-period-sales" style="font-size:1.5rem; font-weight:bold; color:#10b981; margin-top:5px;">$0.00</div>
-                </div>
-            </div>
-
-            <div id="goals-container"></div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;">
-                <div class="stat-card">
-                    <h3>🏆 Ventas por Producto</h3>
-                    <canvas id="topProductsChart"></canvas>
-                </div>
-                <div class="stat-card">
-                    <h3>📊 Estructura de Gastos</h3>
-                    <canvas id="costStructureChart"></canvas>
+                <div class="stat-card" style="border-left: 4px solid #10b981;">
+                    <small style="color:#64748b; font-weight:bold; letter-spacing:0.5px;">VENTAS BRUTAS</small>
+                    <div id="total-period-sales" style="font-size:1.8rem; font-weight:800; color:#10b981; margin-top:8px;">$0.00</div>
                 </div>
             </div>
 
-            <div class="stat-card" style="margin-top:20px;">
-                <h3>📑 Estado de Resultados (Resumen USD)</h3>
-                <table style="width:100%; border-collapse: collapse; margin-top:15px; font-size:0.95rem;">
+            <div id="goals-container" style="margin-top:25px;"></div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:25px; margin-top:25px;">
+                <div class="stat-card">
+                    <h3 style="margin-bottom:20px; font-size:1rem; color:#1e293b;">🏆 Top Productos (Venta USD)</h3>
+                    <canvas id="topProductsChart" height="200"></canvas>
+                </div>
+                <div class="stat-card">
+                    <h3 style="margin-bottom:20px; font-size:1rem; color:#1e293b;">🍕 Distribución de Gastos</h3>
+                    <div style="max-width: 250px; margin: 0 auto;">
+                        <canvas id="costStructureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="margin-top:25px; padding:0; overflow:hidden;">
+                <div style="padding:20px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                    <h3 style="margin:0; font-size:1.1rem;">📑 Resumen Financiero Consolidadado</h3>
+                </div>
+                <table style="width:100%; border-collapse: collapse; font-size:0.95rem;">
                     <thead>
-                        <tr style="border-bottom:2px solid #e2e8f0; text-align:left; color:#64748b;">
-                            <th style="padding:12px;">CONCEPTO</th>
-                            <th style="text-align:right;">MONTO USD</th>
-                            <th style="text-align:right;">%</th>
+                        <tr style="text-align:left; color:#64748b; background:#fff;">
+                            <th style="padding:15px 20px;">CONCEPTO</th>
+                            <th style="text-align:right; padding:15px 20px;">MONTO USD</th>
+                            <th style="text-align:right; padding:15px 20px;">% SOBRE VENTA</th>
                         </tr>
                     </thead>
                     <tbody id="financial-body"></tbody>
@@ -63,124 +67,106 @@ export async function loadReports() {
         </div>
     `;
 
+    // Manejador de meta
     document.getElementById('btn-set-meta').onclick = () => {
-        const newMeta = prompt("Ingresa la meta de venta mensual (USD):", currentMeta);
-        if (newMeta !== null && !isNaN(newMeta)) {
-            localStorage.setItem('business-meta', newMeta);
-            loadReports(); 
+        const val = prompt("Define tu meta de facturación mensual (USD):", currentMeta);
+        if (val && !isNaN(val)) {
+            localStorage.setItem('business-meta', val);
+            loadReports();
         }
     };
 
-    await generateProfessionalReport(parseFloat(currentMeta));
-    
-    // El botón PDF requiere html2canvas y jspdf cargados en el index.html
+    // Botón de PDF (Requiere jsPDF)
     document.getElementById('btn-pdf').onclick = () => {
-        if (window.html2canvas && window.jspdf) {
-            exportToPDF();
-        } else {
-            alert("Las librerías de PDF aún no han cargado completamente.");
-        }
+        window.print(); // Solución nativa más estable para reportes con gráficas
     };
+
+    await renderReportData(parseFloat(currentMeta));
 }
 
-async function generateProfessionalReport(metaMensual) {
-    // 1. OBTENCIÓN DE DATOS (Ajustado a tus tablas reales)
+async function renderReportData(metaMensual) {
+    // 1. Fetching de datos reales
     const { data: sales } = await supabase.from('sales_orders').select('*');
     const { data: expenses } = await supabase.from('operational_expenses').select('*');
     const { data: ingredients } = await supabase.from('ingredients').select('*');
 
     const totalVentas = sales?.reduce((acc, s) => acc + (parseFloat(s.total_amount) || 0), 0) || 0;
     const totalGastos = expenses?.reduce((acc, e) => acc + (parseFloat(e.amount_usd) || 0), 0) || 0;
-    
-    // Valor del inventario: Cantidad * Costo Unitario
-    const valorInv = ingredients?.reduce((acc, i) => {
-        const costo = parseFloat(i.costo_unidad_medida) || 0;
-        const stock = parseFloat(i.stock_actual) || 0;
-        return acc + (costo * stock);
-    }, 0) || 0;
-    
+    const valorInv = ingredients?.reduce((acc, i) => acc + ((parseFloat(i.costo_unidad_medida) || 0) * (parseFloat(i.stock_actual) || 0)), 0) || 0;
     const avgTicket = sales?.length > 0 ? (totalVentas / sales.length) : 0;
 
-    // Actualizar KPIs
-    document.getElementById('inv-value').innerText = `$${valorInv.toFixed(2)}`;
-    document.getElementById('avg-ticket').innerText = `$${avgTicket.toFixed(2)}`;
-    document.getElementById('total-period-sales').innerText = `$${totalVentas.toFixed(2)}`;
+    // Actualizar UI de KPIs
+    document.getElementById('inv-value').innerText = `$${valorInv.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+    document.getElementById('avg-ticket').innerText = `$${avgTicket.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+    document.getElementById('total-period-sales').innerText = `$${totalVentas.toLocaleString('en-US', {minimumFractionDigits:2})}`;
 
-    // 2. LÓGICA DE BARRA DE META
-    const porcentajeLogrado = Math.min((totalVentas / metaMensual) * 100, 100);
-    const colorBarra = porcentajeLogrado < 40 ? '#ef4444' : (porcentajeLogrado < 80 ? '#f59e0b' : '#10b981');
+    // 2. Barra de Progreso de Meta
+    const pct = Math.min((totalVentas / metaMensual) * 100, 100);
+    const statusColor = pct < 50 ? '#ef4444' : (pct < 90 ? '#f59e0b' : '#10b981');
     
     document.getElementById('goals-container').innerHTML = `
-        <div class="stat-card" style="margin-top:20px; border-left: 6px solid ${colorBarra};">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0;">🎯 Objetivo Mensual</h3>
-                <span style="font-weight:bold; color:${colorBarra}; font-size:1.2rem;">${porcentajeLogrado.toFixed(1)}%</span>
+        <div class="stat-card" style="background: white; border: 1px solid #e2e8f0;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-weight:bold; color:#1e293b;">Progreso de Meta Mensual</span>
+                <span style="font-weight:800; color:${statusColor}">${pct.toFixed(1)}%</span>
             </div>
-            <div style="width:100%; background:#f1f5f9; height:12px; border-radius:10px; margin:15px 0; overflow:hidden;">
-                <div style="width:${porcentajeLogrado}%; background:${colorBarra}; height:100%; transition:width 1s;"></div>
+            <div style="width:100%; background:#f1f5f9; height:14px; border-radius:10px; overflow:hidden;">
+                <div style="width:${pct}%; background:${statusColor}; height:100%; transition: width 0.8s ease-in-out;"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
-                <span>Progreso: $${totalVentas.toFixed(2)}</span>
-                <span>Meta: $${metaMensual.toFixed(2)}</span>
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:#64748b;">
+                <span>Vendido: $${totalVentas.toFixed(2)}</span>
+                <span>Objetivo: $${metaMensual.toFixed(2)}</span>
             </div>
         </div>
     `;
 
-    // 3. GRÁFICAS (Chart.js)
-    // Agrupar ventas por producto
-    const productData = {};
-    sales?.forEach(s => {
-        const nombre = s.product_name || 'Otros';
-        productData[nombre] = (productData[nombre] || 0) + parseFloat(s.total_amount);
-    });
+    // 3. Gráficas (Chart.js)
+    const productAgg = {};
+    sales?.forEach(s => { productAgg[s.product_name || 'Otros'] = (productAgg[s.product_name] || 0) + parseFloat(s.total_amount); });
 
     new Chart(document.getElementById('topProductsChart'), {
         type: 'bar',
         data: {
-            labels: Object.keys(productData),
+            labels: Object.keys(productAgg),
             datasets: [{
-                label: 'Ventas USD',
-                data: Object.values(productData),
-                backgroundColor: '#3b82f6'
+                data: Object.values(productAgg),
+                backgroundColor: '#3b82f6',
+                borderRadius: 5
             }]
         },
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
-    // Agrupar gastos por categoría
-    const expenseCats = {};
-    expenses?.forEach(e => {
-        const cat = e.category || 'Otros';
-        expenseCats[cat] = (expenseCats[cat] || 0) + parseFloat(e.amount_usd);
-    });
+    const expenseAgg = {};
+    expenses?.forEach(e => { expenseAgg[e.category || 'Varios'] = (expenseAgg[e.category] || 0) + parseFloat(e.amount_usd); });
 
     new Chart(document.getElementById('costStructureChart'), {
         type: 'doughnut',
         data: {
-            labels: Object.keys(expenseCats),
+            labels: Object.keys(expenseAgg),
             datasets: [{
-                data: Object.values(expenseCats),
+                data: Object.values(expenseAgg),
                 backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#7c3aed']
             }]
         },
-        options: { responsive: true }
+        options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
     });
 
-    // 4. ESTADO DE RESULTADOS
-    const utilidadNeta = totalVentas - totalGastos;
-    const marginPct = totalVentas > 0 ? (utilidadNeta / totalVentas * 100).toFixed(1) : 0;
+    // 4. Tabla Financiera (Estado de Resultados)
+    const utilidad = totalVentas - totalGastos;
+    const margin = totalVentas > 0 ? (utilidad / totalVentas * 100).toFixed(1) : 0;
 
-    const rows = [
-        { label: 'INGRESOS TOTALES', val: totalVentas, pct: 100, color: '#0f172a' },
-        { label: 'GASTOS OPERATIVOS', val: totalGastos, pct: totalVentas > 0 ? (totalGastos/totalVentas*100).toFixed(1) : 0, color: '#ef4444' },
-        { label: 'UTILIDAD NETA ESTIMADA', val: utilidadNeta, pct: marginPct, color: '#10b981' }
+    const dataRows = [
+        { label: 'INGRESOS TOTALES', val: totalVentas, p: '100%', c: '#0f172a' },
+        { label: 'COSTOS Y GASTOS OPERATIVOS', val: totalGastos, p: totalVentas > 0 ? (totalGastos/totalVentas*100).toFixed(1) + '%' : '-', c: '#dc2626' },
+        { label: 'UTILIDAD NETA ESTIMADA', val: utilidad, p: margin + '%', c: '#16a34a' }
     ];
 
-    document.getElementById('financial-body').innerHTML = rows.map(r => `
-        <tr style="border-bottom:1px solid #f1f5f9; font-weight:bold; color:${r.color};">
-            <td style="padding:15px;">${r.label}</td>
-            <td style="text-align:right;">$${r.val.toFixed(2)}</td>
-            <td style="text-align:right;">${r.pct}%</td>
+    document.getElementById('financial-body').innerHTML = dataRows.map(r => `
+        <tr style="border-top:1px solid #f1f5f9; font-weight:bold; color:${r.c};">
+            <td style="padding:18px 20px;">${r.label}</td>
+            <td style="text-align:right; padding:18px 20px;">$${r.val.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+            <td style="text-align:right; padding:18px 20px;">${r.p}</td>
         </tr>
     `).join('');
 }

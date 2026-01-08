@@ -1,35 +1,58 @@
 import { supabase } from '../supabase.js';
-import { getGlobalRates } from './settings.js'; // Importación de las tasas duales
+import { getGlobalRates } from './settings.js';
 
 export async function loadAdmin() {
     const rates = await getGlobalRates();
     const container = document.getElementById('app-content');
 
+    // Inyectamos el CSS para la adaptabilidad de Administración
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+        .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .admin-tabs { display: none; margin-bottom: 20px; gap: 10px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        @media (max-width: 850px) {
+            .admin-layout { grid-template-columns: 1fr; }
+            .admin-tabs { display: flex; }
+            .admin-panel { display: none; }
+            .admin-panel.active { display: block; }
+            .admin-header { flex-direction: column; text-align: center; gap: 15px; }
+            .list-container { max-height: 300px; overflow-y: auto; }
+        }
+    `;
+    document.head.appendChild(styleTag);
+
     container.innerHTML = `
         <div class="main-container">
-            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <header class="admin-header">
                 <div>
-                    <h1>⚙️ Administración y Activos</h1>
-                    <p>Gestiona tus equipos y gastos operativos en cualquier moneda.</p>
+                    <h1 style="margin:0;">⚙️ Administración</h1>
+                    <p style="margin:5px 0 0; color:#64748b;">Equipos y Gastos Operativos</p>
                 </div>
-                <div style="display:flex; gap:10px; font-size:0.8rem;">
-                    <div style="background:#f1f5f9; padding:5px 10px; border-radius:8px; border:1px solid #cbd5e1;">
-                        <b>USD/VES:</b> ${rates.tasa_usd_ves.toFixed(2)}
+                <div style="display:flex; gap:10px;">
+                    <div style="background:#f1f5f9; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.85rem;">
+                        <b style="color:#475569;">USD:</b> Bs ${rates.tasa_usd_ves.toFixed(2)}
                     </div>
-                    <div style="background:#f5f3ff; padding:5px 10px; border-radius:8px; border:1px solid #ddd6fe;">
-                        <b>EUR/VES:</b> ${rates.tasa_eur_ves.toFixed(2)}
+                    <div style="background:#f5f3ff; padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; font-size:0.85rem;">
+                        <b style="color:#5b21b6;">EUR:</b> Bs ${rates.tasa_eur_ves.toFixed(2)}
                     </div>
                 </div>
             </header>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
-                <div class="stat-card">
-                    <h3>🛡️ Inventario de Equipos (Activos)</h3>
+            <div class="admin-tabs">
+                <button class="tab-btn active" id="tab-assets" onclick="switchAdminTab('assets')">🛡️ Equipos</button>
+                <button class="tab-btn" id="tab-expenses" onclick="switchAdminTab('expenses')">💸 Gastos</button>
+            </div>
+
+            <div class="admin-layout">
+                <div id="panel-assets" class="stat-card admin-panel active">
+                    <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">🛡️ Inventario de Equipos</h3>
                     <div class="input-group">
                         <label>Nombre del Equipo</label>
                         <input type="text" id="a-name" class="input-field" placeholder="Ej: Horno de Convección">
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
                         <div class="input-group">
                             <label>Marca</label>
                             <input type="text" id="a-brand" class="input-field">
@@ -40,10 +63,10 @@ export async function loadAdmin() {
                         </div>
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
                         <div class="input-group">
-                            <label>Costo de Adquisición</label>
-                            <input type="number" id="a-cost" class="input-field" step="0.01" placeholder="0.00">
+                            <label>Costo Adquisición</label>
+                            <input type="number" id="a-cost" class="input-field" step="0.01">
                         </div>
                         <div class="input-group">
                             <label>Moneda</label>
@@ -54,17 +77,21 @@ export async function loadAdmin() {
                             </select>
                         </div>
                     </div>
-                    <button id="btn-save-asset" class="btn-primary" style="width:100%; background:#0f172a;">💾 Registrar Equipo</button>
-                    <div id="assets-list" style="margin-top:20px; font-size:0.85rem;"></div>
+                    <button id="btn-save-asset" class="btn-primary" style="width:100%; background:#0f172a; margin-top:15px; height:45px;">💾 Registrar Equipo</button>
+                    
+                    <div style="margin-top:25px;">
+                        <h4 style="border-bottom:1px solid #f1f5f9; padding-bottom:5px;">Equipos Registrados</h4>
+                        <div id="assets-list" class="list-container"></div>
+                    </div>
                 </div>
 
-                <div class="stat-card">
-                    <h3>💸 Gastos Operativos</h3>
+                <div id="panel-expenses" class="stat-card admin-panel">
+                    <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">💸 Gastos Operativos</h3>
                     <div class="input-group">
                         <label>Descripción del Gasto</label>
                         <input type="text" id="e-desc" class="input-field" placeholder="Ej: Pago de Electricidad">
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" style="margin-top:10px;">
                         <label>Categoría</label>
                         <select id="e-cat" class="input-field">
                             <option value="Consumibles">Consumibles (Guantes, limpieza)</option>
@@ -73,10 +100,10 @@ export async function loadAdmin() {
                             <option value="Mantenimiento">Mantenimiento</option>
                         </select>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
                         <div class="input-group">
                             <label>Monto Pagado</label>
-                            <input type="number" id="e-amount" class="input-field" step="0.01" placeholder="0.00">
+                            <input type="number" id="e-amount" class="input-field" step="0.01">
                         </div>
                         <div class="input-group">
                             <label>Moneda</label>
@@ -87,12 +114,32 @@ export async function loadAdmin() {
                             </select>
                         </div>
                     </div>
-                    <button id="btn-save-expense" class="btn-primary" style="width:100%; background:#0284c7;">💸 Registrar Gasto</button>
-                    <div id="expenses-list" style="margin-top:20px; font-size:0.85rem;"></div>
+                    <button id="btn-save-expense" class="btn-primary" style="width:100%; background:#0284c7; margin-top:15px; height:45px;">💸 Registrar Gasto</button>
+                    
+                    <div style="margin-top:25px;">
+                        <h4 style="border-bottom:1px solid #f1f5f9; padding-bottom:5px;">Últimos Gastos (USD)</h4>
+                        <div id="expenses-list" class="list-container"></div>
+                    </div>
                 </div>
             </div>
         </div>
     `;
+
+    // Función para cambiar pestañas en móvil
+    window.switchAdminTab = (target) => {
+        const pAssets = document.getElementById('panel-assets');
+        const pExpenses = document.getElementById('panel-expenses');
+        const tAssets = document.getElementById('tab-assets');
+        const tExpenses = document.getElementById('tab-expenses');
+
+        if(target === 'assets') {
+            pAssets.classList.add('active'); pExpenses.classList.remove('active');
+            tAssets.classList.add('active'); tExpenses.classList.remove('active');
+        } else {
+            pAssets.classList.remove('active'); pExpenses.classList.add('active');
+            tAssets.classList.remove('active'); tExpenses.classList.add('active');
+        }
+    };
 
     setupAdminEvents(rates);
     renderAssets();
@@ -100,18 +147,13 @@ export async function loadAdmin() {
 }
 
 function setupAdminEvents(rates) {
-    // Función auxiliar para convertir cualquier moneda a USD
     const convertToUSD = (amount, currency) => {
         if (currency === 'USD') return amount;
         if (currency === 'VES') return amount / rates.tasa_usd_ves;
-        if (currency === 'EUR') {
-            const amountInBs = amount * rates.tasa_eur_ves;
-            return amountInBs / rates.tasa_usd_ves;
-        }
+        if (currency === 'EUR') return (amount * rates.tasa_eur_ves) / rates.tasa_usd_ves;
         return amount;
     };
 
-    // Registro de Activos
     document.getElementById('btn-save-asset').onclick = async () => {
         const name = document.getElementById('a-name').value;
         const amount = parseFloat(document.getElementById('a-cost').value);
@@ -128,15 +170,15 @@ function setupAdminEvents(rates) {
         }]);
 
         if(!error) {
-            alert("✅ Equipo registrado en el inventario.");
+            alert("✅ Equipo registrado.");
+            document.getElementById('a-name').value = '';
+            document.getElementById('a-cost').value = '';
             renderAssets();
         }
     };
 
-    // Registro de Gastos
     document.getElementById('btn-save-expense').onclick = async () => {
         const description = document.getElementById('e-desc').value;
-        const category = document.getElementById('e-cat').value;
         const amount = parseFloat(document.getElementById('e-amount').value);
         const currency = document.getElementById('e-currency').value;
         const amount_usd = convertToUSD(amount, currency);
@@ -145,12 +187,14 @@ function setupAdminEvents(rates) {
 
         const { error } = await supabase.from('operational_expenses').insert([{ 
             description, 
-            category, 
+            category: document.getElementById('e-cat').value, 
             amount_usd 
         }]);
 
         if(!error) {
-            alert("✅ Gasto registrado y convertido a USD.");
+            alert("✅ Gasto registrado.");
+            document.getElementById('e-desc').value = '';
+            document.getElementById('e-amount').value = '';
             renderExpenses();
         }
     };
@@ -159,21 +203,33 @@ function setupAdminEvents(rates) {
 async function renderAssets() {
     const { data } = await supabase.from('assets_inventory').select('*').order('purchase_date', { ascending: false });
     const list = document.getElementById('assets-list');
-    list.innerHTML = `<h4>Tus Equipos (Valor en USD)</h4>` + data.map(a => `
-        <div style="padding:10px; border-bottom:1px solid #eee; background:white; border-radius:4px; margin-bottom:5px;">
-            <strong>${a.name}</strong><br>
-            <small style="color:#64748b;">Costo: $${a.cost_usd.toFixed(2)}</small>
+    if(!data) return;
+    
+    list.innerHTML = data.map(a => `
+        <div style="padding:12px; border:1px solid #e2e8f0; background:#f8fafc; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong style="display:block; font-size:0.9rem;">${a.name}</strong>
+                <small style="color:#64748b;">${a.brand || ''} ${a.model || ''}</small>
+            </div>
+            <div style="font-weight:bold; color:#0f172a; background:#fff; padding:4px 8px; border-radius:6px; border:1px solid #e2e8f0;">
+                $${a.cost_usd.toFixed(2)}
+            </div>
         </div>
     `).join('');
 }
 
 async function renderExpenses() {
-    const { data } = await supabase.from('operational_expenses').select('*').order('expense_date', { ascending: false }).limit(5);
+    const { data } = await supabase.from('operational_expenses').select('*').order('expense_date', { ascending: false }).limit(10);
     const list = document.getElementById('expenses-list');
-    list.innerHTML = `<h4>Últimos Gastos (USD)</h4>` + data.map(e => `
-        <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:white; border-radius:4px; margin-bottom:5px;">
-            <div><strong>${e.description}</strong><br><small>${e.category}</small></div>
-            <div style="color:#ef4444; font-weight:bold;">-$${e.amount_usd.toFixed(2)}</div>
+    if(!data) return;
+
+    list.innerHTML = data.map(e => `
+        <div style="padding:12px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:white; border-radius:8px; margin-bottom:8px;">
+            <div>
+                <strong style="display:block; font-size:0.9rem;">${e.description}</strong>
+                <span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">${e.category}</span>
+            </div>
+            <div style="color:#ef4444; font-weight:bold; font-size:0.95rem;">-$${e.amount_usd.toFixed(2)}</div>
         </div>
     `).join('');
 }

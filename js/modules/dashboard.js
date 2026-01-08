@@ -3,167 +3,171 @@ import { supabase } from '../supabase.js';
 export async function loadDashboard() {
     const container = document.getElementById('app-content');
     
+    // 1. Carga de datos: Recetas, Tasas y los últimos 10 registros
+    const [recipeCountRes, logsRes, ratesRes] = await Promise.all([
+        supabase.from('recipes').select('*', { count: 'exact', head: true }),
+        supabase.from('production_logs').select('*').order('fecha_produccion', { ascending: false }).limit(10),
+        supabase.from('global_config').select('*').eq('id', 'current_rates').single()
+    ]);
+
+    const recipeCount = recipeCountRes.count || 0;
+    const historyLogs = logsRes.data || []; 
+    const lastLog = historyLogs[0]; // El primero es el más reciente
+    const rates = ratesRes.data || { tasa_usd_ves: 0, tasa_eur_ves: 0 };
+
+    window.navTo = (tabName) => {
+        const targetBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
+        if (targetBtn) targetBtn.click();
+    };
+
     container.innerHTML = `
-        <div class="main-container" style="background: #f8fafc; min-height: 100vh;">
-            <header style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 style="color: #0f172a; font-size: 2rem; margin: 0;">🍞 Dashboard Focaccia & Coffee</h1>
-                    <p style="color: #64748b; margin: 5px 0 0 0;">Análisis estratégico de tu panadería artesanal.</p>
-                </div>
-                <div style="background: white; padding: 10px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-                    <span style="font-size: 0.8rem; color: #94a3b8; display: block; text-transform: uppercase;">Estado del Horno</span>
-                    <span style="color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                        <span style="height: 8px; width: 8px; background: #10b981; border-radius: 50%;"></span> Operativo y Vendiendo
-                    </span>
-                </div>
-            </header>
+        <style>
+            .hero-section {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                color: white; padding: 40px; border-radius: 28px;
+                margin-bottom: 25px; position: relative; overflow: hidden;
+            }
+            .hero-section::after {
+                content: '🥖'; position: absolute; right: -10px; bottom: -20px;
+                font-size: 150px; opacity: 0.05; transform: rotate(-15deg);
+            }
+            .welcome-text h1 { font-size: 2.2rem; margin: 0; font-weight: 800; }
+            
+            .quick-access {
+                display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 15px; margin-top: 30px;
+            }
+            .access-card {
+                background: rgba(255,255,255,0.08); backdrop-filter: blur(12px);
+                padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+                transition: all 0.3s ease; cursor: pointer; text-align: center;
+            }
+            .access-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
+            
+            /* Layout de información */
+            .info-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; margin-bottom: 20px; }
+            
+            .chart-full { 
+                background: white; padding: 25px; border-radius: 24px; 
+                border: 1px solid #e2e8f0; margin-top: 10px;
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            }
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
-                <div class="stat-card" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none;">
-                    <small style="opacity: 0.8;">INGRESOS TOTALES</small>
-                    <div id="total-revenue" style="font-size: 2.2rem; font-weight: 800; margin: 10px 0;">$0.00</div>
-                    <div style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); padding: 4px 8px; border-radius: 6px; width: fit-content;">↑ Tendencia Positiva</div>
-                </div>
-                
-                <div class="stat-card" style="border-left: 6px solid #f59e0b;">
-                    <small style="color: #64748b;">COSTO DE OPERACIÓN (USD)</small>
-                    <div id="total-expenses-combined" style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin: 10px 0;">$0.00</div>
-                    <small style="color: #94a3b8;">Fijos + Insumos</small>
-                </div>
+            @media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }
+        </style>
 
-                <div class="stat-card" style="background: #ffffff; border-left: 6px solid #10b981;">
-                    <small style="color: #64748b;">UTILIDAD NETA</small>
-                    <div id="net-profit" style="font-size: 2.2rem; font-weight: 800; color: #10b981; margin: 10px 0;">$0.00</div>
-                    <div id="profit-badge" style="font-size: 0.8rem; color: #64748b;">Calculado en tiempo real</div>
+        <div class="main-container">
+            <div class="hero-section">
+                <div class="welcome-text">
+                    <h1>¡Hola, Maestro! 👋</h1>
+                    <p>Panel de control y rendimiento.</p>
+                </div>
+                <div class="quick-access">
+                    <div class="access-card" onclick="navTo('produccion')">🚀 <b>Nueva Tanda</b></div>
+                    <div class="access-card" onclick="navTo('recetas')">📖 <b>${recipeCount} Recetas</b></div>
+                    <div class="access-card" onclick="navTo('suministros')">📦 <b>Suministros</b></div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 20px; margin-top: 25px;">
-                <div class="stat-card">
-                    <h3 style="margin-bottom: 20px; font-size: 1.1rem; color: #1e293b;">📈 Flujo de Caja (Últimos 7 Días)</h3>
-                    <div style="height: 320px;">
-                        <canvas id="lineChart"></canvas>
-                    </div>
+            <div class="info-grid">
+                <div class="stat-card" style="margin:0; display:flex; flex-direction:column; justify-content:center;">
+                    <h3 style="margin-top:0; color:#64748b; font-size:0.9rem; text-transform:uppercase;">📅 Última Producción</h3>
+                    ${lastLog ? `
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <div style="font-size:3rem;">🍞</div>
+                            <div style="flex-grow: 1;">
+                                <div style="font-size: 1.4rem; font-weight:800; color:#0f172a;">${lastLog.recipe_name}</div>
+                                <div style="font-size:0.95rem; color:#64748b;">${new Date(lastLog.fecha_produccion).toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.8rem; font-weight:900; color:#10b981;">$${lastLog.costo_total_tanda.toFixed(2)}</div>
+                                <small style="color:#94a3b8; font-weight:bold;">INVERSIÓN</small>
+                            </div>
+                        </div>
+                    ` : `<p style="color:#94a3b8;">No hay registros recientes.</p>`}
                 </div>
 
-                <div class="stat-card">
-                    <h3 style="margin-bottom: 20px; font-size: 1.1rem; color: #1e293b;">🍰 Gastos por Categoría</h3>
-                    <div style="height: 320px;">
-                        <canvas id="pieChart"></canvas>
+                <div class="stat-card" style="margin:0;">
+                    <h3 style="margin-top:0; color:#64748b; font-size:0.9rem; text-transform:uppercase;">💰 Tasas del Día</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div style="background:#f0fdf4; padding:10px; border-radius:12px; text-align:center; border:1px solid #dcfce7;">
+                            <small style="display:block; color:#166534;">USD</small>
+                            <b style="font-size:1.1rem; color:#166534;">${rates.tasa_usd_ves.toFixed(2)}</b>
+                        </div>
+                        <div style="background:#eff6ff; padding:10px; border-radius:12px; text-align:center; border:1px solid #dbeafe;">
+                            <small style="display:block; color:#1e40af;">EUR</small>
+                            <b style="font-size:1.1rem; color:#1e40af;">${rates.tasa_eur_ves.toFixed(2)}</b>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="stat-card" style="margin-top: 25px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="font-size: 1.1rem; color: #1e293b;">🏆 Top Focaccias & Cafés por Rentabilidad</h3>
-                    <span style="font-size: 0.8rem; color: #3b82f6; font-weight: bold; cursor: pointer;">Ver todos los productos →</span>
-                </div>
-                <div style="height: 250px;">
-                    <canvas id="barChart"></canvas>
+            <div class="chart-full">
+                <h3 style="margin:0 0 20px 0; font-size: 1.1rem; color: #1e293b; display:flex; align-items:center; gap:10px;">
+                    📈 Tendencia de Inversión <small style="color:#94a3b8; font-weight:normal;">(Últimas tandas)</small>
+                </h3>
+                <div style="height: 250px; width: 100%;">
+                    <canvas id="productionChart"></canvas>
                 </div>
             </div>
         </div>
     `;
 
-    renderDashboardData();
+    // Inicializar gráfico con los datos (revertidos para orden cronológico)
+    initChart([...historyLogs].reverse());
 }
 
-async function renderDashboardData() {
-    // 1. OBTENCIÓN DE DATOS (Usando tus tablas finales)
-    const { data: sales } = await supabase.from('sales_orders').select('*');
-    const { data: expenses } = await supabase.from('operational_expenses').select('*');
-    const { data: recipes } = await supabase.from('recipes').select(`
-        id, nombre, precio_venta_usd, 
-        recipe_ingredients (cantidad_necesaria, ingredients (costo_unidad_medida))
-    `);
-
-    if (!sales || !expenses) return;
-
-    // --- PROCESAMIENTO ---
-    const totalRev = sales.reduce((acc, s) => acc + (parseFloat(s.total_amount) || 0), 0);
-    const totalExp = expenses.reduce((acc, e) => acc + (parseFloat(e.amount_usd) || 0), 0);
+function initChart(logs) {
+    const canvas = document.getElementById('productionChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     
-    // Calcular Utilidad Real considerando costos de receta
-    let productProfitMap = {};
-    sales.forEach(s => {
-        const recipe = recipes.find(r => r.nombre === s.product_name);
-        let costoUnit = 0;
-        if (recipe) {
-            costoUnit = recipe.recipe_ingredients.reduce((acc, ri) => 
-                acc + (ri.cantidad_necesaria * (ri.ingredients?.costo_unidad_medida || 0)), 0);
-            
-            const utilidad = (s.unit_price - costoUnit) * s.quantity;
-            productProfitMap[s.product_name] = (productProfitMap[s.product_name] || 0) + utilidad;
-        }
-    });
+    if (logs.length === 0) return;
 
-    // --- RENDERIZADO DE KPIs ---
-    document.getElementById('total-revenue').innerText = `$${totalRev.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-    document.getElementById('total-expenses-combined').innerText = `$${totalExp.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-    const profit = totalRev - totalExp;
-    const profitEl = document.getElementById('net-profit');
-    profitEl.innerText = `$${profit.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-    profitEl.style.color = profit >= 0 ? '#10b981' : '#ef4444';
+    const labels = logs.map(l => new Date(l.fecha_produccion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
+    const dataValues = logs.map(l => l.costo_total_tanda);
 
-    // --- CHART: LÍNEAS (Ventas Diarias) ---
-    const salesByDay = sales.reduce((acc, s) => {
-        const date = new Date(s.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        acc[date] = (acc[date] || 0) + s.total_amount;
-        return acc;
-    }, {});
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        script.onload = () => draw(ctx, labels, dataValues);
+        document.head.appendChild(script);
+    } else {
+        draw(ctx, labels, dataValues);
+    }
+}
 
-    new Chart(document.getElementById('lineChart'), {
+function draw(ctx, labels, dataValues) {
+    new Chart(ctx, {
         type: 'line',
         data: {
-            labels: Object.keys(salesByDay),
+            labels: labels,
             datasets: [{
-                data: Object.values(salesByDay),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4,
+                label: 'Costo de Tanda ($)',
+                data: dataValues,
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15, 23, 42, 0.05)',
                 borderWidth: 3,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#3b82f6',
-                pointRadius: 4
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: 'white',
+                pointRadius: 5,
+                pointHoverRadius: 7
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-
-    // --- CHART: TORTA (Gastos) ---
-    const expenseCats = expenses.reduce((acc, e) => {
-        acc[e.category] = (acc[e.category] || 0) + e.amount_usd;
-        return acc;
-    }, {});
-
-    new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(expenseCats),
-            datasets: [{
-                data: Object.values(expenseCats),
-                backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#7c3aed'],
-                borderWidth: 0
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
-    });
-
-    // --- CHART: BARRAS (Rentabilidad por producto) ---
-    const topData = Object.entries(productProfitMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: topData.map(d => d[0]),
-            datasets: [{
-                label: 'Utilidad Real ($)',
-                data: topData.map(d => d[1]),
-                backgroundColor: '#0f172a',
-                borderRadius: 8
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    beginAtZero: false, 
+                    grid: { color: '#f1f5f9' },
+                    ticks: { callback: (value) => '$' + value }
+                },
+                x: { grid: { display: false } }
+            }
+        }
     });
 }

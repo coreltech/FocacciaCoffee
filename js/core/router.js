@@ -11,6 +11,7 @@ const routes = {
     plan:           () => import('../modules/plan.js'),
     reportes:       () => import('../modules/reports.js'),
     calculadora:    () => import('../modules/calculator.js'),
+    biblioteca:     () => import('../modules/library.js'),
 };
 
 export async function initRouter() {
@@ -44,6 +45,7 @@ export async function initRouter() {
                 if (tab === 'plan')           await module.loadPlan();
                 if (tab === 'reportes')       await module.loadReports();
                 if (tab === 'calculadora')    await module.loadCalculator();
+                if (tab === 'biblioteca')     await module.loadLibrary();
 
             } catch (err) {
                 container.innerHTML = `
