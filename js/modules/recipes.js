@@ -38,21 +38,29 @@ export async function loadRecipes() {
                     <hr style="margin:20px 0; opacity:0.1;">
                     
                     <h4>1. Ingredientes</h4>
-                    <div style="display:grid; grid-template-columns: 1.5fr 1fr 0.5fr; gap:10px;">
-                        <select id="r-select-ing" class="input-field">
-                            <option value="">-- Seleccionar Insumo --</option>
-                            ${allIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('')}
-                        </select>
-                        <input type="number" id="r-valor" class="input-field" placeholder="Cant.">
-                        <button id="btn-add-item" class="btn-primary" style="background:#0f172a; cursor:pointer;">+</button>
+                    <div style="display:grid; grid-template-columns: 1.5fr 0.8fr 0.8fr; gap:10px; align-items: end;">
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; color:#64748b;">Insumo</label>
+                            <select id="r-select-ing" class="input-field" style="padding: 6px; font-size: 0.85rem;">
+                                <option value="">-- Seleccionar --</option>
+                                ${allIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; color:#64748b;">Cant.</label>
+                            <input type="number" id="r-valor" class="input-field" style="padding: 6px; font-size: 0.85rem;" placeholder="0">
+                        </div>
+                        <button id="btn-add-item" class="btn-primary" style="background:#0284c7; height:34px; font-size:0.8rem; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer; padding: 0 10px; border-radius: 6px;">
+                            <span>➕</span> Añadir
+                        </button>
                     </div>
 
-                    <table style="width:100%; margin-top:15px; font-size:0.85rem; border-collapse:collapse;">
+                    <table style="width:100%; margin-top:20px; font-size:0.85rem; border-collapse:collapse;">
                         <thead id="table-head" style="background:#f8fafc; border-bottom:2px solid #e2e8f0;"></thead>
                         <tbody id="recipe-items-body"></tbody>
                     </table>
 
-                    <div id="summary-box" style="margin-top:20px; padding:15px; background:#0f172a; color:#fff; border-radius:8px; display:none;">
+                    <div id="summary-box" style="margin-top:20px; padding:15px; background:#0f172a; color:#fff; border-radius:10px; display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span id="label-costo" style="font-size:0.9rem; opacity:0.8;">Costo Ref:</span>
                             <span id="total-cost" style="color:#4ade80; font-weight:bold; font-size:1.3rem;">$0.00</span>
@@ -60,11 +68,11 @@ export async function loadRecipes() {
                     </div>
 
                     <h4 style="margin-top:25px;">2. Pasos de Preparación</h4>
-                    <textarea id="r-pasos" class="input-field" style="min-height:120px; font-family:sans-serif; padding:10px;" placeholder="Describe el proceso..."></textarea>
+                    <textarea id="r-pasos" class="input-field" style="min-height:120px; font-family:sans-serif; padding:10px;" placeholder="Describe el proceso paso a paso..."></textarea>
                     
                     <div style="display:flex; gap:10px; margin-top:20px;">
                         <button id="btn-cancel-edit" class="btn-primary" style="background:#64748b; display:none; cursor:pointer;">Cancelar</button>
-                        <button id="btn-save-recipe" class="btn-primary" style="flex:1; background:#0284c7; display:none; cursor:pointer;">💾 Guardar Receta</button>
+                        <button id="btn-save-recipe" class="btn-primary" style="flex:1; background:#10b981; display:none; cursor:pointer;">💾 Guardar Receta</button>
                     </div>
                 </div>
 
@@ -80,6 +88,8 @@ export async function loadRecipes() {
     renderRecipesList();
 }
 
+// ... (El resto de las funciones: setupEvents, renderTable, removeItem, renderRecipesList, duplicateRecipe, editRecipe, deleteRecipe, resetForm, viewRecipeDetail se mantienen iguales a la versión anterior)
+
 function setupEvents(allIngredients) {
     const rTipo = document.getElementById('r-tipo');
     const secEst = document.getElementById('section-estandar');
@@ -89,7 +99,6 @@ function setupEvents(allIngredients) {
 
     rTipo.onchange = () => {
         secEst.style.display = rTipo.value === 'estandar' ? 'block' : 'none';
-        // Solo limpiamos si NO estamos editando, para evitar que el render inicial de edición se borre
         if (!editingRecipeId) {
             currentItems = []; 
             renderTable();
@@ -111,6 +120,8 @@ function setupEvents(allIngredients) {
         });
         renderTable();
         document.getElementById('r-valor').value = "";
+        select.value = "";
+        select.focus();
     };
 
     btnCancel.onclick = () => { resetForm(); };
@@ -159,7 +170,7 @@ function renderTable() {
     const tipo = document.getElementById('r-tipo').value;
     const isPan = tipo === 'panadera';
 
-    head.innerHTML = `<tr><th align="left" style="padding:10px;">Insumo</th><th>Cant/%</th><th align="right"></th></tr>`;
+    head.innerHTML = `<tr><th align="left" style="padding:10px;">Insumo</th><th align="center">Cant/%</th><th align="right">Costo</th><th align="right"></th></tr>`;
 
     let totalCostoTemp = 0;
     let totalPorcentaje = 0;
@@ -170,17 +181,16 @@ function renderTable() {
         if(isPan) totalPorcentaje += i.valor;
 
         return `<tr style="border-bottom:1px solid #f1f5f9;">
-            <td style="padding:8px 0;">${i.name}</td>
-            <td align="center">${i.valor}</td>
-            <td align="right"><button onclick="removeItem(${index})" style="background:none; border:none; cursor:pointer;">❌</button></td>
+            <td style="padding:10px 0;">${i.name}</td>
+            <td align="center">${i.valor}${isPan ? '%' : 'g'}</td>
+            <td align="right" style="color:#10b981; font-weight:bold;">$${costoItem.toFixed(3)}</td>
+            <td align="right"><button onclick="removeItem(${index})" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">🗑️</button></td>
         </tr>`;
     }).join('');
 
     if (currentItems.length > 0) {
         summary.style.display = 'block';
         btnSave.style.display = 'block';
-        btnSave.innerText = editingRecipeId ? "💾 Actualizar Receta" : "💾 Guardar Receta";
-        
         const costDisp = document.getElementById('total-cost');
         const label = document.getElementById('label-costo');
         
@@ -215,32 +225,81 @@ async function renderRecipesList() {
     const list = document.getElementById('recipes-list');
     if(!recipes || recipes.length === 0) return list.innerHTML = "No hay recetas.";
 
-    list.innerHTML = recipes.map(r => `
-        <div style="background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:10px; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="cursor:pointer;" onclick="viewRecipeDetail('${r.id}')">
-                    <strong style="font-size:1rem; color:#0f172a;">${r.name} 👁️</strong>
-                    <div style="font-size:0.7rem; color:#0284c7; font-weight:bold; margin-top:2px;">${r.tipo_receta.toUpperCase()}</div>
+    list.innerHTML = recipes.map(r => {
+        let totalCosto = 0;
+        let totalCantidad = 0;
+        const isPan = r.tipo_receta === 'panadera';
+
+        r.recipe_ingredients.forEach(ri => {
+            const cant = ri.cantidad_o_porcentaje;
+            const costoBase = ri.ingredients.costo_base_usd_unidad_minima;
+            const costoItem = isPan ? (cant * 10 * costoBase) : (cant * costoBase);
+            totalCosto += costoItem;
+            totalCantidad += cant;
+        });
+
+        const unidad = isPan ? '%' : 'g';
+
+        return `
+        <div style="background:#fff; border:1px solid #e2e8f0; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <div style="cursor:pointer; flex:1;" onclick="viewRecipeDetail('${r.id}')">
+                    <strong style="font-size:1.1rem; color:#0f172a; display:block;">${r.name} 👁️</strong>
+                    <div style="margin-top:5px;">
+                        <span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:10px; font-weight:bold; text-transform:uppercase; margin-right:8px;">${r.tipo_receta}</span>
+                        <span style="font-size:0.8rem; color:#64748b;">Rendimiento: <b>${totalCantidad.toFixed(0)}${unidad}</b></span>
+                    </div>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="editRecipe('${r.id}')" style="background:#f1f5f9; border:none; border-radius:6px; padding:5px 8px; cursor:pointer;">✏️</button>
-                    <button onclick="deleteRecipe('${r.id}')" style="background:#fff1f2; border:none; border-radius:6px; padding:5px 8px; cursor:pointer;">🗑️</button>
+                <div style="text-align:right; margin-right:15px;">
+                    <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase;">Costo Total</div>
+                    <div style="font-size:1.2rem; font-weight:bold; color:#10b981;">$${totalCosto.toFixed(2)}</div>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="duplicateRecipe('${r.id}')" title="Duplicar" style="background:#f0f9ff; border:none; border-radius:8px; padding:8px; cursor:pointer;">👯</button>
+                    <button onclick="editRecipe('${r.id}')" title="Editar" style="background:#f1f5f9; border:none; border-radius:8px; padding:8px; cursor:pointer;">✏️</button>
+                    <button onclick="deleteRecipe('${r.id}')" title="Eliminar" style="background:#fff1f2; border:none; border-radius:8px; padding:8px; cursor:pointer;">🗑️</button>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
+
+window.duplicateRecipe = async (id) => {
+    const { data: r } = await supabase.from('recipes').select('*, recipe_ingredients(*)').eq('id', id).single();
+    if(!r) return;
+
+    const newName = prompt("Nombre para la copia:", r.name + " (Copia)");
+    if(!newName) return;
+
+    const { data: newRec, error } = await supabase.from('recipes').insert([{
+        name: newName,
+        tipo_receta: r.tipo_receta,
+        peso_final_esperado: r.peso_final_esperado,
+        pasos_preparacion: r.pasos_preparacion
+    }]).select().single();
+
+    if(error) return alert("Error al duplicar base");
+
+    const newIngs = r.recipe_ingredients.map(ri => ({
+        recipe_id: newRec.id,
+        ingredient_id: ri.ingredient_id,
+        cantidad_o_porcentaje: ri.cantidad_o_porcentaje
+    }));
+
+    await supabase.from('recipe_ingredients').insert(newIngs);
+    alert("Receta duplicada con éxito");
+    renderRecipesList();
+};
 
 window.editRecipe = async (id) => {
     const { data: r } = await supabase.from('recipes').select('*, recipe_ingredients(*, ingredients(*))').eq('id', id).single();
-    
     editingRecipeId = id;
     document.getElementById('form-title').innerText = "Editando: " + r.name;
     document.getElementById('r-name').value = r.name;
     document.getElementById('r-tipo').value = r.tipo_receta;
     document.getElementById('r-pasos').value = r.pasos_preparacion || "";
-    document.getElementById('r-peso-final').value = r.peso_final_esperado;
-    
+    document.getElementById('r-peso-final').value = r.peso_final_esperado || "";
     document.getElementById('section-estandar').style.display = r.tipo_receta === 'estandar' ? 'block' : 'none';
     document.getElementById('btn-cancel-edit').style.display = "block";
     
@@ -250,7 +309,6 @@ window.editRecipe = async (id) => {
         costo_base_usd_unidad_minima: ri.ingredients.costo_base_usd_unidad_minima,
         valor: ri.cantidad_o_porcentaje
     }));
-    
     renderTable();
 };
 
@@ -272,50 +330,49 @@ function resetForm() {
     document.getElementById('section-estandar').style.display = "none";
     renderTable();
 }
+
 window.viewRecipeDetail = async (id) => {
     const { data: r } = await supabase.from('recipes').select('*, recipe_ingredients(*, ingredients(*))').eq('id', id).single();
-    
-    // Crear el fondo oscuro del modal
     const overlay = document.createElement('div');
     overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;";
     
-    // Calcular costo para mostrarlo
     let totalCosto = 0;
-    r.recipe_ingredients.forEach(ri => {
-        totalCosto += (r.tipo_receta === 'panadera') 
+    const modal = document.createElement('div');
+    modal.style = "background:#fff; width:100%; max-width:600px; max-height:90vh; border-radius:15px; overflow-y:auto; padding:30px; position:relative;";
+
+    const ingHtml = r.recipe_ingredients.map(ri => {
+        const itemCost = (r.tipo_receta === 'panadera') 
             ? (ri.cantidad_o_porcentaje * 10 * ri.ingredients.costo_base_usd_unidad_minima)
             : (ri.cantidad_o_porcentaje * ri.ingredients.costo_base_usd_unidad_minima);
-    });
+        totalCosto += itemCost;
+        return `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:0.9rem;">
+                <span>${ri.ingredients.name} (${ri.cantidad_o_porcentaje}${r.tipo_receta === 'panadera' ? '%' : 'g'})</span>
+                <span style="font-weight:bold; color:#10b981;">$${itemCost.toFixed(3)}</span>
+            </div>
+        `;
+    }).join('');
 
-    const modal = document.createElement('div');
-    modal.style = "background:#fff; width:100%; max-width:600px; max-height:90vh; border-radius:15px; overflow-y:auto; padding:30px; position:relative; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);";
-    
     modal.innerHTML = `
         <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:20px; right:20px; border:none; background:none; font-size:1.5rem; cursor:pointer;">✕</button>
-        <h2 style="margin-top:0; color:#0f172a;">${r.name}</h2>
-        <span style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">${r.tipo_receta}</span>
+        <h2 style="margin:0;">${r.name}</h2>
+        <p style="color:#64748b; font-size:0.8rem; margin-bottom:20px;">DESGLOSE TÉCNICO DE COSTOS</p>
         
-        <div style="margin-top:25px; display:grid; grid-template-columns:1fr 1fr; gap:20px; border-bottom:1px solid #f1f5f9; padding-bottom:20px;">
-            <div>
-                <h4 style="margin-bottom:10px; color:#64748b;">Ingredientes</h4>
-                <ul style="padding-left:15px; font-size:0.9rem; margin:0;">
-                    ${r.recipe_ingredients.map(ri => `<li>${ri.ingredients.name}: <strong>${ri.cantidad_o_porcentaje}${r.tipo_receta === 'panadera' ? '%' : 'g'}</strong></li>`).join('')}
-                </ul>
-            </div>
-            <div style="background:#f8fafc; padding:15px; border-radius:10px; text-align:center;">
-                <span style="font-size:0.8rem; color:#64748b;">Costo Ref.</span>
+        <div style="margin-bottom:25px;">
+            ${ingHtml}
+            <div style="margin-top:15px; background:#f8fafc; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold; color:#64748b;">COSTO TOTAL ESTIMADO</span>
                 <div style="font-size:1.5rem; font-weight:bold; color:#10b981;">$${totalCosto.toFixed(2)}</div>
             </div>
         </div>
 
-        <div style="margin-top:20px;">
-            <h4 style="color:#0f172a; margin-bottom:10px;">Procedimiento:</h4>
-            <div style="white-space:pre-wrap; line-height:1.6; color:#334155; font-size:0.95rem; background:#fffbeb; padding:15px; border-left:4px solid #f59e0b; border-radius:4px;">
-                ${r.pasos_preparacion || "<i>No hay instrucciones registradas para esta receta.</i>"}
+        <div>
+            <h4 style="margin-bottom:10px;">Procedimiento:</h4>
+            <div style="white-space:pre-wrap; line-height:1.6; color:#334155; font-size:0.9rem; background:#fffbeb; padding:15px; border-radius:8px;">
+                ${r.pasos_preparacion || "Sin instrucciones."}
             </div>
         </div>
     `;
-
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 };
