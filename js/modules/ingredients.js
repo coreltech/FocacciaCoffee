@@ -128,6 +128,7 @@ function setupEvents(rates) {
         const cant = parseFloat(document.getElementById('i-cantidad').value) || 1;
         const moneda = document.getElementById('i-moneda').value;
         const unit = iUnitFact.value;
+        const cat = iCat.value;
         
         let costoUSD = monto;
         if (moneda === 'VES') costoUSD = monto / rates.tasa_usd_ves;
@@ -135,8 +136,22 @@ function setupEvents(rates) {
         
         const costoBaseMin = (unit === 'kg' || unit === 'l') ? (costoUSD / (cant * 1000)) : (costoUSD / cant);
         
-        const isUnid = (iCat.value === 'conteo' || iUnitFact.value === 'unid');
-        document.getElementById('res-val').innerText = isUnid ? `$${costoBaseMin.toFixed(4)} / Unid` : `$${(costoBaseMin * 1000).toFixed(4)} / Kg-L`;
+        // --- Lógica de etiquetas personalizada ---
+        let label = "";
+        let precioMostrado = 0;
+
+        if (cat === 'masa') {
+            label = "/ kg";
+            precioMostrado = costoBaseMin * 1000;
+        } else if (cat === 'volumen') {
+            label = "/ Litro";
+            precioMostrado = costoBaseMin * 1000;
+        } else {
+            label = "/ Unid";
+            precioMostrado = costoBaseMin;
+        }
+
+        document.getElementById('res-val').innerText = `$${precioMostrado.toFixed(4)} ${label}`;
         
         return costoBaseMin;
     };
@@ -198,8 +213,20 @@ async function renderList() {
                 <th style="text-align:right;">ACCIONES</th>
             </tr>
             ${data.map(i => {
-                const isUnid = (i.categoria === 'conteo' || i.unidad_compra === 'unid');
-                const refPrice = isUnid ? i.costo_base_usd_unidad_minima : i.costo_base_usd_unidad_minima * 1000;
+                let label = "";
+                let refPrice = 0;
+
+                if (i.categoria === 'masa') {
+                    label = "kg";
+                    refPrice = i.costo_base_usd_unidad_minima * 1000;
+                } else if (i.categoria === 'volumen') {
+                    label = "Litro";
+                    refPrice = i.costo_base_usd_unidad_minima * 1000;
+                } else {
+                    label = "Unid";
+                    refPrice = i.costo_base_usd_unidad_minima;
+                }
+
                 return `
                 <tr style="border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
                     <td style="padding:10px;">
@@ -207,7 +234,7 @@ async function renderList() {
                         <small style="color:#64748b;">${i.brand || 'Sin marca'}</small>
                     </td>
                     <td><span style="font-size:0.7rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${i.tipo || 'materia_prima'}</span></td>
-                    <td style="font-weight:bold;">$${refPrice.toFixed(3)}</td>
+                    <td style="font-weight:bold;">$${refPrice.toFixed(3)} <small style="color:#94a3b8; font-weight:normal;">/${label}</small></td>
                     <td style="text-align:right;">
                         <button onclick="editIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1rem; margin-right:10px;">✏️</button>
                         <button onclick="deleteIng('${i.id}')" style="border:none; background:none; cursor:pointer; font-size:1rem;">🗑️</button>
@@ -225,14 +252,11 @@ window.editIng = async (id) => {
         document.getElementById('form-title').innerText = "📝 Editando Insumo";
         document.getElementById('btn-cancel').style.display = "block";
         
-        // Llenar campos
         document.getElementById('i-name').value = data.name;
         document.getElementById('i-brand').value = data.brand || '';
         document.getElementById('i-type').value = data.tipo || 'materia_prima';
         document.getElementById('i-cat').value = data.categoria;
         
-        // Forzar actualización de unidades antes de asignar el valor
-        const iCat = document.getElementById('i-cat');
         const iUnitFact = document.getElementById('i-unit-fact');
         if (data.categoria === 'masa') iUnitFact.innerHTML = '<option value="kg">Kilogramos (kg)</option><option value="g">Gramos (g)</option>';
         else if (data.categoria === 'volumen') iUnitFact.innerHTML = '<option value="l">Litros (L)</option><option value="ml">Mililitros (ml)</option>';
@@ -243,7 +267,6 @@ window.editIng = async (id) => {
         document.getElementById('i-costo-total').value = data.costo_compra_total;
         document.getElementById('i-cantidad').value = data.cantidad_compra;
         
-        // Scroll al formulario
         document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
     }
 };
