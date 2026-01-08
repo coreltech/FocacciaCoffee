@@ -3,7 +3,23 @@ import { supabase } from '../supabase.js';
 export async function loadDashboard() {
     const container = document.getElementById('app-content');
     
-    // 1. Carga de datos: Recetas, Tasas y los últimos 10 registros
+    // 1. Lógica del saludo dinámico
+    const ahora = new Date();
+    const hora = ahora.getHours();
+    let saludo = "¡Hola"; // Saludo por defecto
+
+    if (hora >= 5 && hora < 12) {
+        saludo = "¡Buenos días";
+    } else if (hora >= 12 && hora < 19) {
+        saludo = "¡Buenas tardes";
+    } else {
+        saludo = "¡Buenas noches";
+    }
+
+    // Aquí definimos el nombre. En el futuro, esto vendrá del login del usuario.
+    const nombreUsuario = "Agustín"; 
+
+    // 2. Carga de datos (Recetas, Tasas y Logs)
     const [recipeCountRes, logsRes, ratesRes] = await Promise.all([
         supabase.from('recipes').select('*', { count: 'exact', head: true }),
         supabase.from('production_logs').select('*').order('fecha_produccion', { ascending: false }).limit(10),
@@ -12,7 +28,7 @@ export async function loadDashboard() {
 
     const recipeCount = recipeCountRes.count || 0;
     const historyLogs = logsRes.data || []; 
-    const lastLog = historyLogs[0]; // El primero es el más reciente
+    const lastLog = historyLogs[0];
     const rates = ratesRes.data || { tasa_usd_ves: 0, tasa_eur_ves: 0 };
 
     window.navTo = (tabName) => {
@@ -32,6 +48,7 @@ export async function loadDashboard() {
                 font-size: 150px; opacity: 0.05; transform: rotate(-15deg);
             }
             .welcome-text h1 { font-size: 2.2rem; margin: 0; font-weight: 800; }
+            .welcome-text p { opacity: 0.8; font-size: 1.1rem; margin-top: 5px; }
             
             .quick-access {
                 display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -44,14 +61,8 @@ export async function loadDashboard() {
             }
             .access-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
             
-            /* Layout de información */
             .info-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; margin-bottom: 20px; }
-            
-            .chart-full { 
-                background: white; padding: 25px; border-radius: 24px; 
-                border: 1px solid #e2e8f0; margin-top: 10px;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            }
+            .chart-full { background: white; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
             @media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }
         </style>
@@ -59,7 +70,7 @@ export async function loadDashboard() {
         <div class="main-container">
             <div class="hero-section">
                 <div class="welcome-text">
-                    <h1>¡Hola, Maestro! 👋</h1>
+                    <h1>${saludo}, ${nombreUsuario}! 👋</h1>
                     <p>Panel de control y rendimiento.</p>
                 </div>
                 <div class="quick-access">
@@ -103,9 +114,7 @@ export async function loadDashboard() {
             </div>
 
             <div class="chart-full">
-                <h3 style="margin:0 0 20px 0; font-size: 1.1rem; color: #1e293b; display:flex; align-items:center; gap:10px;">
-                    📈 Tendencia de Inversión <small style="color:#94a3b8; font-weight:normal;">(Últimas tandas)</small>
-                </h3>
+                <h3 style="margin:0 0 20px 0; font-size: 1.1rem; color: #1e293b;">📈 Tendencia de Inversión</h3>
                 <div style="height: 250px; width: 100%;">
                     <canvas id="productionChart"></canvas>
                 </div>
@@ -113,9 +122,9 @@ export async function loadDashboard() {
         </div>
     `;
 
-    // Inicializar gráfico con los datos (revertidos para orden cronológico)
     initChart([...historyLogs].reverse());
 }
+
 
 function initChart(logs) {
     const canvas = document.getElementById('productionChart');
