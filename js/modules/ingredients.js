@@ -7,13 +7,16 @@ export async function loadIngredients() {
     const rates = await getGlobalRates();
     const container = document.getElementById('app-content');
     
-    // Inyectamos el CSS específico para Ingredientes
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         .ing-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; }
         .ing-tabs { display: none; margin-bottom: 20px; gap: 10px; }
         .ing-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
+        /* Control de visibilidad de listas */
+        .mobile-list { display: none; }
+        .desktop-table { display: block; }
+
         @media (max-width: 850px) {
             .ing-layout { grid-template-columns: 1fr; }
             .ing-tabs { display: flex; }
@@ -22,7 +25,10 @@ export async function loadIngredients() {
             .ing-header { flex-direction: column; gap: 15px; text-align: center; }
             .rates-container { width: 100%; justify-content: center; }
             .ing-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+            
+            /* En móvil, ocultamos tabla y mostramos tarjetas */
             .desktop-table { display: none; }
+            .mobile-list { display: block; }
         }
     `;
     document.head.appendChild(styleTag);
@@ -128,7 +134,6 @@ export async function loadIngredients() {
         </div>
     `;
 
-    // Función de cambio de pestaña
     window.switchIngTab = (target) => {
         const pForm = document.getElementById('panel-ing-form');
         const pList = document.getElementById('panel-ing-list');
@@ -227,8 +232,7 @@ async function renderList() {
     const container = document.getElementById('ing-list-container');
     if (!data) return;
 
-    // Vista de escritorio (Tabla)
-    let html = `
+    let htmlTable = `
         <div class="desktop-table">
             <table style="width:100%; border-collapse:collapse;">
                 <tr style="text-align:left; border-bottom:2px solid #f1f5f9; color:#64748b; font-size:0.75rem;">
@@ -252,15 +256,13 @@ async function renderList() {
                     </tr>`;
                 }).join('')}
             </table>
-        </div>
-    `;
+        </div>`;
 
-    // Vista móvil (Tarjetas)
-    html += `<div class="mobile-only">`;
+    let htmlCards = `<div class="mobile-list">`;
     data.forEach(i => {
         let label = i.categoria === 'masa' ? 'kg' : (i.categoria === 'volumen' ? 'Litro' : 'Unid');
         let refPrice = (i.categoria === 'masa' || i.categoria === 'volumen') ? i.costo_base_usd_unidad_minima * 1000 : i.costo_base_usd_unidad_minima;
-        html += `
+        htmlCards += `
             <div class="ing-card">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
@@ -276,12 +278,11 @@ async function renderList() {
                     <button onclick="editIng('${i.id}')" style="flex:1; padding:10px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer;">✏️ Editar</button>
                     <button onclick="deleteIng('${i.id}')" style="flex:1; padding:10px; border-radius:8px; border:1px solid #fee2e2; background:#fff1f2; color:#b91c1c; cursor:pointer;">🗑️ Borrar</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
-    html += `</div>`;
+    htmlCards += `</div>`;
     
-    container.innerHTML = html;
+    container.innerHTML = htmlTable + htmlCards;
 }
 
 window.editIng = async (id) => {

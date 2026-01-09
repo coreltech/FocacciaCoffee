@@ -5,20 +5,31 @@ export async function loadAdmin() {
     const rates = await getGlobalRates();
     const container = document.getElementById('app-content');
 
-    // Inyectamos el CSS para la adaptabilidad de Administración
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         .admin-tabs { display: none; margin-bottom: 20px; gap: 10px; }
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
+        /* Estilo para los botones de acción */
+        .btn-admin-save { 
+            width: 100%; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: opacity 0.2s;
+        }
+        .btn-admin-save:hover { opacity: 0.9; }
+
         @media (max-width: 850px) {
             .admin-layout { grid-template-columns: 1fr; }
             .admin-tabs { display: flex; }
             .admin-panel { display: none; }
             .admin-panel.active { display: block; }
             .admin-header { flex-direction: column; text-align: center; gap: 15px; }
-            .list-container { max-height: 300px; overflow-y: auto; }
+            .list-container { max-height: 400px; overflow-y: auto; }
         }
     `;
     document.head.appendChild(styleTag);
@@ -77,7 +88,7 @@ export async function loadAdmin() {
                             </select>
                         </div>
                     </div>
-                    <button id="btn-save-asset" class="btn-primary" style="width:100%; background:#0f172a; margin-top:15px; height:45px;">💾 Registrar Equipo</button>
+                    <button id="btn-save-asset" class="btn-admin-save" style="background:#0f172a; margin-top:15px; height:45px;">💾 Registrar Equipo</button>
                     
                     <div style="margin-top:25px;">
                         <h4 style="border-bottom:1px solid #f1f5f9; padding-bottom:5px;">Equipos Registrados</h4>
@@ -114,7 +125,7 @@ export async function loadAdmin() {
                             </select>
                         </div>
                     </div>
-                    <button id="btn-save-expense" class="btn-primary" style="width:100%; background:#0284c7; margin-top:15px; height:45px;">💸 Registrar Gasto</button>
+                    <button id="btn-save-expense" class="btn-admin-save" style="background:#0284c7; margin-top:15px; height:45px;">💸 Registrar Gasto</button>
                     
                     <div style="margin-top:25px;">
                         <h4 style="border-bottom:1px solid #f1f5f9; padding-bottom:5px;">Últimos Gastos (USD)</h4>
@@ -125,7 +136,6 @@ export async function loadAdmin() {
         </div>
     `;
 
-    // Función para cambiar pestañas en móvil
     window.switchAdminTab = (target) => {
         const pAssets = document.getElementById('panel-assets');
         const pExpenses = document.getElementById('panel-expenses');
@@ -173,6 +183,8 @@ function setupAdminEvents(rates) {
             alert("✅ Equipo registrado.");
             document.getElementById('a-name').value = '';
             document.getElementById('a-cost').value = '';
+            document.getElementById('a-brand').value = '';
+            document.getElementById('a-model').value = '';
             renderAssets();
         }
     };

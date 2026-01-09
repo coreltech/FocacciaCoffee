@@ -17,7 +17,7 @@ export async function loadDashboard() {
     }
 
     // Aquí definimos el nombre. En el futuro, esto vendrá del login del usuario.
-    const nombreUsuario = "Agustín"; 
+    const nombreUsuario = "Agustin"; 
 
     // 2. Carga de datos (Recetas, Tasas y Logs)
     const [recipeCountRes, logsRes, ratesRes] = await Promise.all([
