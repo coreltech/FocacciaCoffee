@@ -1,22 +1,37 @@
 import { supabase } from '../supabase.js';
 
+// Cache local para evitar llamadas excesivas a la red
+let cachedRates = null;
+
 export async function getGlobalRates() {
-    const { data } = await supabase.from('global_config').select('*').eq('id', 'current_rates').single();
-    return data || { tasa_usd_ves: 1, tasa_eur_ves: 1 };
+    // Si ya pedimos las tasas en esta sesión, las devolvemos rápido
+    if (cachedRates) return cachedRates;
+    
+    const { data, error } = await supabase
+        .from('global_config')
+        .select('*')
+        .eq('id', 'current_rates')
+        .single();
+    
+    if (error) {
+        console.error("Error obteniendo tasas:", error);
+        return { tasa_usd_ves: 1, tasa_eur_ves: 1 };
+    }
+    
+    cachedRates = data;
+    return data;
 }
 
 export async function loadSettings() {
     const rates = await getGlobalRates();
     const container = document.getElementById('app-content');
 
-    // Inyectamos CSS para manejar el grid responsivo
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) {
             .settings-grid { grid-template-columns: 1fr; }
             .history-table-container { overflow-x: auto; }
-            h1 { font-size: 1.5rem; }
         }
     `;
     document.head.appendChild(styleTag);
@@ -25,7 +40,7 @@ export async function loadSettings() {
         <div class="main-container" style="max-width: 900px; margin: 0 auto; padding: 10px;">
             <header style="margin-bottom: 25px; text-align: center;">
                 <h1 style="margin-bottom:5px;">⚙️ Centro de Control</h1>
-                <p style="color: #64748b; margin:0;">Gestión de divisas e historial</p>
+                <p style="color: #64748b; margin:0;">Gestión de divisas e integración web</p>
             </header>
 
             <div class="settings-grid">
@@ -41,7 +56,7 @@ export async function loadSettings() {
                             <input type="number" id="set-eur" step="0.01" class="input-field" value="${rates.tasa_eur_ves}" style="font-size: 1.3rem; padding: 12px;">
                         </div>
                         <button id="btn-save-settings" class="btn-primary" style="width: 100%; padding: 15px; font-weight: bold; font-size: 1rem; cursor:pointer;">
-                            💾 Actualizar y Registrar
+                            💾 Actualizar y Sincronizar Web
                         </button>
                     </div>
                 </div>
@@ -77,8 +92,6 @@ export async function loadSettings() {
         }
 
         const now = new Date().toISOString();
-
-        // 1. Actualizar Tasa Global
         const { error: upsertError } = await supabase.from('global_config').upsert({ 
             id: 'current_rates', 
             tasa_usd_ves: u, 
@@ -91,10 +104,10 @@ export async function loadSettings() {
             return;
         }
 
-        // 2. Guardar en Historial
         await supabase.from('rates_history').insert([{ tasa_usd: u, tasa_eur: e }]);
-
-        alert("✅ Tasas actualizadas correctamente.");
+        
+        cachedRates = null; // Limpiamos cache para forzar recarga
+        alert("✅ Tasas sincronizadas. Los costos se han recalculado.");
         loadSettings(); 
     };
 }

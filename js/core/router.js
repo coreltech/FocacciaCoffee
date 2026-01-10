@@ -6,6 +6,7 @@ const routes = {
     suministros:    () => import('../modules/ingredients.js'),
     recetas:        () => import('../modules/recipes.js'),
     produccion:     () => import('../modules/production.js'), 
+    catalogo:       () => import('../modules/catalog.js'), // Nueva ruta añadida
     ventas:         () => import('../modules/sales.js'),
     administracion: () => import('../modules/admin.js'),
     plan:           () => import('../modules/plan.js'),
@@ -40,6 +41,7 @@ export async function initRouter() {
                 if (tab === 'suministros')    await module.loadIngredients(); 
                 if (tab === 'recetas')        await module.loadRecipes();
                 if (tab === 'produccion')     await module.loadProduction();
+                if (tab === 'catalogo')       await module.loadCatalog(); // Llamada al nuevo módulo
                 if (tab === 'ventas')         await module.loadSales();
                 if (tab === 'administracion') await module.loadAdmin();
                 if (tab === 'plan')           await module.loadPlan();
