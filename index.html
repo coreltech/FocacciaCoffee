@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focaccia & Coffee ERP</title>
+  <link rel="stylesheet" href="src/ui/theme.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+  <header class="nav-bar">
+
+    <button class="nav-btn" data-tab="dashboard">🏠 Inicio</button>
+    <button class="nav-btn" data-tab="tasas">🪙 Tasas</button>
+
+    <div class="nav-sep"></div>
+    <button class="nav-btn" data-tab="suministros">📦 Suministros</button>
+    <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
+    <button class="nav-btn" data-tab="produccion">🥣 Producción</button>
+    <button class="nav-btn" data-tab="compras">🛒 Compras</button>
+    <button class="nav-btn" data-tab="mermas" style="color:var(--error); border-color:var(--error);">🗑️
+      Perdidas</button>
+
+    <button class="nav-btn" data-tab="catalogo">📋 Catálogo</button>
+    <button class="nav-btn" data-tab="config_productos">⚙️ Config</button>
+    <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
+
+    <div class="nav-sep"></div>
+    <button class="nav-btn" data-tab="administracion">💼 Admin</button>
+    <button class="nav-btn" data-tab="plan">🚀 Estrategia</button>
+    <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
+    <button class="nav-btn" data-tab="biblioteca">📚 Biblioteca</button>
+
+  </header>
+
+  <main id="app-content" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <div class="stat-card" style="text-align:center; padding: 50px;">
+      <h2 style="color: #64748b;">🍞 Preparando la masa...</h2>
+      <p style="color: #94a3b8;">Iniciando sistema de inteligencia artesanal</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initRouter } from './src/core/router.js';
+    import { StateManager } from './src/core/state.js';
+
+    window.addEventListener('load', async () => {
+      try {
+        // Pre-carga de datos críticos (Tasas)
+        await StateManager.init();
+
+        // Carga de la App
+        await initRouter();
+      } catch (err) {
+        console.error("Error de inicio:", err);
+        document.getElementById('app-content').innerHTML = `
+          <div class="stat-card" style="border:2px solid #ef4444; background: #fef2f2;">
+            <h3 style="color: #b91c1c;">❌ Error de Sistema</h3>
+            <p>No se pudo conectar con los módulos internos.</p>
+            <pre style="font-size: 0.8rem; background: #fee2e2; padding: 10px; border-radius: 8px;">${err.message}</pre>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+
+</html>

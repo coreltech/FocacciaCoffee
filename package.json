@@ -1,0 +1,20 @@
+{
+  "name": "focaccia-plus-and-coffee",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "Agustín Lugo",
+  "license": "ISC",
+  "description": "Sistema ERP para Focaccia Plus and Coffee",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

@@ -1,0 +1,401 @@
+/* ============================================
+   🌿 LOGIN - ESTILO GOURMET MEDITERRÁNEO
+   ============================================ */
+
+/* Fuentes */
+:root {
+  /* Paleta Mediterránea */
+  --olive-dark: #3d4f2f;
+  --olive-medium: #5a6f47;
+  --olive-light: #8b9d7c;
+  --terracotta: #c86f3d;
+  --terracotta-light: #e89b6f;
+  --sand: #f4e8d8;
+  --cream: #faf7f2;
+  --earth-brown: #6b4423;
+  --gold: #d4a574;
+  
+  /* Sombras y efectos */
+  --shadow-soft: 0 8px 32px rgba(61, 79, 47, 0.12);
+  --shadow-medium: 0 12px 48px rgba(61, 79, 47, 0.18);
+  --shadow-strong: 0 16px 64px rgba(61, 79, 47, 0.24);
+  
+  /* Tipografía */
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Lato', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: linear-gradient(135deg, 
+    var(--cream) 0%, 
+    var(--sand) 50%, 
+    #e8dcc8 100%
+  );
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Patrón de fondo decorativo */
+.background-pattern {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+  background-image: 
+    radial-gradient(circle at 20% 30%, var(--olive-dark) 1px, transparent 1px),
+    radial-gradient(circle at 80% 70%, var(--terracotta) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Contenedor principal */
+.login-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  padding: 2rem;
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tarjeta de Login */
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-strong);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--olive-medium), 
+    var(--terracotta), 
+    var(--gold)
+  );
+}
+
+/* Header con logo */
+.login-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.logo-container {
+  animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(200, 111, 61, 0.2));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--olive-dark);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.brand-tagline {
+  font-size: 0.9rem;
+  color: var(--olive-medium);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* Formulario */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--earth-brown);
+  letter-spacing: 0.3px;
+}
+
+.label-icon {
+  font-size: 1.1rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--olive-dark);
+  background: var(--cream);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: var(--olive-light);
+}
+
+.form-input:focus {
+  background: white;
+  border-color: var(--olive-medium);
+  box-shadow: 0 0 0 4px rgba(90, 111, 71, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Mensaje de error */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 0.9rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.error-message.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.error-icon {
+  font-size: 1.2rem;
+}
+
+/* Botón de Login */
+.login-button {
+  width: 100%;
+  padding: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  color: white;
+  background: linear-gradient(135deg, var(--olive-dark), var(--olive-medium));
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(61, 79, 47, 0.3);
+  margin-top: 0.5rem;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(61, 79, 47, 0.4);
+  background: linear-gradient(135deg, var(--olive-medium), var(--olive-dark));
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-button.loading .button-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.login-button.success {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.button-icon {
+  font-size: 1.3rem;
+  transition: transform 0.3s ease;
+}
+
+.login-button:hover .button-icon {
+  transform: translateX(4px);
+}
+
+/* Footer */
+.login-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(90, 111, 71, 0.15);
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 0.85rem;
+  color: var(--olive-light);
+  font-weight: 300;
+}
+
+/* Decoración lateral */
+.side-decoration {
+  position: relative;
+  width: 200px;
+  height: 400px;
+  display: none;
+}
+
+.decoration-circle {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, 
+    rgba(90, 111, 71, 0.1), 
+    rgba(200, 111, 61, 0.1)
+  );
+  backdrop-filter: blur(40px);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.decoration-leaf,
+.decoration-olive {
+  position: absolute;
+  font-size: 3rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.decoration-leaf {
+  top: 20%;
+  left: 30%;
+  animation-delay: 0.5s;
+}
+
+.decoration-olive {
+  bottom: 30%;
+  right: 20%;
+  animation-delay: 1s;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .side-decoration {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .brand-name {
+    font-size: 1.6rem;
+  }
+  
+  .logo-icon {
+    font-size: 3rem;
+  }
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focaccia & Coffee - Iniciar Sesión</title>
+    <link rel="stylesheet" href="src/ui/login.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Fondo decorativo con olivas -->
+    <div class="background-pattern"></div>
+
+    <div class="login-container">
+
+        <!-- Tarjeta de Login -->
+        <div class="login-card">
+
+            <!-- Header con logo -->
+            <div class="login-header">
+                <div class="logo-container">
+                    <div class="logo-icon">🍞</div>
+                    <h1 class="brand-name">Focaccia & Coffee</h1>
+                    <p class="brand-tagline">Sistema de Gestión Artesanal</p>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <form id="loginForm" class="login-form">
+
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <span class="label-icon">📧</span>
+                        Correo Electrónico
+                    </label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="tu@email.com" required
+                        autocomplete="email" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <span class="label-icon">🔒</span>
+                        Contraseña
+                    </label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••"
+                        required autocomplete="current-password" />
+                </div>
+
+                <!-- Mensaje de error -->
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <span class="error-icon">⚠️</span>
+                    <span id="errorText"></span>
+                </div>
+
+                <!-- Botón de submit -->
+                <button type="submit" class="login-button" id="loginButton">
+                    <span class="button-text">Iniciar Sesión</span>
+                    <span class="button-icon">→</span>
+                </button>
+
+            </form>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p class="footer-text">
+                    🌿 Artesanía Mediterránea desde 2024
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Decoración lateral -->
+        <div class="side-decoration">
+            <div class="decoration-circle"></div>
+            <div class="decoration-leaf">🌿</div>
+            <div class="decoration-olive">🫒</div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { login } from './src/core/supabase.js';
+
+        const form = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const loginButton = document.getElementById('loginButton');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Ocultar mensaje de error previo
+            errorMessage.style.display = 'none';
+
+            // Deshabilitar botón y mostrar loading
+            loginButton.disabled = true;
+            loginButton.classList.add('loading');
+            loginButton.querySelector('.button-text').textContent = 'Verificando...';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const result = await login(email, password);
+
+                if (result.success) {
+                    // Login exitoso - redirigir al dashboard
+                    loginButton.querySelector('.button-text').textContent = '✓ Acceso concedido';
+                    loginButton.classList.add('success');
+
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 800);
+                } else {
+                    // Error de login
+                    showError(result.error || 'Credenciales incorrectas');
+                    resetButton();
+                }
+            } catch (err) {
+                console.error('Error en login:', err);
+                showError('Error de conexión. Intenta nuevamente.');
+                resetButton();
+            }
+        });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'flex';
+            errorMessage.classList.add('shake');
+            setTimeout(() => {
+                errorMessage.classList.remove('shake');
+            }, 500);
+        }
+
+        function resetButton() {
+            loginButton.disabled = false;
+            loginButton.classList.remove('loading');
+            loginButton.querySelector('.button-text').textContent = 'Iniciar Sesión';
+        }
+    </script>
+
+</body>
+
+</html>
