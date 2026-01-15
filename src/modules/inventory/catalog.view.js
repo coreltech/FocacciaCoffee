@@ -33,6 +33,12 @@ export const CatalogView = {
                             <input type="text" id="c-name" class="input-field" placeholder="Ej: Focaccia de Romero" required>
                         </div>
                         
+                        <div class="input-group">
+                            <label>Descripción del Producto</label>
+                            <textarea id="c-description" class="input-field" rows="3" placeholder="Describe el producto, sus ingredientes destacados, sabor, etc..." style="resize: vertical; font-family: inherit;"></textarea>
+                            <small style="color: #64748b; font-size: 0.75rem;">Opcional - Se mostrará en el catálogo web</small>
+                        </div>
+                        
                         <!-- NEW: COST CALCULATOR SECTION -->
                         <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">

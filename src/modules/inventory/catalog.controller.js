@@ -53,6 +53,7 @@ export async function loadCatalog() {
 function openEdit(item) {
     document.getElementById('c-id').value = item.id;
     document.getElementById('c-name').value = item.product_name;
+    document.getElementById('c-description').value = item.description || '';
     document.getElementById('c-price').value = item.precio_venta_final;
     document.getElementById('c-category').value = item.categoria || 'Focaccias';
     document.getElementById('c-stock').value = item.stock_disponible || 0;
@@ -238,6 +239,7 @@ function bindEvents(rates) {
 
             const productData = {
                 product_name: nameInput.value,
+                description: document.getElementById('c-description').value.trim() || null,
                 precio_venta_final: parseFloat(priceInput.value),
                 costo_unitario_referencia: currentCost,
                 categoria: categorySelect.value,
