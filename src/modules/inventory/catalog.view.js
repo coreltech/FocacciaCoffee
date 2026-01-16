@@ -126,6 +126,85 @@ export const CatalogView = {
                             </select>
                         </div>
 
+                        <div class="input-group" id="icon-selector-group">
+                            <label>Icono (Emoji) 
+                                <small style="color:#64748b; font-weight:normal;">- Opcional para Cafetería/Bebidas</small>
+                            </label>
+                            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                                <input type="text" id="c-icon" class="input-field" placeholder="Selecciona o escribe emoji..." maxlength="2" style="font-size:2rem; text-align:center; width:100px; padding:10px;">
+                                <button type="button" id="clear-icon-btn" style="padding:8px 12px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.8rem;">✕ Limpiar</button>
+                            </div>
+                            
+                            <div id="icon-picker" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:none;">
+                                <div style="margin-bottom:10px;">
+                                    <strong style="font-size:0.85rem; color:#475569;">☕ Café y Calientes</strong>
+                                    <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+                                        <button type="button" class="icon-option" data-icon="☕">☕</button>
+                                        <button type="button" class="icon-option" data-icon="🍵">🍵</button>
+                                        <button type="button" class="icon-option" data-icon="🫖">🫖</button>
+                                        <button type="button" class="icon-option" data-icon="🧋">🧋</button>
+                                        <button type="button" class="icon-option" data-icon="🥤">🥤</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom:10px;">
+                                    <strong style="font-size:0.85rem; color:#475569;">🥤 Refrescos y Sodas</strong>
+                                    <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+                                        <button type="button" class="icon-option" data-icon="🥤">🥤</button>
+                                        <button type="button" class="icon-option" data-icon="🧃">🧃</button>
+                                        <button type="button" class="icon-option" data-icon="🧊">🧊</button>
+                                        <button type="button" class="icon-option" data-icon="🥛">🥛</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom:10px;">
+                                    <strong style="font-size:0.85rem; color:#475569;">💧 Agua y Naturales</strong>
+                                    <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+                                        <button type="button" class="icon-option" data-icon="💧">💧</button>
+                                        <button type="button" class="icon-option" data-icon="🚰">🚰</button>
+                                        <button type="button" class="icon-option" data-icon="🥥">🥥</button>
+                                        <button type="button" class="icon-option" data-icon="🍋">🍋</button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <strong style="font-size:0.85rem; color:#475569;">🍺 Otros</strong>
+                                    <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+                                        <button type="button" class="icon-option" data-icon="🍺">🍺</button>
+                                        <button type="button" class="icon-option" data-icon="🍷">🍷</button>
+                                        <button type="button" class="icon-option" data-icon="🍹">🍹</button>
+                                        <button type="button" class="icon-option" data-icon="🧉">🧉</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <small style="color: #64748b; font-size: 0.75rem; display:block; margin-top:8px;">
+                                💡 Haz clic en un emoji o escribe/pega uno personalizado. Solo para Cafetería/Bebidas.
+                            </small>
+                        </div>
+                        
+                        <style>
+                            .icon-option {
+                                font-size: 1.8rem;
+                                padding: 8px 12px;
+                                background: white;
+                                border: 2px solid #e2e8f0;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            }
+                            .icon-option:hover {
+                                background: #eff6ff;
+                                border-color: #3b82f6;
+                                transform: scale(1.1);
+                            }
+                            .icon-option.selected {
+                                background: #dbeafe;
+                                border-color: #2563eb;
+                                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+                            }
+                        </style>
+
                         <div class="input-group">
                             <label>Foto del Producto</label>
                             <input type="file" id="c-image" class="input-field" accept="image/*" style="padding:8px;">

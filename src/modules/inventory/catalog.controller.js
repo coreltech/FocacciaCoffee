@@ -56,6 +56,7 @@ function openEdit(item) {
     document.getElementById('c-description').value = item.description || '';
     document.getElementById('c-price').value = item.precio_venta_final;
     document.getElementById('c-category').value = item.categoria || 'Focaccias';
+    document.getElementById('c-icon').value = item.icon || '';
     document.getElementById('c-stock').value = item.stock_disponible || 0;
     document.getElementById('c-manual-cost').value = item.costo_unitario_referencia || 0;
 
@@ -75,7 +76,10 @@ function handleCategoryChange() {
     const category = document.getElementById('c-category').value;
     const stockInput = document.getElementById('c-stock');
     const hinte = document.getElementById('stock-hint');
+    const iconPicker = document.getElementById('icon-picker');
+    const iconSelectorGroup = document.getElementById('icon-selector-group');
 
+    // Stock management
     if (category === 'Focaccias') {
         stockInput.disabled = true;
         stockInput.style.backgroundColor = "#f1f5f9";
@@ -84,6 +88,17 @@ function handleCategoryChange() {
         stockInput.disabled = false;
         stockInput.style.backgroundColor = "#fff";
         hinte.innerText = "✅ Stock manual habilitado para esta categoría.";
+    }
+
+    // Icon picker visibility - only show for Cafetería and Bebidas
+    if (category === 'Cafetería' || category === 'Bebidas') {
+        iconSelectorGroup.style.display = 'block';
+        if (iconPicker) iconPicker.style.display = 'block';
+    } else {
+        iconSelectorGroup.style.display = 'none';
+        if (iconPicker) iconPicker.style.display = 'none';
+        // Clear icon if switching away from beverage categories
+        document.getElementById('c-icon').value = '';
     }
 }
 
@@ -226,6 +241,34 @@ function bindEvents(rates) {
 
     categorySelect.onchange = handleCategoryChange;
 
+    // Icon Picker Events
+    const iconInput = document.getElementById('c-icon');
+    const clearIconBtn = document.getElementById('clear-icon-btn');
+    const iconOptions = document.querySelectorAll('.icon-option');
+
+    // Handle icon selection
+    iconOptions.forEach(btn => {
+        btn.onclick = () => {
+            const selectedIcon = btn.dataset.icon;
+            iconInput.value = selectedIcon;
+
+            // Visual feedback - highlight selected
+            iconOptions.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        };
+    });
+
+    // Handle clear icon
+    if (clearIconBtn) {
+        clearIconBtn.onclick = () => {
+            iconInput.value = '';
+            iconOptions.forEach(b => b.classList.remove('selected'));
+        };
+    }
+
+    // Initialize category-based visibility
+    handleCategoryChange();
+
     form.onsubmit = async (e) => {
         e.preventDefault();
         const prodId = document.getElementById('c-id').value;
@@ -243,6 +286,7 @@ function bindEvents(rates) {
                 precio_venta_final: parseFloat(priceInput.value),
                 costo_unitario_referencia: currentCost,
                 categoria: categorySelect.value,
+                icon: document.getElementById('c-icon').value.trim() || null,
                 esta_activo: true,
                 stock_disponible: parseFloat(document.getElementById('c-stock').value) || 0
             };
