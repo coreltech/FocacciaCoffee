@@ -58,20 +58,19 @@ Las migraciones SQL están en la carpeta `migrations/`. Debes ejecutarlas en ord
 
 ## 📁 Estructura del Proyecto
 
-```
 Focaccia Plus and Coffee/
 ├── src/                    # Código fuente
 │   ├── core/              # Autenticación, router, state
 │   ├── modules/           # Módulos del ERP
 │   └── ui/                # Estilos y componentes UI
 ├── migrations/            # Migraciones SQL (Supabase)
+├── documentacion/         # Documentación del sistema
 ├── index.html            # Página principal
 ├── login.html            # Página de login
 ├── package.json          # Dependencias
 ├── vite.config.js        # Configuración Vite
 ├── vercel.json           # Configuración Vercel
 ├── .gitignore            # Archivos ignorados por Git
-├── MANUAL_USUARIO.md     # Manual de usuario completo
 └── README.md             # Este archivo
 ```
 
@@ -93,9 +92,10 @@ npm run preview
 
 ## 📚 Documentación
 
-- [Manual de Usuario](./MANUAL_USUARIO.md) - Guía completa de todos los módulos
-- [Guía de Autenticación](./GUIA_SETUP_AUTH.md) - Configuración de usuarios y roles
-- [Estructura de Datos](./REPORTE_ESTRUCTURA_DATOS.md) - Esquema de base de datos
+- [Manual de Usuario](./documentacion/MANUAL_USUARIO.md) - Guía completa de todos los módulos
+- [Guía de Autenticación](./documentacion/GUIA_SETUP_AUTH.md) - Configuración de usuarios y roles
+- [Estructura de Datos](./documentacion/REPORTE_ESTRUCTURA_DATOS.md) - Esquema de base de datos
+- [Propuesta Comercial](./documentacion/PROPUESTA_COMERCIAL.md) - Resumen ejecutivo y propuesta de valor
 
 ## 🔒 Seguridad
 
