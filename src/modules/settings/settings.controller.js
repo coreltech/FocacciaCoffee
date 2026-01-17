@@ -16,8 +16,17 @@ export async function loadSettings() {
 }
 
 async function loadHistory() {
-    const history = await SettingsService.getHistory();
-    SettingsView.renderHistory(history);
+    try {
+        const history = await SettingsService.getHistory();
+        console.log('History data:', history);
+        SettingsView.renderHistory(history);
+    } catch (err) {
+        console.error('Error loading history:', err);
+        const container = document.getElementById('history-container');
+        if (container) {
+            container.innerHTML = `<p style="text-align:center; color:#dc2626; padding:20px;">❌ Error al cargar historial: ${err.message}</p>`;
+        }
+    }
 }
 
 function bindEvents() {

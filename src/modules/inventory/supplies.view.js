@@ -4,35 +4,38 @@ export const SuppliesView = {
         <div class="main-container fade-in">
             <header style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h1>📦 Módulo de Suministros</h1>
-                    <p style="color: #64748b;">Gestión profesional de insumos, conversiones y costos dinámicos.</p>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">📦 Módulo de Suministros</h1>
+                    <p style="color: #64748b; font-size: 0.95rem;">Gestión profesional de insumos, conversiones y costos dinámicos.</p>
                 </div>
-                <button id="btn-new-supply" class="btn-primary">+ Nuevo Suministro</button>
+                <button id="btn-new-supply" class="btn-primary" style="padding: 12px 20px;">+ Nuevo Suministro</button>
             </header>
 
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px;" class="supplies-grid">
                 <!-- FORMULARIO DE SUMINISTRO -->
-                <div id="supply-form-container" class="stat-card" style="height: fit-content; display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 id="form-title">Nuevo Suministro</h3>
-                        <button id="btn-close-form" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✕</button>
+                <div id="supply-form-container" class="stat-card" style="height: fit-content; display: none; padding: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+                        <h3 id="form-title" style="margin: 0; font-size: 1.1rem;">Nuevo Suministro</h3>
+                        <button id="btn-close-form" style="background:none; border:none; cursor:pointer; font-size:1.3rem; color: #64748b;">✕</button>
                     </div>
                     
                     <input type="hidden" id="supply-id">
                     
                     <div class="input-group">
-                        <label>Nombre del Insumo</label>
-                        <input type="text" id="supply-name" class="input-field" placeholder="Ej. Harina 000">
+                        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Nombre del Insumo</label>
+                        <input type="text" id="supply-name" class="input-field" placeholder="Ej. Harina 000" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px;">
                         <div class="input-group">
-                            <label>Marca</label>
-                            <input type="text" id="supply-brand" class="input-field" placeholder="Ej. Primor">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Marca</label>
+                            <input type="text" id="supply-brand" class="input-field" placeholder="Ej. Primor" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                         </div>
                         <div class="input-group">
-                            <label>Categoría</label>
-                            <select id="supply-category" class="input-field">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Categoría</label>
+                            <select id="supply-category" class="input-field" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                                 <option value="Secos">Secos</option>
                                 <option value="Líquidos">Líquidos</option>
                                 <option value="Empaquetados">Empaquetados</option>
@@ -40,22 +43,25 @@ export const SuppliesView = {
                         </div>
                     </div>
 
-                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
-                    <h4 style="margin-bottom: 10px; color: #1e293b;">Presentación de Compra</h4>
+                    <hr style="margin: 20px 0; border: 0; border-top: 2px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 12px; color: #1e293b; font-size: 1rem;">Presentación de Compra</h4>
 
                     <div class="input-group">
-                        <label>Nombre de la Presentación (Opcional)</label>
-                        <input type="text" id="supply-purchase-unit" class="input-field" placeholder="Ej. Bulto, Caja, Botella">
+                        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Nombre de la Presentación (Opcional)</label>
+                        <input type="text" id="supply-purchase-unit" class="input-field" placeholder="Ej. Bulto, Caja, Botella" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px;">
                         <div class="input-group">
-                            <label>Cantidad de Compra</label>
-                            <input type="number" id="supply-qty-input" class="input-field" step="0.01" placeholder="Ej. 20, 0.5, 500">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Cantidad de Compra</label>
+                            <input type="number" id="supply-qty-input" class="input-field" step="0.01" placeholder="Ej. 20, 0.5, 500" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                         </div>
                         <div class="input-group">
-                            <label>Unidad</label>
-                            <select id="supply-unit-selector" class="input-field">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Unidad</label>
+                            <select id="supply-unit-selector" class="input-field" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                                 <option value="g">Gramos (g)</option>
                                 <option value="Kg">Kilogramos (Kg)</option>
                                 <option value="ml">Mililitros (ml)</option>
@@ -69,48 +75,56 @@ export const SuppliesView = {
                     <input type="hidden" id="supply-equivalence">
                     <input type="hidden" id="supply-min-unit">
 
-                    <div class="input-group" style="margin-top: 15px; background: #fff7ed; padding: 10px; border-radius: 8px; border: 1px solid #ffedd5;">
-                        <label style="color: #c2410c; font-weight: bold;">📦 Existencias Actuales (en Unid. Mínimas)</label>
-                        <input type="number" id="supply-stock" class="input-field" step="0.01" placeholder="Ej. 5000 para 5kg">
-                        <small style="color: #9a3412; font-size: 0.7rem;">Carga aquí tu inventario inicial o ajusta las existencias actuales.</small>
+                    <div class="input-group" style="margin-top: 15px; background: #fff7ed; padding: 12px; border-radius: 8px; border: 2px solid #ffedd5;">
+                        <label style="color: #c2410c; font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">📦 Existencias Actuales (en Unid. Mínimas)</label>
+                        <input type="number" id="supply-stock" class="input-field" step="0.01" placeholder="Ej. 5000 para 5kg" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #fed7aa; border-radius: 6px; background: white;">
+                        <small style="color: #9a3412; font-size: 0.75rem; display: block; margin-top: 6px;">Carga aquí tu inventario inicial o ajusta las existencias actuales.</small>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 15px;">
                         <div class="input-group">
-                            <label>Moneda de Pago</label>
-                            <select id="supply-currency" class="input-field">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Moneda de Pago</label>
+                            <select id="supply-currency" class="input-field" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                                 <option value="USD">USD ($)</option>
                                 <option value="VES">VES (Bs)</option>
                                 <option value="EUR">EUR (€)</option>
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Precio Pagado</label>
-                            <input type="number" id="supply-last-price" class="input-field" step="0.01" placeholder="0.00">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Precio Pagado</label>
+                            <input type="number" id="supply-last-price" class="input-field" step="0.01" placeholder="0.00" 
+                                style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
                         </div>
                     </div>
 
-                    <div id="cost-preview" class="stat-card" style="margin-top: 15px; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 10px; text-align: center;">
+                    <div id="cost-preview" class="stat-card" style="margin-top: 15px; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 12px; text-align: center; border-radius: 8px;">
                         <span id="label-conv-usd" style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 5px;">Costo Base (USD): $0.00</span>
                         <div id="calculated-cost" style="font-size: 1.1rem; font-weight: bold; color: #0284c7;">$0.0000 / unid minima</div>
                     </div>
 
                     <div class="input-group" style="margin-top: 15px;">
-                        <label>Alerta de Stock Mínimo (Unid. Mínimas)</label>
-                        <input type="number" id="supply-threshold" class="input-field" placeholder="Ej. 2000 para 2kg">
-                        <small style="color: #64748b; font-size: 0.7rem;">El sistema avisará cuando las existencias bajen de este valor.</small>
+                        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Alerta de Stock Mínimo (Unid. Mínimas)</label>
+                        <input type="number" id="supply-threshold" class="input-field" placeholder="Ej. 2000 para 2kg" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                        <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 6px;">El sistema avisará cuando las existencias bajen de este valor.</small>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button id="btn-save-supply" class="btn-primary" style="flex: 1;">Guardar Insumo</button>
+                    <div style="margin-top: 20px;">
+                        <button id="btn-save-supply" class="btn-primary" 
+                            style="width: 100%; padding: 14px; font-weight: bold; border-radius: 8px; border: none; background: #2563eb; color: white; cursor: pointer;">
+                            Guardar Insumo
+                        </button>
                     </div>
                 </div>
 
                 <!-- LISTADO DE SUMINISTROS -->
-                <div class="stat-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3>Suministros Registrados</h3>
-                        <input type="text" id="search-supply" placeholder="🔎 Buscar..." class="input-field" style="width: 200px; padding: 8px;">
+                <div class="stat-card" style="padding: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <h3 style="margin: 0; font-size: 1.1rem;">Suministros Registrados</h3>
+                        <input type="text" id="search-supply" placeholder="🔎 Buscar..." class="input-field" 
+                            style="width: 250px; padding: 10px; box-sizing: border-box; border: 2px solid #e2e8f0; border-radius: 6px;">
                     </div>
                     
                     <div class="table-responsive">
@@ -132,6 +146,28 @@ export const SuppliesView = {
                 </div>
             </div>
         </div>
+
+        <style>
+            .supplies-grid {
+                grid-template-columns: 1fr 2fr;
+            }
+            
+            @media (max-width: 1024px) {
+                .supplies-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+            
+            #btn-save-supply:hover {
+                background: #1d4ed8 !important;
+            }
+            
+            .input-field:focus {
+                outline: none;
+                border-color: #2563eb !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+        </style>
         `;
     },
 

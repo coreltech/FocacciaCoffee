@@ -71,20 +71,186 @@ export const InventoryService = {
 
     // --- CATALOG (FINISHED GOODS) ---
     async getCatalog() {
-        const { data, error } = await supabase.from('sales_prices').select('*').order('product_name');
+        const { data, error } = await supabase
+            .from('sales_prices')
+            .select('*')
+            .eq('esta_activo', true) // Only show active products
+            .order('product_name');
+        if (error) throw error;
+        return data || [];
+    },
+
+    async getCatalogWithInactive() {
+        const { data, error } = await supabase
+            .from('sales_prices')
+            .select('*')
+            .order('product_name');
         if (error) throw error;
         return data || [];
     },
 
     async saveCatalogItem(item) {
+        // If it has an ID, it's an UPDATE. Otherwise allow UPSERT based on constraints.
         const { data, error } = await supabase.from('sales_prices').upsert(item).select().single();
-        if (error) throw error;
+
+        if (error) {
+            console.error('Supabase Save Error:', error);
+            throw error;
+        }
         return data;
     },
 
     async deleteCatalogItem(id) {
-        const { error } = await supabase.from('sales_prices').delete().eq('id', id);
-        if (error) throw error;
+        // First, check if the product has related transactions
+        const { data: transactions, error: txError } = await supabase
+            .from('inventory_transactions')
+            .select('id')
+            .eq('product_id', id)
+            .limit(1);
+
+        if (txError) {
+            console.warn('Error checking transactions:', txError);
+        }
+
+        const hasTransactions = transactions && transactions.length > 0;
+
+        // If product has transactions, use SOFT DELETE (mark as inactive)
+        if (hasTransactions) {
+            const { data, error } = await supabase
+                .from('sales_prices')
+                .update({ esta_activo: false })
+                .eq('id', id)
+                .select();
+
+            if (error) {
+                if (error.code === '42501' || error.message.toLowerCase().includes('policy')) {
+                    throw new Error('No tienes permisos suficientes para desactivar productos.');
+                }
+                throw error;
+            }
+
+            if (!data || data.length === 0) {
+                throw new Error('El producto no pudo ser desactivado.');
+            }
+
+            // Return special flag to indicate soft delete
+            return { ...data[0], _softDeleted: true };
+        }
+
+        // If no transactions, proceed with HARD DELETE
+        // First, delete related composition items (if any)
+        const { error: compError } = await supabase
+            .from('catalog_composition')
+            .delete()
+            .eq('catalog_id', id);
+
+        if (compError) {
+            console.warn('Composition delete warning:', compError);
+        }
+
+        // Then delete the catalog item
+        const { data, error } = await supabase
+            .from('sales_prices')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            // Check if it's a foreign key constraint error
+            if (error.code === '23503') {
+                throw new Error('No se puede eliminar este producto porque tiene registros relacionados. Se marcará como inactivo en su lugar.');
+            }
+
+            // Enhance error message for RLS policy violations
+            if (error.code === '42501' || error.message.toLowerCase().includes('policy')) {
+                throw new Error('No tienes permisos suficientes para eliminar productos.');
+            }
+            throw error;
+        }
+
+        // Verify deletion actually happened
+        if (!data || data.length === 0) {
+            throw new Error('El producto no pudo ser eliminado. Verifica tus permisos.');
+        }
+
+        return data[0];
+    },
+
+    async reactivateCatalogItem(id) {
+        const { data, error } = await supabase
+            .from('sales_prices')
+            .update({ esta_activo: true })
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            if (error.code === '42501' || error.message.toLowerCase().includes('policy')) {
+                throw new Error('No tienes permisos suficientes para reactivar productos.');
+            }
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+            throw new Error('El producto no pudo ser reactivado.');
+        }
+
+        return data[0];
+    },
+
+    async forceDeleteCatalogItem(id) {
+        // Get transaction count for confirmation message
+        const { data: transactions, error: txError } = await supabase
+            .from('inventory_transactions')
+            .select('id, transaction_type, quantity, created_at')
+            .eq('product_id', id)
+            .order('created_at', { ascending: false });
+
+        if (txError) {
+            console.warn('Error checking transactions:', txError);
+        }
+
+        // First, delete related composition items
+        const { error: compError } = await supabase
+            .from('catalog_composition')
+            .delete()
+            .eq('catalog_id', id);
+
+        if (compError) {
+            console.warn('Composition delete warning:', compError);
+        }
+
+        // Delete all related transactions (DANGEROUS!)
+        const { error: txDeleteError } = await supabase
+            .from('inventory_transactions')
+            .delete()
+            .eq('product_id', id);
+
+        if (txDeleteError) {
+            throw new Error(`No se pudieron eliminar las transacciones: ${txDeleteError.message}`);
+        }
+
+        // Finally, delete the product
+        const { data, error } = await supabase
+            .from('sales_prices')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            if (error.code === '42501' || error.message.toLowerCase().includes('policy')) {
+                throw new Error('No tienes permisos suficientes para eliminar permanentemente.');
+            }
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+            throw new Error('El producto no pudo ser eliminado permanentemente.');
+        }
+
+        return {
+            product: data[0],
+            deletedTransactions: transactions?.length || 0
+        };
     },
 
     // --- PRODUCT ASSEMBLY (MODERN) ---

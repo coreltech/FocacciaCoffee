@@ -117,8 +117,24 @@ class SettingsServiceImpl {
     }
 
     async getHistory() {
-        const { data } = await supabase.from('rates_history').select('*').order('created_at', { ascending: false }).limit(10);
-        return data || [];
+        try {
+            const { data, error } = await supabase
+                .from('rates_history')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) {
+                console.error('Supabase error in getHistory:', error);
+                throw error;
+            }
+
+            console.log('History fetched:', data);
+            return data || [];
+        } catch (err) {
+            console.error('Error in getHistory:', err);
+            throw err;
+        }
     }
 }
 

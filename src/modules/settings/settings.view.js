@@ -4,47 +4,72 @@ export const SettingsView = {
         // Assuming theme.css has base styles.
 
         container.innerHTML = `
-        <div class="main-container" style="max-width: 900px; margin: 0 auto; padding: 10px;">
-            <header style="margin-bottom: 25px; text-align: center;">
-                <h1 style="margin-bottom:5px;">⚙️ Centro de Control</h1>
-                <p style="color: #64748b; margin:0;">Gestión de divisas e integración web</p>
+        <div class="main-container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <header style="margin-bottom: 30px; text-align: center;">
+                <h1 style="margin-bottom:5px; font-size: 1.8rem;">⚙️ Centro de Control</h1>
+                <p style="color: #64748b; margin:0; font-size: 0.95rem;">Gestión de divisas e integración web</p>
             </header>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="settings-grid">
-                <div class="stat-card" style="padding: 20px; border-top: 4px solid #0f172a; margin:0;">
-                    <h3 style="margin-top:0;">Actualizar Tasas</h3>
-                    <div style="display: flex; flex-direction: column; gap: 15px; margin-top:20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;" class="settings-grid">
+                <div class="stat-card" style="padding: 25px; border-top: 4px solid #0f172a;">
+                    <h3 style="margin-top:0; margin-bottom: 20px; font-size: 1.1rem;">Actualizar Tasas</h3>
+                    <div style="display: flex; flex-direction: column; gap: 18px;">
                         <div class="input-group">
-                            <label style="font-weight: bold; font-size: 0.8rem; color: #475569;">DÓLAR (USD)</label>
-                            <input type="number" id="set-usd" step="0.01" class="input-field" value="${rates.tasa_usd_ves}" style="font-size: 1.3rem; padding: 12px;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 8px;">DÓLAR (USD)</label>
+                            <input type="number" id="set-usd" step="0.01" class="input-field" value="${rates.tasa_usd_ves}" 
+                                style="font-size: 1.3rem; padding: 12px; width: 100%; box-sizing: border-box; border: 2px solid #e2e8f0; border-radius: 8px;">
                         </div>
                         <div class="input-group">
-                            <label style="font-weight: bold; font-size: 0.8rem; color: #475569;">EURO (EUR)</label>
-                            <input type="number" id="set-eur" step="0.01" class="input-field" value="${rates.tasa_eur_ves}" style="font-size: 1.3rem; padding: 12px;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 8px;">EURO (EUR)</label>
+                            <input type="number" id="set-eur" step="0.01" class="input-field" value="${rates.tasa_eur_ves}" 
+                                style="font-size: 1.3rem; padding: 12px; width: 100%; box-sizing: border-box; border: 2px solid #e2e8f0; border-radius: 8px;">
                         </div>
-                        <button id="btn-save-settings" class="btn-primary" style="width: 100%; padding: 15px; font-weight: bold; font-size: 1rem; cursor:pointer;">
+                        <button id="btn-save-settings" class="btn-primary" 
+                            style="width: 100%; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; border-radius: 8px; border: none; background: #2563eb; color: white; transition: background 0.2s;">
                             💾 Actualizar y Sincronizar Web
                         </button>
                     </div>
                 </div>
 
-                <div class="stat-card" style="padding: 20px; background: #f8fafc; display: flex; flex-direction: column; justify-content: center; align-items: center; margin:0; border: 1px dashed #cbd5e1;">
-                    <p style="color: #64748b; margin-bottom: 5px; font-weight: 500;">Relación Actual</p>
-                    <h2 style="margin: 0; color: #0f172a; font-size: 1.8rem;">1 € = ${(rates.tasa_eur_ves / rates.tasa_usd_ves).toFixed(4)} $</h2>
-                    <div style="margin-top: 15px; text-align: center;">
-                        <small style="color: #94a3b8; display: block;">Último cambio:</small>
-                        <small style="color: #64748b; font-weight: bold;">${rates.updated_at ? new Date(rates.updated_at).toLocaleString() : 'Sin registros'}</small>
+                <div class="stat-card" style="padding: 25px; background: #f8fafc; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px dashed #cbd5e1; border-radius: 12px;">
+                    <p style="color: #64748b; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem;">Relación Actual</p>
+                    <h2 style="margin: 0; color: #0f172a; font-size: 2rem; font-weight: 700;">1 € = ${(rates.tasa_eur_ves / rates.tasa_usd_ves).toFixed(4)} $</h2>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <small style="color: #94a3b8; display: block; font-size: 0.75rem;">Último cambio:</small>
+                        <small style="color: #64748b; font-weight: 600; font-size: 0.85rem;">${rates.updated_at ? new Date(rates.updated_at).toLocaleString() : 'Sin registros'}</small>
                     </div>
                 </div>
             </div>
 
-            <div class="stat-card" style="margin-top: 25px; padding: 20px;">
-                <h3 style="margin-top:0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">📜 Historial de Cambios</h3>
-                <div id="history-container" class="history-table-container" style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
-                    <p style="text-align:center; color:#94a3b8;">Cargando historial...</p>
+            <div class="stat-card" style="padding: 25px; border-radius: 12px;">
+                <h3 style="margin-top:0; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-size: 1.1rem;">📜 Historial de Cambios</h3>
+                <div id="history-container" class="history-table-container" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <p style="text-align:center; color:#94a3b8; padding: 20px;">Cargando historial...</p>
                 </div>
             </div>
         </div>
+
+        <style>
+            .settings-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            @media (max-width: 768px) {
+                .settings-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+            
+            #btn-save-settings:hover {
+                background: #1d4ed8 !important;
+            }
+            
+            #set-usd:focus, #set-eur:focus {
+                outline: none;
+                border-color: #2563eb;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+        </style>
         `;
     },
 

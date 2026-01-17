@@ -2,87 +2,107 @@ export const SalesView = {
     renderLayout(container, initialDate, rates) {
         container.innerHTML = `
         <div class="main-container">
-            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
                 <div>
-                    <h1 id="sales-title" style="font-size: 1.8rem; margin:0;">🛒 Punto de Venta</h1>
-                    <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
-                        <input type="date" id="filter-date" value="${initialDate}" class="input-field" style="padding:4px 8px; width:auto; font-size:0.8rem;">
+                    <h1 id="sales-title" style="font-size: 1.8rem; margin:0 0 8px 0;">🛒 Punto de Venta</h1>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="date" id="filter-date" value="${initialDate}" class="input-field" 
+                            style="padding:8px 12px; width:auto; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px; box-sizing:border-box;">
                     </div>
                 </div>
-                <div style="background:#fff; padding:10px; border-radius:12px; border:1px solid #e2e8f0; text-align:right;">
-                    <small style="color:#64748b; font-weight:800; font-size:0.6rem;">TASA BCV</small>
-                    <b style="display:block;">1$ = ${rates.tasa_usd_ves.toFixed(2)} Bs</b>
+                <div style="background:#fff; padding:12px 16px; border-radius:10px; border:2px solid #e2e8f0;">
+                    <small style="color:#64748b; font-weight:800; font-size:0.65rem; display:block; text-align:center;">TASA BCV</small>
+                    <b style="display:block; text-align:center; font-size:1rem; margin-top:2px;">1$ = ${rates.tasa_usd_ves.toFixed(2)} Bs</b>
                 </div>
             </header>
 
-            <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:30px;">
+            <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:25px;" class="sales-grid">
                 <!-- FORMULARIO DE VENTA -->
                 <div class="stat-card" style="padding:25px;">
-                    <h3 style="margin-bottom:20px; border-bottom: 2px solid #f1f5f9; padding-bottom:10px;">📝 Nueva Venta</h3>
+                    <h3 style="margin:0 0 20px 0; border-bottom: 2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">📝 Nueva Venta</h3>
                     
                     <div class="input-group">
-                        <label>PRODUCTO</label>
-                        <select id="v-catalog-select" class="input-field">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRODUCTO</label>
+                        <select id="v-catalog-select" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                             <option value="">Cargando catálogo...</option>
                         </select>
                     </div>
 
-                    <div id="manual-desc-container" class="input-group" style="display:none; margin-top:10px;">
-                        <label>DESCRIPCIÓN DE VENTA MANUAL</label>
-                        <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo...">
+                    <div id="manual-desc-container" class="input-group" style="display:none; margin-top:15px;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">DESCRIPCIÓN DE VENTA MANUAL</label>
+                        <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo..." 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:10px;">
-                        <div class="input-group"><label>PRECIO $</label><input type="number" id="v-final-price" class="input-field" step="0.01"></div>
-                        <div class="input-group"><label>CANTIDAD</label><input type="number" id="v-qty" class="input-field" value="1"></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px;">
+                        <div class="input-group">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRECIO $</label>
+                            <input type="number" id="v-final-price" class="input-field" step="0.01" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">CANTIDAD</label>
+                            <input type="number" id="v-qty" class="input-field" value="1" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
                     </div>
 
-                    <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:5px;">⚠️ Cantidad supera el stock disponible</div>
+                    <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fef2f2; border-radius:6px; border:1px solid #fecaca;">⚠️ Cantidad supera el stock disponible</div>
 
-                    <div class="input-group" style="margin-top:10px;">
-                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="input-group" style="margin-top:15px;">
+                        <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
                             CLIENTE
-                            <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:0;">+ NUEVO CLIENTE</button>
+                            <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO CLIENTE</button>
                         </label>
-                        <select id="v-customer-id" class="input-field">
+                        <select id="v-customer-id" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                             <option value="">Cliente Genérico</option>
                         </select>
                     </div>
 
-                    <div style="background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px; margin-top:10px;">
-                        <label style="font-size:0.7rem; color:#64748b; font-weight:800; text-transform:uppercase; display:block; margin-bottom:10px;">💳 Métodos de Pago (Multimoneda)</label>
+                    <div style="background:#f8fafc; padding:18px; border-radius:10px; border:2px solid #e2e8f0; margin-top:18px;">
+                        <label style="font-size:0.75rem; color:#64748b; font-weight:800; text-transform:uppercase; display:block; margin-bottom:12px;">💳 Métodos de Pago (Multimoneda)</label>
                         <div id="payment-container">
-                            <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;">
-                                <input type="number" class="p-amt input-field" placeholder="Monto">
-                                <select class="p-meth input-field" style="font-size: 0.8rem;">
+                            <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1fr 0.2fr; gap:8px; margin-bottom:10px;">
+                                <input type="number" class="p-amt input-field" placeholder="Monto" 
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #cbd5e1; border-radius:6px;">
+                                <select class="p-meth input-field" 
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #cbd5e1; border-radius:6px; font-size:0.8rem;">
                                     <option value="Efectivo $">💵 Efectivo $</option>
                                     <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
                                     <option value="Zelle $">📱 Zelle $</option>
                                     <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
                                     <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
                                 </select>
-                                <span class="p-currency-hint" style="font-size:0.7rem; display:flex; align-items:center;">$</span>
+                                <span class="p-currency-hint" style="font-size:0.75rem; display:flex; align-items:center; font-weight:bold;">$</span>
                             </div>
                         </div>
-                        <button id="add-pay-row" style="width:100%; border:1px dashed #cbd5e1; background:none; color:#475569; padding:8px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.75rem;">+ Agregar Pago Combinado</button>
+                        <button id="add-pay-row" 
+                            style="width:100%; border:2px dashed #cbd5e1; background:white; color:#475569; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.8rem; transition:all 0.2s;">
+                            + Agregar Pago Combinado
+                        </button>
                     </div>
 
-                    <div style="background:#0f172a; color:white; padding:25px; border-radius:20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                    <div style="background:#0f172a; color:white; padding:25px; border-radius:15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-top:18px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.9rem; color:#94a3b8;">TOTAL A PAGAR</span>
+                            <span style="font-size:0.9rem; color:#94a3b8; font-weight:600;">TOTAL A PAGAR</span>
                             <b id="txt-total-usd" style="color:#4ade80; font-size:2rem;">$0.00</b>
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:5px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                            <span style="font-size:0.8rem; color:#94a3b8;">EQUIVALENTE BS (BCV)</span>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size:0.85rem; color:#94a3b8;">EQUIVALENTE BS (BCV)</span>
                             <b id="txt-total-ves" style="font-size:1.2rem; color:#fff;">0.00 Bs</b>
                         </div>
                     </div>
-                    <button id="btn-submit-sale" class="btn-primary" style="width:100%; padding:15px; margin-top:15px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🚀 Guardar Venta</button>
+                    <button id="btn-submit-sale" class="btn-primary" 
+                        style="width:100%; padding:16px; margin-top:18px; background:#2563eb; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                        🚀 Guardar Venta
+                    </button>
                 </div>
 
                 <!-- LISTADO HISTÓRICO Y CIERRE -->
                 <div>
-                    <div id="daily-summary" style="background:#fff; border:1px solid #e2e8f0; border-radius:15px; padding:20px; margin-bottom:20px;">
+                    <div id="daily-summary" style="background:#fff; border:2px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
                         <!-- Se llena dinámicamente -->
                     </div>
 
@@ -90,12 +110,48 @@ export const SalesView = {
                         <!-- Se llena dinámicamente -->
                     </div>
                     
-                    <button id="btn-load-more" style="width:100%; padding:15px; background:#f1f5f9; color:#64748b; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px; display:none;">
+                    <button id="btn-load-more" 
+                        style="width:100%; padding:15px; background:#f1f5f9; color:#64748b; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:15px; display:none; transition:background 0.2s;">
                         ⬇️ Cargar más ventas
                     </button>
                 </div>
             </div>
         </div>
+
+        <style>
+            .sales-grid {
+                grid-template-columns: 1fr 1.2fr;
+            }
+            
+            @media (max-width: 1024px) {
+                .sales-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+            
+            #btn-submit-sale:hover {
+                background: #1d4ed8 !important;
+            }
+            
+            #btn-add-customer:hover {
+                background: #eff6ff;
+            }
+            
+            #add-pay-row:hover {
+                background: #f8fafc;
+                border-color: #94a3b8;
+            }
+            
+            #btn-load-more:hover {
+                background: #e2e8f0;
+            }
+            
+            .input-field:focus, select:focus {
+                outline: none;
+                border-color: #2563eb !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+        </style>
         `;
     },
 

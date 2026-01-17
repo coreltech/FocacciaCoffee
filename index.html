@@ -13,30 +13,65 @@
 
 <body>
 
-  <header class="nav-bar">
+  <!-- Hamburger Button (Mobile Only) -->
+  <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
 
-    <button class="nav-btn" data-tab="dashboard">🏠 Inicio</button>
-    <button class="nav-btn" data-tab="tasas">🪙 Tasas</button>
+  <header class="nav-bar" id="nav-bar">
+    <!-- Mobile Menu Header -->
+    <div class="mobile-menu-header">
+      <h2>📋 Menú</h2>
+      <button class="mobile-close-btn" id="mobile-close-btn">✕</button>
+    </div>
+
+    <!-- Core Operations -->
+    <div class="nav-group">
+      <span class="nav-group-title">Operaciones</span>
+      <button class="nav-btn" data-tab="dashboard">🏠 Inicio</button>
+      <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
+      <button class="nav-btn" data-tab="catalogo">📋 Catálogo</button>
+    </div>
 
     <div class="nav-sep"></div>
-    <button class="nav-btn" data-tab="suministros">📦 Suministros</button>
-    <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
-    <button class="nav-btn" data-tab="produccion">🥣 Producción</button>
-    <button class="nav-btn" data-tab="compras">🛒 Compras</button>
-    <button class="nav-btn" data-tab="mermas" style="color:var(--error); border-color:var(--error);">🗑️
-      Perdidas</button>
 
-    <button class="nav-btn" data-tab="catalogo">📋 Catálogo</button>
-    <button class="nav-btn" data-tab="config_productos">⚙️ Config</button>
-    <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
+    <!-- Inventory & Production -->
+    <div class="nav-group">
+      <span class="nav-group-title">Inventario & Producción</span>
+      <button class="nav-btn" data-tab="suministros">📦 Suministros</button>
+      <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
+      <button class="nav-btn" data-tab="produccion">🥣 Producción</button>
+      <button class="nav-btn" data-tab="compras">🛒 Compras</button>
+      <button class="nav-btn" data-tab="mermas" style="color:var(--error); border-color:var(--error);">🗑️
+        Perdidas</button>
+    </div>
 
     <div class="nav-sep"></div>
-    <button class="nav-btn" data-tab="administracion">💼 Admin</button>
-    <button class="nav-btn" data-tab="plan">🚀 Estrategia</button>
-    <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
-    <button class="nav-btn" data-tab="biblioteca">📚 Biblioteca</button>
 
+    <!-- Configuration -->
+    <div class="nav-group">
+      <span class="nav-group-title">Configuración</span>
+      <button class="nav-btn" data-tab="tasas">🪙 Tasas</button>
+      <button class="nav-btn" data-tab="config_productos">⚙️ Config</button>
+      <button class="nav-btn" data-tab="administracion">💼 Admin</button>
+    </div>
+
+    <div class="nav-sep"></div>
+
+    <!-- Analytics -->
+    <div class="nav-group">
+      <span class="nav-group-title">Análisis</span>
+      <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
+      <button class="nav-btn" data-tab="plan">🚀 Estrategia</button>
+      <button class="nav-btn" data-tab="biblioteca">📚 Biblioteca</button>
+    </div>
   </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
 
   <main id="app-content" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
     <div class="stat-card" style="text-align:center; padding: 50px;">
@@ -65,6 +100,59 @@
             <pre style="font-size: 0.8rem; background: #fee2e2; padding: 10px; border-radius: 8px;">${err.message}</pre>
           </div>
         `;
+      }
+    });
+
+    // Mobile Menu Functionality
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const navBar = document.getElementById('nav-bar');
+    const mobileOverlay = document.getElementById('mobile-menu-overlay');
+    const mobileCloseBtn = document.getElementById('mobile-close-btn');
+    const navButtons = document.querySelectorAll('.nav-btn');
+
+    function toggleMobileMenu() {
+      hamburgerBtn.classList.toggle('active');
+      navBar.classList.toggle('active');
+      mobileOverlay.classList.toggle('active');
+      document.body.style.overflow = navBar.classList.contains('active') ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+      hamburgerBtn.classList.remove('active');
+      navBar.classList.remove('active');
+      mobileOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Hamburger button click
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
+
+    // Mobile close button click
+    mobileCloseBtn.addEventListener('click', closeMobileMenu);
+
+    // Overlay click to close
+    mobileOverlay.addEventListener('click', closeMobileMenu);
+
+    // Close menu when clicking a nav button
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          closeMobileMenu();
+        }
+      });
+    });
+
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && navBar.classList.contains('active')) {
+        closeMobileMenu();
+      }
+    });
+
+    // Close menu on window resize to desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        closeMobileMenu();
       }
     });
   </script>

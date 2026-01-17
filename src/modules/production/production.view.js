@@ -7,48 +7,70 @@ export const ProductionView = {
         container.innerHTML = `
         <div class="main-container">
             <header style="margin-bottom: 30px;">
-                <h1>🚀 Producción y Almacén</h1>
-                <p>Transforma tus recetas en stock para la venta.</p>
+                <h1 style="font-size:1.8rem; margin:0 0 8px 0;">🚀 Producción y Almacén</h1>
+                <p style="color:#64748b; font-size:0.95rem; margin:0;">Transforma tus recetas en stock para la venta.</p>
             </header>
 
             <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
-                <div class="stat-card" style="border-top: 6px solid #0284c7; max-width: 600px; margin: 0 auto; width: 100%;">
-                    <h3 style="margin-top:0;">📦 Registrar Producción (PT)</h3>
-                    <p style="color: #64748b; font-size: 0.9rem;">Selecciona un producto configurado para sumar stock al mostrador.</p>
+                <div class="stat-card" style="border-top: 5px solid #0284c7; max-width: 700px; margin: 0 auto; width: 100%; padding:30px;">
+                    <h3 style="margin:0 0 15px 0; font-size:1.1rem;">📦 Registrar Producción (PT)</h3>
+                    <p style="color: #64748b; font-size: 0.9rem; margin:0 0 20px 0;">Selecciona un producto configurado para sumar stock al mostrador.</p>
                     
                     <div class="input-group">
-                        <label>Producto a Producir</label>
-                        <select id="p-catalog-id" class="input-field" style="font-weight:bold; border-color:#0284c7;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Producto a Producir</label>
+                        <select id="p-catalog-id" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; font-weight:bold; border:2px solid #0284c7; border-radius:6px;">
                             <option value="">-- Seleccionar del Catálogo --</option>
                         </select>
                     </div>
 
-                    <div id="p-assembly-info" style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; display: none;">
+                    <div id="p-assembly-info" style="margin: 20px 0; padding: 18px; background: #f8fafc; border-radius: 10px; border: 2px solid #e2e8f0; display: none;">
                         <!-- Cost and components summary loads here -->
                     </div>
 
-                    <div id="p-no-config" style="margin: 20px 0; padding: 20px; background: #fff1f2; border-radius: 12px; border: 1px solid #fecaca; text-align: center; display: none;">
-                        <div style="font-size: 1.5rem; margin-bottom: 10px;">⚠️</div>
-                        <p style="color: #991b1b; font-weight: bold; margin-bottom: 15px;">Este producto no tiene composición.</p>
-                        <button onclick="document.querySelector('[data-tab=\'config_productos\']').click()" class="btn-primary" style="background:#e11d48;">⚙️ Ir a Configurar</button>
+                    <div id="p-no-config" style="margin: 20px 0; padding: 25px; background: #fff1f2; border-radius: 10px; border: 2px solid #fecaca; text-align: center; display: none;">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
+                        <p style="color: #991b1b; font-weight: bold; margin:0 0 18px 0; font-size:1rem;">Este producto no tiene composición.</p>
+                        <button onclick="document.querySelector('[data-tab=\'config_productos\']').click()" class="btn-primary" 
+                            style="background:#e11d48; padding:12px 24px; border:none; color:white; border-radius:8px; cursor:pointer; font-weight:bold;">⚙️ Ir a Configurar</button>
                     </div>
 
-                    <div class="input-group" id="p-qty-container" style="display:none;">
-                        <label>Cantidad (Unidades Finales)</label>
-                        <input type="number" id="p-unidades" class="input-field" value="1" min="1" style="font-size: 1.2rem; font-weight: bold;">
+                    <div class="input-group" id="p-qty-container" style="display:none; margin-top:18px;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Cantidad (Unidades Finales)</label>
+                        <input type="number" id="p-unidades" class="input-field" value="1" min="1" 
+                            style="width:100%; box-sizing:border-box; padding:12px; font-size: 1.2rem; font-weight: bold; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
 
-                    <button id="btn-save-production" class="btn-primary" style="width:100%; margin-top:15px; background: #10b981; display:none;">
+                    <button id="btn-save-production" class="btn-primary" 
+                        style="width:100%; margin-top:20px; background: #10b981; padding:16px; border:none; color:white; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; display:none; transition:background 0.2s;">
                         🚀 REGISTRAR Y SUMAR STOCK
                     </button>
                 </div>
 
-                <div class="stat-card" style="padding:20px;">
-                    <h4>Historial Reciente de Producción</h4>
+                <div class="stat-card" style="padding:25px;">
+                    <h4 style="margin:0 0 18px 0; font-size:1rem;">Historial Reciente de Producción</h4>
                     <div id="p-history-content">Cargando historial...</div>
                 </div>
             </div>
         </div>
+
+        <style>
+            #btn-save-production:hover {
+                background: #059669 !important;
+            }
+            
+            .input-field:focus, select:focus {
+                outline: none;
+                border-color: #0284c7 !important;
+                box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+            }
+            
+            @media (max-width: 768px) {
+                .stat-card {
+                    padding: 20px !important;
+                }
+            }
+        </style>
         `;
     },
 

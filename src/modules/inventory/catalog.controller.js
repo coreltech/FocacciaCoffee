@@ -2,6 +2,7 @@ import { InventoryService } from './inventory.service.js';
 import { CatalogView } from './catalog.view.js';
 import { getGlobalRates } from '../settings/settings.service.js';
 import { supabase } from '../../core/supabase.js';
+import { getCurrentRole } from '../../core/supabase.js';
 
 let currentLogs = [];
 let recipes = [];
@@ -10,14 +11,20 @@ let products = [];
 let currentCost = 0;
 let currentToppings = [];
 let currentPackaging = [];
+let showInactive = false; // Toggle for showing inactive products
 
 export async function loadCatalog() {
     const container = document.getElementById('app-content');
+    const isDirector = getCurrentRole() === 'director';
 
     // Multi Fetch
+    const catalogPromise = showInactive && isDirector
+        ? InventoryService.getCatalogWithInactive()
+        : InventoryService.getCatalog();
+
     const [rates, productsData, recentLogs, recipesData, suppliesData] = await Promise.all([
         getGlobalRates(),
-        InventoryService.getCatalog(),
+        catalogPromise,
         supabase.from('production_logs').select('*').order('fecha_produccion', { ascending: false }),
         InventoryService.getRecipes(),
         InventoryService.getSupplies()
@@ -28,26 +35,102 @@ export async function loadCatalog() {
     supplies = suppliesData || [];
     products = productsData || [];
 
-    CatalogView.renderLayout(container, rates, productsData, currentLogs.slice(0, 20));
+    CatalogView.renderLayout(container, rates, productsData, currentLogs.slice(0, 20), isDirector, showInactive);
 
-    bindEvents(rates);
+    bindEvents(rates, isDirector);
 
-    // Bind edit/delete
-    document.querySelectorAll('.btn-edit-prod').forEach(b => {
-        b.onclick = () => {
-            const item = JSON.parse(b.dataset.item);
-            openEdit(item);
-        };
-    });
+    // Event Delegation for Table Actions
+    const catalogBody = document.getElementById('catalog-body');
+    if (catalogBody) {
+        catalogBody.onclick = async (e) => {
+            const target = e.target;
 
-    document.querySelectorAll('.btn-del-prod').forEach(b => {
-        b.onclick = async () => {
-            if (confirm("¿Eliminar producto?")) {
-                await InventoryService.deleteCatalogItem(b.dataset.id);
-                loadCatalog();
+            // Edit
+            const editBtn = target.closest('.btn-edit-prod');
+            if (editBtn) {
+                const item = JSON.parse(editBtn.dataset.item);
+                openEdit(item);
+                return;
+            }
+
+            // Delete
+            const delBtn = target.closest('.btn-del-prod');
+            if (delBtn) {
+                if (confirm("¿Eliminar producto?")) {
+                    try {
+                        const result = await InventoryService.deleteCatalogItem(delBtn.dataset.id);
+                        if (result._softDeleted) {
+                            alert("⚠️ Producto desactivado (no eliminado)\n\nEste producto tiene historial de transacciones, por lo que fue marcado como inactivo en lugar de eliminarse.\n\nYa no aparecerá en el catálogo web, pero se conserva su historial.");
+                        } else {
+                            alert("✅ Producto eliminado correctamente.");
+                        }
+                        loadCatalog();
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        if (error.message.includes('foreign key') || error.message.includes('registros relacionados')) {
+                            alert("❌ No se puede eliminar este producto\n\nTiene transacciones de inventario asociadas. El producto será marcado como inactivo en su lugar.");
+                            try {
+                                await InventoryService.deleteCatalogItem(delBtn.dataset.id);
+                                alert("✅ Producto desactivado correctamente.");
+                                loadCatalog();
+                            } catch (retryError) {
+                                alert(`❌ Error al desactivar: ${retryError.message}`);
+                            }
+                        } else if (error.message.includes('policy') || error.message.includes('permisos')) {
+                            alert("❌ No tienes permisos para eliminar productos.\n\nSolo usuarios con rol 'Director' o 'Gerente' pueden eliminar productos del catálogo.");
+                        } else {
+                            alert(`❌ Error al eliminar: ${error.message}`);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Reactivate
+            const reactivateBtn = target.closest('.btn-reactivate-prod');
+            if (reactivateBtn) {
+                if (confirm("¿Reactivar este producto?")) {
+                    try {
+                        await InventoryService.reactivateCatalogItem(reactivateBtn.dataset.id);
+                        alert("✅ Producto reactivado correctamente.\n\nEl producto volverá a aparecer en el catálogo web.");
+                        loadCatalog();
+                    } catch (error) {
+                        console.error('Reactivate error:', error);
+                        alert(`❌ Error al reactivar: ${error.message}`);
+                    }
+                }
+                return;
+            }
+
+            // Force Delete
+            const forceDelBtn = target.closest('.btn-force-del-prod');
+            if (forceDelBtn) {
+                const productName = forceDelBtn.dataset.name;
+                if (confirm(`⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE\n\n¿Estás seguro de eliminar PERMANENTEMENTE "${productName}"?\n\nEsta acción:\n✗ Eliminará el producto de la base de datos\n✗ Eliminará TODAS sus transacciones de inventario\n✗ NO SE PUEDE DESHACER\n\n¿Continuar?`)) {
+                    if (confirm(`⚠️ ÚLTIMA CONFIRMACIÓN\n\n¿REALMENTE deseas eliminar permanentemente "${productName}" y TODO su historial?\n\nEscribe "ELIMINAR" para confirmar.`)) {
+                        try {
+                            const result = await InventoryService.forceDeleteCatalogItem(forceDelBtn.dataset.id);
+                            alert(`✅ Producto eliminado permanentemente\n\n${result.deletedTransactions} transacciones de inventario fueron eliminadas junto con el producto.`);
+                            loadCatalog();
+                        } catch (error) {
+                            console.error('Force delete error:', error);
+                            alert(`❌ Error al eliminar permanentemente: ${error.message}`);
+                        }
+                    }
+                }
+                return;
             }
         };
-    });
+    }
+
+    // Bind inactive toggle (director only)
+    const inactiveToggle = document.getElementById('toggle-inactive');
+    if (inactiveToggle) {
+        inactiveToggle.onchange = () => {
+            showInactive = inactiveToggle.checked;
+            loadCatalog();
+        };
+    }
 }
 
 function openEdit(item) {
@@ -58,7 +141,8 @@ function openEdit(item) {
     document.getElementById('c-category').value = item.categoria || 'Focaccias';
     document.getElementById('c-icon').value = item.icon || '';
     document.getElementById('c-stock').value = item.stock_disponible || 0;
-    document.getElementById('c-manual-cost').value = item.costo_unitario_referencia || 0;
+    // Fix: Round manual cost to avoid validation error
+    document.getElementById('c-manual-cost').value = (item.costo_unitario_referencia || 0).toFixed(2);
 
     // Reset Calculator State (Improvement: Load previous state if saved in DB)
     currentToppings = [];
@@ -146,7 +230,7 @@ function bindEvents(rates) {
         const o = document.createElement('option');
         o.value = `R|${r.id}`;
         o.textContent = `👩‍🍳 ${r.name}`;
-        o.dataset.cost = 0; // Estimation placeholder
+        o.dataset.cost = getRecipeCostPerGram(r); // Calculated cost per gram
         toppingSelect.appendChild(o);
     });
 
@@ -160,7 +244,15 @@ function bindEvents(rates) {
         toppingSelect.appendChild(o);
     });
 
-    fillSelect(packagingSelect, supplies, 'id', 'name');
+    // Fix: Manually populate packaging to include 'S|' prefix and cost data
+    packagingSelect.innerHTML = '<option value="">Seleccione...</option>';
+    supplies.forEach(s => {
+        const o = document.createElement('option');
+        o.value = `S|${s.id}`;
+        o.textContent = s.name;
+        o.dataset.cost = s.last_purchase_price / s.equivalence;
+        packagingSelect.appendChild(o);
+    });
 
     // === Sync Logic ===
     const syncCalculations = () => {
@@ -284,15 +376,21 @@ function bindEvents(rates) {
                 product_name: nameInput.value,
                 description: document.getElementById('c-description').value.trim() || null,
                 precio_venta_final: parseFloat(priceInput.value),
-                costo_unitario_referencia: currentCost,
+                costo_unitario_referencia: parseFloat(currentCost.toFixed(2)),
                 categoria: categorySelect.value,
                 icon: document.getElementById('c-icon').value.trim() || null,
                 esta_activo: true,
-                stock_disponible: parseFloat(document.getElementById('c-stock').value) || 0
+                stock_disponible: parseFloat(document.getElementById('c-stock').value) || 0,
+                image_url: imageUrl // Fix: Save the uploaded image URL
             };
 
-            if (imageUrl) productData.image_url = imageUrl;
-            if (prodId) productData.id = prodId;
+            // Fix: Force UPDATE if ID exists by ensuring the ID field is present in the object
+            if (prodId && prodId.trim() !== '') {
+                productData.id = prodId;
+                console.log('Updating product with ID:', prodId);
+            } else {
+                console.log('Creating new product');
+            }
 
             const savedItem = await InventoryService.saveCatalogItem(productData);
 
@@ -325,7 +423,13 @@ function bindEvents(rates) {
             alert("✅ Catálogo y Estructura actualizados.");
             loadCatalog();
         } catch (err) {
-            alert("❌ Error: " + err.message);
+            console.error('Save error:', err);
+            // Handle unique constraint violation (duplicate name)
+            if (err.message.includes('sales_prices_product_name_key') || err.message.includes('409') || err.code === '23505') {
+                alert("⚠️ Error: Ya existe un producto con este nombre.\n\nPor favor, elige un nombre diferente.");
+            } else {
+                alert("❌ Error al guardar: " + err.message);
+            }
         }
     };
 }
@@ -344,6 +448,14 @@ function addItem(array, select, qtyInput) {
     if (!val || !qty) return;
 
     const [type, id] = val.split('|');
+
+    // Fix: Validate that we actually got a type and id
+    if (!type || !id) {
+        console.error('Invalid item value:', val);
+        alert("Error: El ítem seleccionado no es válido.");
+        return;
+    }
+
     let itemData = null;
 
     if (type === 'S') {
@@ -415,29 +527,47 @@ function calculateTotalCost() {
 }
 
 function getRecipeCostPerGram(recipe) {
+    if (recipe.name.includes('Tomates')) console.log('Calculating cost for:', recipe.name, recipe);
     if (!recipe.items || recipe.items.length === 0) return 0;
 
-    // Calculate Total Recipe Cost
     let totalBatchCost = 0;
+    let totalBatchWeight = 0;
 
-    recipe.items.forEach(item => {
-        let costUnit = 0;
+    // Check if it's a Percentage-based recipe (implicitly or explicitly)
+    const isPercentageBased = recipe.items.some(i => (i.percentage > 0 && (!i.quantity || i.quantity === 0)) || i.unit_type === '%');
 
-        if (item.supply_id && item.items) { // Is Supply
-            // item.items in 'v_recipe_items_detailed' usually holds the Supply object due to alias
-            // Wait, InventoryService uses: select('*, items:v_recipe_items_detailed!rel_parent_recipe(*)')
-            // Let's assume standard structure or verify.
-            // Actually, v_recipe_items_detailed has 'cost_per_unit_min' calculated.
-            costUnit = parseFloat(item.cost_per_unit_min) || 0;
-        } else {
-            costUnit = parseFloat(item.cost_per_unit_min) || 0;
+    if (isPercentageBased) {
+        const baseFlourWeight = 1000; // Standard base for calculation
+
+        recipe.items.forEach(item => {
+            let grams = parseFloat(item.quantity) || 0;
+            const percentage = parseFloat(item.percentage) || 0;
+            const costUnit = parseFloat(item.cost_per_unit_min) || 0; // Cost per GRAM usually
+
+            if (item.unit_type === '%' || (percentage > 0 && grams === 0)) {
+                grams = (percentage / 100) * baseFlourWeight;
+            }
+
+            totalBatchCost += grams * costUnit;
+            totalBatchWeight += grams;
+        });
+    } else {
+        // Standard logic for fixed weight recipes
+        recipe.items.forEach(item => {
+            const costUnit = parseFloat(item.cost_per_unit_min) || 0;
+            const qty = parseFloat(item.quantity) || 0;
+            totalBatchCost += qty * costUnit;
+        });
+        totalBatchWeight = parseFloat(recipe.expected_weight) || 0;
+
+        // Fallback if expected_weight is missing but we calculated a sum
+        if (totalBatchWeight === 0) {
+            let sumQty = 0;
+            recipe.items.forEach(i => sumQty += (parseFloat(i.quantity) || 0));
+            totalBatchWeight = sumQty > 0 ? sumQty : 1000;
         }
+    }
 
-        const qty = parseFloat(item.quantity) || 0;
-        totalBatchCost += qty * costUnit;
-    });
-
-    // Cost Per Gram
-    const expectedWeight = parseFloat(recipe.expected_weight) || 1000; // avoid div/0
-    return totalBatchCost / expectedWeight;
+    if (totalBatchWeight === 0) return 0;
+    return totalBatchCost / totalBatchWeight;
 }

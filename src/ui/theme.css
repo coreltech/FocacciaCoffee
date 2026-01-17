@@ -181,6 +181,210 @@ h6 {
 }
 
 /* ================================================================
+   MOBILE MENU STYLES
+================================================================ */
+
+/* Hamburger Button - Hidden on Desktop */
+.hamburger-btn {
+    display: none;
+    position: fixed;
+    top: 25px;
+    left: 20px;
+    z-index: 10001;
+    background: var(--olive);
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(112, 130, 56, 0.3);
+    transition: var(--transition);
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background: white;
+    margin: 5px 0;
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+.hamburger-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(112, 130, 56, 0.4);
+}
+
+.hamburger-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+/* Mobile Menu Overlay */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-menu-overlay.active {
+    opacity: 1;
+}
+
+/* Mobile Menu Header - Hidden on Desktop */
+.mobile-menu-header {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 15px;
+}
+
+.mobile-menu-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--olive);
+}
+
+.mobile-close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.mobile-close-btn:hover {
+    background: #fef2f2;
+    color: var(--error);
+}
+
+/* Navigation Groups - Hidden on Desktop */
+.nav-group {
+    display: contents;
+}
+
+.nav-group-title {
+    display: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 15px 20px 8px 20px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Show Hamburger Button */
+    .hamburger-btn {
+        display: block;
+    }
+
+    /* Transform Nav Bar into Mobile Menu */
+    .nav-bar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 85%;
+        max-width: 350px;
+        height: 100vh;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        overflow-y: auto;
+        transition: left 0.3s ease;
+        z-index: 10000;
+    }
+
+    .nav-bar.active {
+        left: 0;
+    }
+
+    /* Show Mobile Menu Header */
+    .mobile-menu-header {
+        display: flex;
+    }
+
+    /* Show Group Titles */
+    .nav-group-title {
+        display: block;
+    }
+
+    /* Adjust Navigation Buttons for Mobile */
+    .nav-btn {
+        width: 100%;
+        justify-content: flex-start;
+        border-radius: 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 20px;
+        font-size: 1rem;
+    }
+
+    .nav-btn:hover {
+        transform: none;
+        box-shadow: none;
+        background: #f8fafc;
+    }
+
+    .nav-btn.active {
+        background: var(--olive);
+        color: white;
+        box-shadow: none;
+    }
+
+    /* Hide Desktop Separators */
+    .nav-sep {
+        display: none;
+    }
+
+    /* Show Mobile Overlay when Active */
+    .mobile-menu-overlay {
+        display: block;
+    }
+
+    /* Adjust Main Content Padding */
+    #app-content {
+        padding: 15px !important;
+        margin-top: 70px;
+    }
+
+    /* Navigation Groups */
+    .nav-group {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+
+/* ================================================================
    CONTENEDORES Y TARJETAS
 ================================================================ */
 .main-container {

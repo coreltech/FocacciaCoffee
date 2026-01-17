@@ -2,73 +2,92 @@ export const AdminView = {
     renderLayout(container, rates, isDebug) {
         container.innerHTML = `
         <div class="main-container">
-            <header class="flex-between bg-white p-4 rounded-xl shadow-sm mb-6">
+            <header style="display:flex; justify-content:space-between; align-items:center; background:white; padding:20px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:25px; flex-wrap:wrap; gap:15px;">
                 <div>
-                    <h1 class="m-0 text-xl font-bold">⚙️ Administración</h1>
-                    <p class="text-muted text-sm m-0">Equipos, Gastos y Herramientas</p>
+                    <h1 style="margin:0 0 5px 0; font-size:1.8rem; font-weight:bold;">⚙️ Administración</h1>
+                    <p style="color:#64748b; font-size:0.95rem; margin:0;">Equipos, Gastos y Herramientas</p>
                 </div>
-                <div class="flex-gap-10">
-                    <div class="bg-light p-2 rounded border border-slate-200 text-sm">
-                        <b class="text-slate-600">USD:</b> Bs ${rates.tasa_usd_ves.toFixed(2)}
+                <div style="display:flex; gap:12px;">
+                    <div style="background:#f8fafc; padding:10px 14px; border-radius:8px; border:2px solid #e2e8f0; font-size:0.85rem;">
+                        <b style="color:#64748b;">USD:</b> Bs ${rates.tasa_usd_ves.toFixed(2)}
                     </div>
                 </div>
             </header>
 
-            <div class="flex-gap-10 mb-4 overflow-x-auto">
-                <button class="nav-btn active" id="tab-assets">🛡️ Equipos</button>
-                <button class="nav-btn" id="tab-expenses">💸 Gastos</button>
-                <button class="nav-btn" id="tab-debug" style="opacity:${isDebug ? 1 : 0.5}; cursor:${isDebug ? 'pointer' : 'not-allowed'};">🐞 Debug</button>
+            <div style="display:flex; gap:12px; margin-bottom:20px; overflow-x:auto; flex-wrap:wrap;">
+                <button class="nav-btn active" id="tab-assets" 
+                    style="padding:12px 20px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
+                    🛡️ Equipos
+                </button>
+                <button class="nav-btn" id="tab-expenses" 
+                    style="padding:12px 20px; background:#f1f5f9; color:#64748b; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
+                    💸 Gastos
+                </button>
+                <button class="nav-btn" id="tab-debug" 
+                    style="padding:12px 20px; background:#f1f5f9; color:#64748b; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; opacity:${isDebug ? 1 : 0.5}; cursor:${isDebug ? 'pointer' : 'not-allowed'}; transition:all 0.2s;">
+                    🐞 Debug
+                </button>
             </div>
 
             <!-- ASSETS PANEL -->
-            <div id="panel-assets" class="stat-card">
-                <h3 class="mt-0 border-b pb-2 mb-4">🛡️ Inventario de Equipos</h3>
-                <div class="grid-2-cols mb-4">
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Nombre</label>
-                        <input id="a-name" class="input-field" placeholder="Nombre del equipo">
+            <div id="panel-assets" class="stat-card" style="padding:25px;">
+                <h3 style="margin:0 0 20px 0; border-bottom:2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">🛡️ Inventario de Equipos</h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:18px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Nombre</label>
+                        <input id="a-name" class="input-field" placeholder="Nombre del equipo" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Costo</label>
-                        <input id="a-cost" type="number" class="input-field">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Costo</label>
+                        <input id="a-cost" type="number" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
                 </div>
-                <div class="grid-2-cols mb-4">
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Marca</label>
-                        <input id="a-brand" class="input-field">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:18px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Marca</label>
+                        <input id="a-brand" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Moneda</label>
-                        <select id="a-currency" class="input-field">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Moneda</label>
+                        <select id="a-currency" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                             <option value="USD">USD</option>
                             <option value="VES">Bs</option>
                         </select>
                     </div>
                 </div>
-                <button id="btn-save-asset" class="btn-primary w-full">💾 Registrar Equipo</button>
+                <button id="btn-save-asset" class="btn-primary" 
+                    style="width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                    💾 Registrar Equipo
+                </button>
                 
-                <div class="mt-4">
-                    <h4>Registrados</h4>
+                <div style="margin-top:25px;">
+                    <h4 style="margin:0 0 15px 0; font-size:1rem;">Registrados</h4>
                     <div id="assets-list"></div>
                 </div>
             </div>
 
             <!-- EXPENSES PANEL -->
-            <div id="panel-expenses" class="stat-card" style="display:none;">
-                <h3 class="mt-0 border-b pb-2 mb-4">💸 Gastos Operativos</h3>
-                <div class="flex-col mb-4">
-                    <label class="text-sm font-bold">Descripción</label>
-                    <input id="e-desc" class="input-field" placeholder="Pago de luz...">
+            <div id="panel-expenses" class="stat-card" style="display:none; padding:25px;">
+                <h3 style="margin:0 0 20px 0; border-bottom:2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">💸 Gastos Operativos</h3>
+                <div style="margin-bottom:18px;">
+                    <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Descripción</label>
+                    <input id="e-desc" class="input-field" placeholder="Pago de luz..." 
+                        style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                 </div>
-                <div class="grid-2-cols mb-4">
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Monto</label>
-                        <input id="e-amount" type="number" class="input-field">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:18px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Monto</label>
+                        <input id="e-amount" type="number" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
-                    <div class="flex-col">
-                        <label class="text-sm font-bold">Categoría</label>
-                        <select id="e-cat" class="input-field">
+                    <div>
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Categoría</label>
+                        <select id="e-cat" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                             <option value="Servicios">Servicios</option>
                             <option value="Consumibles">Consumibles</option>
                             <option value="Mantenimiento">Mantenimiento</option>
@@ -76,38 +95,74 @@ export const AdminView = {
                         </select>
                     </div>
                 </div>
-                <div class="flex-col mb-4">
-                     <label class="text-sm font-bold">Moneda</label>
-                     <select id="e-currency" class="input-field">
+                <div style="margin-bottom:18px;">
+                     <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Moneda</label>
+                     <select id="e-currency" class="input-field" 
+                        style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                         <option value="USD">USD</option>
                         <option value="VES">Bs</option>
                      </select>
                 </div>
-                <button id="btn-save-expense" class="btn-primary w-full bg-blue-600">💸 Registrar Gasto</button>
+                <button id="btn-save-expense" class="btn-primary" 
+                    style="width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                    💸 Registrar Gasto
+                </button>
 
-                <div class="mt-4">
-                    <h4>Últimos Gastos</h4>
+                <div style="margin-top:25px;">
+                    <h4 style="margin:0 0 15px 0; font-size:1rem;">Últimos Gastos</h4>
                     <div id="expenses-list"></div>
                 </div>
             </div>
 
             <!-- DEBUG PANEL -->
-            <div id="panel-debug" class="stat-card" style="display:none; border:2px solid #ef4444;">
-                <h3 class="mt-0 border-b pb-2 mb-4 text-red-600">🐞 ZONA DE PELIGRO (DEBUG)</h3>
+            <div id="panel-debug" class="stat-card" style="display:none; border:2px solid #ef4444; padding:25px;">
+                <h3 style="margin:0 0 20px 0; border-bottom:2px solid #ef4444; padding-bottom:12px; color:#dc2626; font-size:1.1rem;">🐞 ZONA DE PELIGRO (DEBUG)</h3>
                 
                 ${isDebug ? `
-                    <p class="mb-4 text-sm">Estas acciones afectan la base de datos permanentemente. Úsalas con extrema precaución.</p>
-                    <button id="btn-wipe-db" class="btn-primary w-full" style="background:#ef4444; padding:20px;">
+                    <p style="margin-bottom:20px; font-size:0.9rem; color:#64748b;">Estas acciones afectan la base de datos permanentemente. Úsalas con extrema precaución.</p>
+                    <button id="btn-wipe-db" class="btn-primary" 
+                        style="width:100%; padding:20px; background:#ef4444; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
                         💣 BORRAR TODA LA DATA DE PRUEBAS
                     </button>
                 ` : `
-                    <div class="p-4 bg-slate-100 rounded text-center">
-                        <p>El modo Debug está desactivado en la configuración global.</p>
-                        <small>Edita <code>src/core/config.js</code> para activar.</small>
+                    <div style="padding:20px; background:#f1f5f9; border-radius:8px; text-align:center;">
+                        <p style="margin:0 0 10px 0;">El modo Debug está desactivado en la configuración global.</p>
+                        <small style="color:#64748b;">Edita <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">src/core/config.js</code> para activar.</small>
                     </div>
                 `}
             </div>
         </div>
+
+        <style>
+            .nav-btn.active {
+                background: #2563eb !important;
+                color: white !important;
+            }
+            
+            .nav-btn:not(.active):hover {
+                background: #e2e8f0 !important;
+            }
+            
+            .btn-primary:hover {
+                background: #1d4ed8 !important;
+            }
+            
+            #btn-wipe-db:hover {
+                background: #dc2626 !important;
+            }
+            
+            .input-field:focus, select:focus {
+                outline: none;
+                border-color: #2563eb !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+            
+            @media (max-width: 768px) {
+                .stat-card > div[style*="grid-template-columns"] {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+        </style>
         `;
     },
 
