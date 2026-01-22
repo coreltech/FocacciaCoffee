@@ -225,7 +225,7 @@ class PurchasesServiceImpl {
     async getSupplies() {
         const { data, error } = await supabase
             .from('supplies')
-            .select('id, name, unit, current_stock, unit_cost')
+            .select('id, name, unit, current_stock, unit_cost, equivalence, purchase_unit')
             .order('name');
 
         if (error) {

@@ -256,14 +256,44 @@ function bindEvents(rates) {
     }
 
     // Add Customer
-    if (btnAddCustomer) {
-        btnAddCustomer.onclick = async () => {
-            const name = prompt("Nombre del nuevo cliente:");
-            if (!name) return;
+    // Add Customer Logic
+    const formNewCust = document.getElementById('new-customer-form');
+    const inputName = document.getElementById('new-cust-name');
+    const inputPhone = document.getElementById('new-cust-phone');
+    const inputEmail = document.getElementById('new-cust-email');
+    const btnSaveCust = document.getElementById('btn-save-customer');
+    const btnCancelCust = document.getElementById('btn-cancel-customer');
+
+    if (btnAddCustomer && formNewCust) {
+        // Toggle Form
+        btnAddCustomer.onclick = () => {
+            formNewCust.style.display = 'block';
+            inputName.focus();
+        };
+
+        // Cancel
+        btnCancelCust.onclick = () => {
+            formNewCust.style.display = 'none';
+        };
+
+        // Save
+        btnSaveCust.onclick = async () => {
+            const name = inputName.value.trim();
+            const phone = inputPhone.value.trim();
+            const email = inputEmail.value.trim();
+
+            if (!name) return alert("El nombre es obligatorio");
 
             try {
-                const newCustomer = await SalesService.registerCustomer(name);
+                await SalesService.registerCustomer({ name, phone, email });
                 Toast.success(`Cliente ${name} creado`);
+
+                // Clear and Hide
+                inputName.value = '';
+                inputPhone.value = '';
+                inputEmail.value = '';
+                formNewCust.style.display = 'none';
+
                 // Reload data to show new customer in select
                 loadSales(filterDate.value);
             } catch (err) {

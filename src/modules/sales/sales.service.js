@@ -89,10 +89,10 @@ export const SalesService = {
             .eq('id', saleId);
     },
 
-    async registerCustomer(name) {
+    async registerCustomer({ name, phone, email }) {
         const { data, error } = await supabase
             .from('customers')
-            .insert([{ name }])
+            .insert([{ name, phone, email }])
             .select()
             .single();
 

@@ -277,6 +277,113 @@ function setupPurchaseFormListeners() {
 
     // Actualizar totales cuando cambia la tasa BCV
     document.getElementById('purchase-bcv-rate').addEventListener('input', updateTotals);
+
+    // Configurar lógica de cálculo de items
+    setupItemCalculationListeners();
+}
+
+function setupItemCalculationListeners() {
+    const supplySelect = document.getElementById('item-supply');
+    const usePresCheck = document.getElementById('item-use-presentation');
+    const lblUsePres = document.getElementById('lbl-use-presentation');
+    const lblQty = document.getElementById('lbl-item-quantity');
+    const qtyInput = document.getElementById('item-quantity');
+    const totalInput = document.getElementById('item-total');
+    const totalBsInput = document.getElementById('item-total-bs');
+    const priceInput = document.getElementById('item-price');
+
+    // 1. Al cambiar suministro
+    supplySelect.addEventListener('change', () => {
+        const option = supplySelect.options[supplySelect.selectedIndex];
+        const unit = option.dataset.unit || '';
+        const purchaseUnit = option.dataset.purchaseUnit;
+        const equivalence = parseFloat(option.dataset.equivalence) || 0;
+
+        // Reset inputs
+        qtyInput.value = '';
+        totalInput.value = '';
+        totalBsInput.value = '';
+        priceInput.value = '';
+        usePresCheck.checked = false;
+
+        // Configurar toggle de presentación
+        if (purchaseUnit && equivalence > 0) {
+            lblUsePres.style.display = 'block';
+            lblUsePres.querySelector('span').textContent = `${purchaseUnit} = ${equivalence}${unit}`;
+            usePresCheck.disabled = false;
+        } else {
+            lblUsePres.style.display = 'none';
+            usePresCheck.disabled = true;
+        }
+
+        updateLabels();
+    });
+
+    // 2. Al cambiar modo presentación
+    usePresCheck.addEventListener('change', () => {
+        updateLabels();
+        calculateUnitPrice();
+    });
+
+    // 3. Listeners de Inputs
+    qtyInput.addEventListener('input', calculateUnitPrice);
+
+    // Si cambia Total USD -> Calcula Bs y Unit
+    totalInput.addEventListener('input', () => {
+        const usdVal = parseFloat(totalInput.value) || 0;
+        const rate = parseFloat(document.getElementById('purchase-bcv-rate').value) || 1;
+        totalBsInput.value = (usdVal * rate).toFixed(2);
+        calculateUnitPrice();
+    });
+
+    // Si cambia Total Bs -> Calcula USD y Unit
+    totalBsInput.addEventListener('input', () => {
+        const bsVal = parseFloat(totalBsInput.value) || 0;
+        const rate = parseFloat(document.getElementById('purchase-bcv-rate').value) || 1;
+        if (rate > 0) {
+            totalInput.value = (bsVal / rate).toFixed(2);
+            calculateUnitPrice();
+        }
+    });
+
+    function updateLabels() {
+        const option = supplySelect.options[supplySelect.selectedIndex];
+        if (!option.value) return;
+
+        const unit = option.dataset.unit;
+        const purchaseUnit = option.dataset.purchaseUnit;
+
+        if (usePresCheck.checked && purchaseUnit) {
+            lblQty.textContent = `Cantidad (${purchaseUnit})`;
+            qtyInput.placeholder = "Ej: 1, 10, 0.5";
+        } else {
+            lblQty.textContent = `Cantidad (${unit})`;
+            qtyInput.placeholder = "Ej: 500, 1000";
+        }
+    }
+
+    function calculateUnitPrice() {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const total = parseFloat(totalInput.value) || 0;
+
+        if (qty <= 0) {
+            priceInput.value = '';
+            return;
+        }
+
+        // Determinar cantidad real en unidad base
+        let realQty = qty;
+        if (usePresCheck.checked) {
+            const option = supplySelect.options[supplySelect.selectedIndex];
+            const equivalence = parseFloat(option.dataset.equivalence) || 1;
+            realQty = qty * equivalence;
+        }
+
+        if (realQty > 0) {
+            const unitCost = total / realQty;
+            priceInput.value = unitCost.toFixed(6); // Más decimales para precisión
+        }
+    }
 }
 
 async function loadSupplierLocations(e) {
@@ -323,38 +430,51 @@ function addPurchaseItem() {
     const supplySelect = document.getElementById('item-supply');
     const brandInput = document.getElementById('item-brand');
     const quantityInput = document.getElementById('item-quantity');
-    const priceInput = document.getElementById('item-price');
+    const totalInput = document.getElementById('item-total');
+    const priceInput = document.getElementById('item-price'); // Readonly now
+    const usePresCheck = document.getElementById('item-use-presentation');
 
     const supplyId = supplySelect.value;
     const brand = brandInput.value.trim();
-    const quantity = parseFloat(quantityInput.value);
-    const price = parseFloat(priceInput.value);
+    const inputQty = parseFloat(quantityInput.value);
+    const inputTotal = parseFloat(totalInput.value);
 
     // Validaciones
     if (!supplyId) {
         showNotification('Seleccione un suministro', 'warning');
         return;
     }
-    if (!quantity || quantity <= 0) {
+    if (!inputQty || inputQty <= 0) {
         showNotification('Ingrese una cantidad válida', 'warning');
         return;
     }
-    if (!price || price <= 0) {
-        showNotification('Ingrese un precio válido', 'warning');
+    if (!inputTotal || inputTotal <= 0) {
+        showNotification('Ingrese el monto Total ($)', 'warning');
         return;
     }
 
     const supply = currentSupplies.find(s => s.id === supplyId);
-    const subtotal = quantity * price;
+
+    // Cálculos Finales
+    let finalQty = inputQty;
+
+    // Si usó presentación, convertir a unidad base
+    if (usePresCheck && usePresCheck.checked) {
+        const equivalence = parseFloat(supplySelect.options[supplySelect.selectedIndex].dataset.equivalence) || 1;
+        finalQty = inputQty * equivalence;
+    }
+
+    // El precio unitario real base se deriva del total / cantidad base
+    const finalUnitPrice = inputTotal / finalQty;
 
     const item = {
         supply_id: supplyId,
         supply_name: supply.name,
         supply_unit: supply.unit,
         brand_description: brand || 'N/A',
-        quantity,
-        unit_price_usd: price,
-        subtotal
+        quantity: finalQty,
+        unit_price_usd: finalUnitPrice,
+        subtotal: inputTotal
     };
 
     currentPurchaseItems.push(item);
@@ -364,7 +484,16 @@ function addPurchaseItem() {
     supplySelect.value = '';
     brandInput.value = '';
     quantityInput.value = '';
+    totalInput.value = '';
+    document.getElementById('item-total-bs').value = '';
     priceInput.value = '';
+    if (usePresCheck) usePresCheck.checked = false;
+
+    if (document.getElementById('lbl-use-presentation'))
+        document.getElementById('lbl-use-presentation').style.display = 'none';
+
+    if (document.getElementById('lbl-item-quantity'))
+        document.getElementById('lbl-item-quantity').textContent = 'Cantidad';
 }
 
 function renderPurchaseItems() {

@@ -59,6 +59,20 @@ export const SalesView = {
                             style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                             <option value="">Cliente Genérico</option>
                         </select>
+                        
+                        <div id="new-customer-form" style="display:none; background:#eff6ff; padding:12px; border-radius:8px; margin-top:8px; border:1px solid #bfdbfe;">
+                            <label style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">REGISTRAR NUEVO CLIENTE</label>
+                            <input type="text" id="new-cust-name" placeholder="Nombre Completo" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="email" id="new-cust-email" placeholder="Email (Opcional)" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <div style="display:flex; gap:5px;">
+                                <button id="btn-save-customer" style="flex:1; background:#2563eb; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar</button>
+                                <button id="btn-cancel-customer" style="width:30px; background:#ef4444; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">✕</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="background:#f8fafc; padding:18px; border-radius:10px; border:2px solid #e2e8f0; margin-top:18px;">
@@ -176,7 +190,7 @@ export const SalesView = {
         customers.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = c.name;
+            opt.textContent = c.phone ? `${c.name} (${c.phone})` : c.name;
             select.appendChild(opt);
         });
     },

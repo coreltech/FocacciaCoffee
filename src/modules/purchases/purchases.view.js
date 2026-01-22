@@ -313,19 +313,28 @@ export const PurchasesView = {
                             
                             <div class="items-controls">
                                 <div class="form-grid">
-                                    <div class="form-group">
+                                    <div class="form-group" style="grid-column: span 2;">
                                         <label for="item-supply">Suministro</label>
-                                        <select id="item-supply">
+                                        <select id="item-supply" style="width: 100%;">
                                             <option value="">Seleccione un suministro</option>
                                             ${supplies.map(s => `
-                                                <option value="${s.id}" data-unit="${s.unit}">
+                                                <option value="${s.id}" 
+                                                    data-unit="${s.unit}" 
+                                                    data-equivalence="${s.equivalence || 0}" 
+                                                    data-purchase-unit="${s.purchase_unit || ''}">
                                                     ${s.name} (${s.unit})
                                                 </option>
                                             `).join('')}
                                         </select>
+                                        <div style="margin-top: 5px;">
+                                            <label style="font-size: 0.85rem; cursor: pointer; color: #2563eb; display: none;" id="lbl-use-presentation">
+                                                <input type="checkbox" id="item-use-presentation"> 
+                                                Comprar por Presentación (<span></span>)
+                                            </label>
+                                        </div>
                                     </div>
 
-                                    <div class="form-group">
+                                    <div class="form-group" style="grid-column: span 2;">
                                         <label for="item-brand">Marca / Descripción</label>
                                         <input 
                                             type="text" 
@@ -335,7 +344,7 @@ export const PurchasesView = {
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="item-quantity">Cantidad</label>
+                                        <label for="item-quantity" id="lbl-item-quantity">Cantidad</label>
                                         <input 
                                             type="number" 
                                             id="item-quantity" 
@@ -345,19 +354,42 @@ export const PurchasesView = {
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="item-price">Precio Unit. ($)</label>
+                                        <label for="item-total">Total ($)</label>
                                         <input 
                                             type="number" 
-                                            id="item-price" 
+                                            id="item-total" 
                                             step="0.01"
-                                            placeholder="0.00"
+                                            placeholder="0.00" 
+                                            style="font-weight: bold; color: #166534;"
                                         />
                                     </div>
 
                                     <div class="form-group">
-                                        <label>&nbsp;</label>
-                                        <button type="button" class="btn-primary" id="btn-add-item">
-                                            ➕ Agregar Item
+                                        <label for="item-total-bs">Total (Bs)</label>
+                                        <input 
+                                            type="number" 
+                                            id="item-total-bs" 
+                                            step="0.01"
+                                            placeholder="0.00" 
+                                            style="color: #ea580c;"
+                                        />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="item-price">Costo Unit. Calc.</label>
+                                        <input 
+                                            type="number" 
+                                            id="item-price" 
+                                            step="0.0001"
+                                            placeholder="0.00"
+                                            readonly
+                                            style="background: #f1f5f9; color: #64748b;"
+                                        />
+                                    </div>
+
+                                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                                        <button type="button" class="btn-primary" id="btn-add-item" style="width: 100%;">
+                                            ➕ Agregar
                                         </button>
                                     </div>
                                 </div>
