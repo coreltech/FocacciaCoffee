@@ -243,9 +243,22 @@ export const SalesView = {
             let displayCustomer = s.customers?.name || s.payment_details?.customer_web || s.client_name || 'Cliente Genérico';
             if (isWeb) displayCustomer = `🌐 ${displayCustomer}`;
 
-            // Metadata de entrega
-            const orderTypeStr = s.payment_details?.order_type === 'delivery' ? '🛵 DELIVERY' : '📍 PICKUP';
+            const isDelivery = s.payment_details?.order_type === 'delivery';
+            const orderTypeStr = isDelivery ? '🛵 DELIVERY' : '📍 PICKUP';
             const addressStr = s.payment_details?.delivery_address;
+
+            // Logic for Delivery Date (Pre-order)
+            let deliveryDateBadge = '';
+            if (s.delivery_date) {
+                // Formatting date to DD/MM
+                const d = new Date(s.delivery_date);
+                // Adjust for timezone offset to avoid "day before" issue
+                const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+                const adjustedDate = new Date(d.getTime() + userTimezoneOffset);
+                const dateStr = adjustedDate.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', weekday: 'short' });
+
+                deliveryDateBadge = `<span style="background:#fef08a; color:#854d0e; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.7rem; border:1px solid #fde047; white-space:nowrap;">📅 ENTREGAR: ${dateStr.toUpperCase()}</span>`;
+            }
 
             // Resumen de productos para la web
             const productTitle = (isWeb && s.payment_details?.resumen)
@@ -256,8 +269,11 @@ export const SalesView = {
                 <div style="background:white; border:1px solid #f1f5f9; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid ${isPending ? '#f87171' : '#10b981'}; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                ${deliveryDateBadge}
+                                <span style="font-size:0.7rem; color:#64748b; font-weight:800; text-transform:uppercase;">${orderTypeStr}</span>
+                            </div>
                             <b style="font-size:0.95rem; color:#1e293b; display:block;">${productTitle}</b>
-                            <span style="font-size:0.7rem; color:#64748b; font-weight:800; text-transform:uppercase;">${orderTypeStr}</span>
                         </div>
                         <button class="btn-delete-sale" data-id="${s.id}" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:0 0 0 10px;">🗑️</button>
                     </div>
