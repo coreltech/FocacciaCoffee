@@ -133,7 +133,7 @@ export async function loadCatalog() {
     }
 }
 
-function openEdit(item) {
+async function openEdit(item) {
     document.getElementById('c-id').value = item.id;
     document.getElementById('c-name').value = item.product_name;
     document.getElementById('c-description').value = item.description || '';
@@ -141,19 +141,103 @@ function openEdit(item) {
     document.getElementById('c-category').value = item.categoria || 'Focaccias';
     document.getElementById('c-icon').value = item.icon || '';
     document.getElementById('c-stock').value = item.stock_disponible || 0;
-    // Fix: Round manual cost to avoid validation error
     document.getElementById('c-manual-cost').value = (item.costo_unitario_referencia || 0).toFixed(2);
 
-    // Reset Calculator State (Improvement: Load previous state if saved in DB)
+    // Image Preview Handling
+    const imgPreview = document.getElementById('c-image-preview');
+    const imgContainer = document.getElementById('image-preview-container');
+    const originalImgInput = document.getElementById('c-original-image');
+
+    if (item.image_url) {
+        imgPreview.src = item.image_url;
+        imgContainer.style.display = 'block';
+        originalImgInput.value = item.image_url;
+    } else {
+        imgContainer.style.display = 'none';
+        originalImgInput.value = '';
+    }
+
+    // Reset Lists
     currentToppings = [];
     currentPackaging = [];
+
+    // Load Composition from DB
+    try {
+        const composition = await InventoryService.getCatalogComposition(item.id);
+
+        if (composition && composition.length > 0) {
+            // Populate Calculator
+            document.getElementById('enable-calculator').checked = true;
+
+            composition.forEach(comp => {
+                // 1. Base Recipe (Masa)
+                if (comp.recipe_id && comp.recipes?.tipo_receta === 'MASA') {
+                    document.getElementById('calc-base-recipe').value = comp.recipe_id;
+                    document.getElementById('calc-base-weight').value = comp.quantity;
+                }
+                // 2. Toppings (Other Recipes, Components, supplies not packaging)
+                else {
+                    let type = '';
+                    let id = '';
+                    let name = '';
+                    let cost = 0;
+                    let isPackaging = false;
+
+                    if (comp.recipe_id) {
+                        type = 'R';
+                        id = comp.recipe_id;
+                        name = `👩‍🍳 ${comp.recipes.name}`;
+                        const r = recipes.find(r => r.id === id);
+                        cost = r ? getRecipeCostPerGram(r) : 0;
+                    } else if (comp.component_id) {
+                        type = 'P';
+                        id = comp.component_id;
+                        name = `🛒 ${comp.components.product_name}`;
+                        cost = comp.components.precio_venta_final;
+                    } else if (comp.supply_id) {
+                        type = 'S';
+                        id = comp.supply_id;
+                        name = comp.supplies.name;
+                        cost = comp.supplies.last_purchase_price / comp.supplies.equivalence;
+
+                        // Heuristic for Packaging
+                        if (name.toLowerCase().includes('caja') || name.toLowerCase().includes('envase') || name.toLowerCase().includes('bolsa') || name.toLowerCase().includes('servilleta')) {
+                            isPackaging = true;
+                        }
+                    }
+
+                    const itemObj = { id, type, name, quantity: comp.quantity, unit_cost: cost };
+
+                    if (isPackaging) {
+                        currentPackaging.push(itemObj);
+                    } else {
+                        currentToppings.push(itemObj);
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error("Error loading composition:", err);
+    }
+
     renderCalculatorLists();
 
     CatalogView.toggleForm();
     document.getElementById('form-title').innerText = "Editar Producto";
 
     handleCategoryChange();
-    document.getElementById('c-price').dispatchEvent(new Event('input'));
+
+    // Trigger Sync
+    const enableCalc = document.getElementById('enable-calculator');
+    const calcPanel = document.getElementById('calculator-panel');
+    const manualPanel = document.getElementById('manual-cost-panel');
+
+    calcPanel.style.display = enableCalc.checked ? 'block' : 'none';
+    manualPanel.style.display = enableCalc.checked ? 'none' : 'block';
+
+    // Calculate cost after loading
+    const simulatedEvent = new Event('input');
+    document.getElementById('c-price').dispatchEvent(simulatedEvent);
 }
 
 function handleCategoryChange() {
@@ -370,6 +454,9 @@ function bindEvents(rates) {
         try {
             if (file) {
                 imageUrl = await InventoryService.uploadProductImage(file);
+            } else {
+                // Use existing image if not uploading new one
+                imageUrl = document.getElementById('c-original-image').value || null;
             }
 
             const productData = {
@@ -381,7 +468,7 @@ function bindEvents(rates) {
                 icon: document.getElementById('c-icon').value.trim() || null,
                 esta_activo: true,
                 stock_disponible: parseFloat(document.getElementById('c-stock').value) || 0,
-                image_url: imageUrl // Fix: Save the uploaded image URL
+                image_url: imageUrl // Keep existing or use new
             };
 
             // Fix: Force UPDATE if ID exists by ensuring the ID field is present in the object

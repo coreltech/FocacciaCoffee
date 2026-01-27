@@ -230,6 +230,11 @@ export const CatalogView = {
                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Foto del Producto</label>
                             <input type="file" id="c-image" class="input-field" accept="image/*" 
                                 style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            <div id="image-preview-container" style="margin-top:10px; display:none;">
+                                <label style="font-size:0.8rem; color:#64748b; display:block; margin-bottom:5px;">Imagen Actual:</label>
+                                <img id="c-image-preview" src="" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid #cbd5e1;">
+                                <input type="hidden" id="c-original-image">
+                            </div>
                         </div>
 
                         <div class="input-group" style="margin-top:18px;">
