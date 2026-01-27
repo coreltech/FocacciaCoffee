@@ -49,7 +49,7 @@ function hasPermission(moduleName) {
  * Oculta botones de navegación según el rol del usuario
  */
 function updateNavigationByRole() {
-    const navButtons = document.querySelectorAll('.nav-btn');
+    const navButtons = document.querySelectorAll('.nav-btn:not(#logout-btn)');
     const userRole = getCurrentRole();
 
     navButtons.forEach(btn => {
