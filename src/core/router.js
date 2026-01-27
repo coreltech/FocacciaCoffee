@@ -85,20 +85,15 @@ function displayUserInfo() {
     if (!userContainer) {
         userContainer = document.createElement('div');
         userContainer.id = 'user-info-container';
-        userContainer.style.cssText = `
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0 1rem;
-        `;
+        userContainer.className = 'user-profile-section';
+        // Remove inline styles to rely on theme.css
 
         userContainer.innerHTML = `
-            <div style="text-align: right; font-size: 0.85rem;">
-                <div style="font-weight: 600; color: var(--primary);">${userName}</div>
-                <div style="color: var(--text-muted); font-size: 0.75rem;">${roleNames[userRole] || userRole}</div>
+            <div class="user-info-details">
+                <div class="user-name">${userName}</div>
+                <div class="user-role">${roleNames[userRole] || userRole}</div>
             </div>
-            <button id="logout-btn" class="nav-btn" style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white; border: none;">
+            <button id="logout-btn" class="nav-btn logout-btn">
                 🚪 Cerrar Sesión
             </button>
         `;

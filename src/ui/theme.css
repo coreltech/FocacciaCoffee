@@ -137,7 +137,43 @@ h6 {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     justify-content: center;
+    justify-content: center;
     flex-wrap: wrap;
+}
+
+/* User Profile Section (Desktop) */
+.user-profile-section {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1rem;
+    border-left: 1px solid var(--border);
+}
+
+.user-info-details {
+    text-align: right;
+    font-size: 0.85rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.user-role {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.logout-btn:hover {
+    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.25) !important;
 }
 
 .nav-sep {
@@ -299,6 +335,7 @@ h6 {
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
+
     /* Show Hamburger Button */
     .hamburger-btn {
         display: block;
@@ -368,9 +405,10 @@ h6 {
     /* Show Mobile Overlay when Active */
     /* Control Visibility via state */
     .mobile-menu-overlay {
-        display: none; /* Only show when active */
+        display: none;
+        /* Only show when active */
     }
-    
+
     .mobile-menu-overlay.active {
         display: block;
     }
@@ -385,6 +423,28 @@ h6 {
     .nav-group {
         display: flex;
         flex-direction: column;
+    }
+
+    /* Mobile User Profile */
+    .user-profile-section {
+        margin-left: 0;
+        margin-top: 20px;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding: 20px;
+        flex-direction: column;
+        align-items: stretch;
+        background: #f8fafc;
+        border-radius: 12px;
+    }
+
+    .user-info-details {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .user-name {
+        font-size: 1.1rem;
     }
 }
 
