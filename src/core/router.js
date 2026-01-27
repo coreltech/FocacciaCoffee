@@ -82,6 +82,9 @@ function displayUserInfo() {
 
     // Crear contenedor de usuario si no existe
     let userContainer = document.getElementById('user-info-container');
+
+    // console.log("Mostrando usuario:", userName, userRole);
+
     if (!userContainer) {
         userContainer = document.createElement('div');
         userContainer.id = 'user-info-container';
