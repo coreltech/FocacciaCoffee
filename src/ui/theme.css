@@ -366,7 +366,12 @@ h6 {
     }
 
     /* Show Mobile Overlay when Active */
+    /* Control Visibility via state */
     .mobile-menu-overlay {
+        display: none; /* Only show when active */
+    }
+    
+    .mobile-menu-overlay.active {
         display: block;
     }
 
