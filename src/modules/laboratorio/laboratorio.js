@@ -1,4 +1,4 @@
-import { PlansService } from './plan.service.js';
+import { PlansService } from './laboratorio.service.js';
 
 let currentPlan = {
     id: null,

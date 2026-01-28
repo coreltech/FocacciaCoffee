@@ -11,7 +11,7 @@ const modulePermissions = {
     catalogo: ['director', 'gerente', 'asistente'], // Todos pueden ver catálogo
     ventas: ['director', 'gerente', 'asistente'], // Todos pueden vender
     administracion: ['director'], // Solo director
-    plan: ['director'], // Solo director
+    laboratorio: ['director'], // Solo director
     reportes: ['director', 'gerente'], // Director y gerente
     biblioteca: ['director', 'gerente', 'asistente'], // Todos
     mermas: ['director', 'gerente'], // Director y gerente
@@ -28,7 +28,7 @@ const routes = {
     catalogo: () => import('../modules/inventory/catalog.controller.js'),
     ventas: () => import('../modules/sales/sales.controller.js'),
     administracion: () => import('../modules/admin/admin.controller.js'),
-    plan: () => import('../modules/plan/plan.js'),
+    laboratorio: () => import('../modules/laboratorio/laboratorio.js'),
     reportes: () => import('../modules/reports/reports.js'),
     biblioteca: () => import('../modules/library/library.js'),
     mermas: () => import('../modules/waste/waste.controller.js'),
@@ -181,7 +181,7 @@ export async function initRouter() {
                 if (tab === 'config_productos') await module.loadAssemblyModern();
                 if (tab === 'mermas') await module.loadWaste();
                 if (tab === 'administracion') await module.loadAdmin();
-                if (tab === 'plan') await module.loadPlan();
+                if (tab === 'laboratorio') await module.loadPlan(); // Function inside is still loadPlan
                 if (tab === 'reportes') await module.loadReports();
                 if (tab === 'biblioteca') await module.loadLibrary();
                 if (tab === 'compras') await module.loadPurchases();
