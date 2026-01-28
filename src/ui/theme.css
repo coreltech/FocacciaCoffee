@@ -167,13 +167,20 @@ h6 {
 }
 
 .logout-btn {
-    background: linear-gradient(135deg, #dc2626, #ef4444) !important;
-    color: white !important;
-    border: none !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
+    box-shadow: none !important;
 }
 
 .logout-btn:hover {
-    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.25) !important;
+    background: #fef2f2 !important;
+    color: var(--error) !important;
+    border-color: var(--error) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1) !important;
 }
 
 .nav-sep {
