@@ -215,6 +215,36 @@ export const PlansService = {
                     debugLog.push(`❌ ERROR: Insumo no encontrado en DB`);
                 }
             }
+            else if (item.type === 'dynamic') {
+                debugLog.push(`✨ Item Dinámico: ${item.name}`);
+                debugLog.push(`💰 Precio Manual: $${item.manualUnitCost} / ${item.unit}`);
+
+                const cost = item.quantity * item.manualUnitCost;
+                itemCost = cost;
+
+                debugLog.push(`💵 Costo calculado: ${item.quantity}${item.unit} * $${item.manualUnitCost} = $${cost.toFixed(2)}`);
+
+                breakdown.push({
+                    name: item.name,
+                    qty: item.quantity,
+                    unit: item.unit,
+                    cost: cost,
+                    hasPrice: true,
+                    isDynamic: true
+                });
+
+                // Add to shopping list map specific for dynamics to avoid ID collision?
+                // Or just use a unique ID. We used 'temp-' timestamp in plan.js so it should be fine.
+                // We construct a "fake" supply object.
+                const fakeSupply = {
+                    id: item.id,
+                    name: item.name,
+                    unit: item.unit,
+                    last_purchase_price: item.manualUnitCost,
+                    equivalence: 1
+                };
+                addToShoppingList(shoppingListMap, fakeSupply, item.quantity);
+            }
             else if (item.type === 'recipe') {
                 const recipe = recipes.find(r => r.id.toString() === item.id.toString());
 

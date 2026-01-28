@@ -27,8 +27,8 @@ function renderLayout(container, history) {
         <div class="planner-layout" style="display: grid; grid-template-columns: 260px 1fr; gap: 20px; height: calc(100vh - 80px);">
             <!-- Sidebar: History -->
             <aside style="background: white; border-right: 1px solid #e2e8f0; padding: 20px; overflow-y: auto;">
-                <button id="btn-new-plan" class="btn-primary" style="width: 100%; margin-bottom: 20px;">+ Nuevo Plan</button>
-                <h3 style="font-size: 0.9rem; color: #64748b; text-transform: uppercase; margin-bottom: 10px;">Historial</h3>
+                <button id="btn-new-plan" class="btn-primary" style="width: 100%; margin-bottom: 20px; background: #6366f1;">+ Nuevo Experimento</button>
+                <h3 style="font-size: 0.9rem; color: #64748b; text-transform: uppercase; margin-bottom: 10px;">Historial de Labs</h3>
                 <div id="plans-list" style="display: flex; flex-direction: column; gap: 10px;">
                     ${history.map(p => `
                         <div class="plan-item" data-id="${p.id}" style="padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; position: relative;">
@@ -38,8 +38,8 @@ function renderLayout(container, history) {
                                     <div style="font-size: 0.8rem; color: #94a3b8;">${new Date(p.planned_date).toLocaleDateString()}</div>
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button onclick="window.editPlan('${p.id}')" title="Editar plan" style="background: #3b82f6; color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer; font-size: 0.85rem;">✏️</button>
-                                    <button onclick="window.deletePlan('${p.id}')" title="Eliminar plan" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer; font-size: 0.85rem;">🗑️</button>
+                                    <button onclick="window.editPlan('${p.id}')" title="Editar" style="background: #3b82f6; color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer; font-size: 0.85rem;">✏️</button>
+                                    <button onclick="window.deletePlan('${p.id}')" title="Eliminar" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer; font-size: 0.85rem;">🗑️</button>
                                 </div>
                             </div>
                         </div>
@@ -50,64 +50,103 @@ function renderLayout(container, history) {
             <!-- Main: Editor -->
             <main style="padding: 20px; overflow-y: auto;">
                 <!-- Header -->
-                <header style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                <header style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 5px solid #6366f1;">
                     <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px;">
                         <!-- Left: Plan Info -->
                         <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; gap: 15px; align-items: center;">
-                                <input type="text" id="plan-name" placeholder="Nombre del Plan (ej. Jornada Viernes)" value="${currentPlan.name}" 
+                                <span style="font-size: 1.5rem;">🧪</span>
+                                <input type="text" id="plan-name" placeholder="Nombre del Experimento (ej. Prueba Focaccia Gluten Free)" value="${currentPlan.name}" 
                                     style="font-size: 1.2rem; font-weight: bold; border: none; border-bottom: 2px solid #e2e8f0; padding: 5px; flex: 1; outline: none;">
                                 <input type="date" id="plan-date" value="${currentPlan.planned_date}" 
                                     style="border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
                             </div>
-                            <textarea id="plan-description" placeholder="Motivo o descripción (opcional)" 
+                            <textarea id="plan-description" placeholder="Notas del experimento..." 
                                 style="border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; resize: none; font-size: 0.9rem; color: #64748b; height: 45px; font-family: inherit;">${currentPlan.description || ''}</textarea>
                         </div>
                         <!-- Right: Save Button -->
                         <div>
-                            <button id="btn-save-plan" class="btn-secondary" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600;">💾 Guardar</button>
+                            <button id="btn-save-plan" class="btn-secondary" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600;">💾 Guardar Lab</button>
                         </div>
                     </div>
                 </header>
 
                     <!-- Product Input Section -->
-                    <section style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <h3 style="margin-top: 0; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">➕ Agregar Producto</h3>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 15px;">
-                            <!-- Selector -->
-                            <div>
-                                <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Receta o Insumo</label>
-                                <input list="product-list" id="sel-product-input" placeholder="Buscar..." 
-                                    style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; background: white;">
-                                <datalist id="product-list">
-                                    ${selectableItems.map(i => `<option value="${i.label}">${i.type === 'recipe' ? '🍞' : '📦'} ${i.label}</option>`).join('')}
-                                </datalist>
+                    <section style="background: white; padding: 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; overflow:hidden;">
+                        <!-- TABS -->
+                        <div style="display: flex; background: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                            <button id="tab-catalog" class="tab-btn active" style="flex:1; padding: 15px; border:none; background:white; font-weight:600; cursor:pointer; color:#334155; border-bottom:2px solid #6366f1;">📦 Catálogo Existente</button>
+                            <button id="tab-dynamic" class="tab-btn" style="flex:1; padding: 15px; border:none; background:#f1f5f9; font-weight:600; cursor:pointer; color:#64748b;">✨ Ingrediente Temporal (Lab)</button>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <!-- VIEW: CATALOG -->
+                            <div id="view-catalog">
+                                <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Buscar en Base de Datos</label>
+                                <div style="display:flex; gap:10px;">
+                                    <input list="product-list" id="sel-product-input" placeholder="Escribe para buscar..." 
+                                        style="flex:1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; background: white;">
+                                    <datalist id="product-list">
+                                        ${selectableItems.map(i => `<option value="${i.label}">${i.type === 'recipe' ? '🍞' : '📦'} ${i.label}</option>`).join('')}
+                                    </datalist>
+                                </div>
+                                <div id="catalog-dynamic-inputs" style="margin-top:15px; display: grid; grid-template-columns: auto auto; gap: 20px; justify-content: start;">
+                                    <!-- Populated by JS -->
+                                </div>
+                                <button id="btn-add-catalog" class="btn-primary" style="margin-top:15px; width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; display:none;">
+                                    ➕ Agregar del Catálogo
+                                </button>
                             </div>
 
-                            <!-- Dynamic Inputs (Grid for Recipe, Single for Supply) -->
-                            <div id="dynamic-inputs" style="display: grid; grid-template-columns: auto auto; gap: 30px; justify-content: start;">
-                                <!-- Placeholder -->
+                            <!-- VIEW: DYNAMIC -->
+                            <div id="view-dynamic" style="display:none;">
+                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; align-items:end;">
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Nombre del Ingrediente</label>
+                                        <input type="text" id="dyn-name" placeholder="Ej. Especia Exótica" 
+                                            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Cantidad</label>
+                                        <input type="number" id="dyn-qty" placeholder="0" 
+                                            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Unidad</label>
+                                        <select id="dyn-unit" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; background:white;">
+                                            <option value="g">Gramos (g)</option>
+                                            <option value="ml">Mililitros (ml)</option>
+                                            <option value="und">Unidades</option>
+                                            <option value="kg">Kilos (kg)</option>
+                                            <option value="l">Litros (l)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Costo Unit. EST ($)</label>
+                                        <input type="number" id="dyn-cost" placeholder="0.00" step="0.01" 
+                                            style="width: 100%; padding: 12px; border: 2px solid #fbbf24; border-radius: 6px; font-size: 0.95rem;">
+                                    </div>
+                                </div>
+                                <button id="btn-add-dynamic" class="btn-primary" style="margin-top:15px; width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; background: #f59e0b; border:none; color:white;">
+                                    ✨ Agregar Ingrediente Temporal
+                                </button>
+                                <div style="margin-top:10px; font-size:0.8rem; color:#94a3b8; text-align:center;">
+                                    * Este ingrediente solo existirá en este experimento, no se guardará en el inventario general.
+                                </div>
                             </div>
-
-                            <!-- Add Button -->
-                            <button id="btn-add-item" class="btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600;">
-                                ➕ Agregar al Plan
-                            </button>
                         </div>
                     </section>
 
                 <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 20px;">
                     <!-- Items Table -->
                     <section style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top: 0; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">📋 Planificación</h3>
+                        <h3 style="margin-top: 0; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">📋 Mezcla de Laboratorio</h3>
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="text-align: left; color: #64748b; font-size: 0.8rem; text-transform:uppercase;">
                                     <th style="padding: 10px;">Ítem</th>
-                                    <th style="padding: 10px;">Gramos/Und</th>
-                                    <th style="padding: 10px;">Unidades</th>
-                                    <th style="padding: 10px; text-align:right;">Subtotal</th>
+                                    <th style="padding: 10px;">Detalle</th>
+                                    <th style="padding: 10px; text-align:right;">Costo</th>
                                     <th style="padding: 10px;"></th>
                                 </tr>
                             </thead>
@@ -119,7 +158,7 @@ function renderLayout(container, history) {
 
                     <!-- Results Panel -->
                     <section id="results-panel" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px dashed #cbd5e1; display:flex; flex-direction:column; gap:15px;">
-                        <div style="text-align: center; color: #94a3b8; padding: 40px;">Agrega recetas para calcular costos...</div>
+                        <div style="text-align: center; color: #94a3b8; padding: 40px;">Agrega items para simular...</div>
                     </section>
                 </div>
             </main>
@@ -139,46 +178,78 @@ function renderLayout(container, history) {
 
 function attachGlobalListeners() {
     const inputSel = document.getElementById('sel-product-input');
-    const dynamicContainer = document.getElementById('dynamic-inputs');
+    const dynamicContainer = document.getElementById('catalog-dynamic-inputs');
+    const btnAddCatalog = document.getElementById('btn-add-catalog');
 
-    // Detect Input Change to Switch Dynamic Fields
+    // TABS LOGIC
+    const tabCatalog = document.getElementById('tab-catalog');
+    const tabDynamic = document.getElementById('tab-dynamic');
+    const viewCatalog = document.getElementById('view-catalog');
+    const viewDynamic = document.getElementById('view-dynamic');
+
+    tabCatalog.onclick = () => {
+        tabCatalog.className = 'tab-btn active';
+        tabDynamic.className = 'tab-btn';
+        tabCatalog.style.background = 'white';
+        tabCatalog.style.borderBottom = '2px solid #6366f1';
+        tabDynamic.style.background = '#f1f5f9';
+        tabDynamic.style.borderBottom = 'none';
+
+        viewCatalog.style.display = 'block';
+        viewDynamic.style.display = 'none';
+    };
+
+    tabDynamic.onclick = () => {
+        tabDynamic.className = 'tab-btn active';
+        tabCatalog.className = 'tab-btn';
+        tabDynamic.style.background = 'white';
+        tabDynamic.style.borderBottom = '2px solid #f59e0b';
+        tabCatalog.style.background = '#f1f5f9';
+        tabCatalog.style.borderBottom = 'none';
+
+        viewDynamic.style.display = 'block';
+        viewCatalog.style.display = 'none';
+    };
+
+    // --- CATALOG ITEMS LOGIC ---
     inputSel.addEventListener('input', (e) => {
         const val = e.target.value;
         const selectedOption = selectableItems.find(i => i.label === val);
         selectedItemMeta = selectedOption;
 
-        if (selectedOption && selectedOption.type === 'recipe') {
-            // SHOW DOUBLE INPUTS (Recipe)
-            dynamicContainer.innerHTML = `
-                <div>
-                    <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Gramaje (g)</label>
-                    <input type="number" id="inp-weight" value="${selectedOption.base || 0}" 
-                        style="width: 180px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; background: #f8fafc;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Unidades</label>
-                    <input type="number" id="inp-units" placeholder="0" 
-                        style="width: 180px; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 0.95rem;">
-                </div>
-            `;
-            // Focus on units
-            setTimeout(() => document.getElementById('inp-units').focus(), 50);
-
+        if (selectedOption) {
+            btnAddCatalog.style.display = 'block';
+            if (selectedOption.type === 'recipe') {
+                dynamicContainer.innerHTML = `
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Gramaje (g)</label>
+                        <input type="number" id="inp-weight" value="${selectedOption.base || 0}" 
+                            style="width: 180px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; background: #f8fafc;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Unidades</label>
+                        <input type="number" id="inp-units" placeholder="0" 
+                            style="width: 180px; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                `;
+                setTimeout(() => document.getElementById('inp-units').focus(), 50);
+            } else {
+                dynamicContainer.innerHTML = `
+                    <div style="grid-column: 1 / -1;">
+                        <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Cantidad</label>
+                        <input type="number" id="inp-simple-qty" placeholder="0" 
+                            style="width: 100%; max-width: 300px; padding: 12px; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                `;
+            }
         } else {
-            // SHOW SINGLE INPUT (Supply)
-            dynamicContainer.innerHTML = `
-                <div style="grid-column: 1 / -1;">
-                    <label style="display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">Cantidad</label>
-                    <input type="number" id="inp-simple-qty" placeholder="0" 
-                        style="width: 100%; max-width: 300px; padding: 12px; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
-                </div>
-            `;
+            dynamicContainer.innerHTML = '';
+            btnAddCatalog.style.display = 'none';
         }
     });
 
-    // ADD ITEM Logic
-    document.getElementById('btn-add-item').onclick = () => {
-        if (!selectedItemMeta) return alert('Seleccione un ítem válido primero');
+    btnAddCatalog.onclick = () => {
+        if (!selectedItemMeta) return;
 
         let totalQty = 0;
         let details = {};
@@ -187,19 +258,13 @@ function attachGlobalListeners() {
             const w = parseFloat(document.getElementById('inp-weight').value) || 0;
             const u = parseFloat(document.getElementById('inp-units').value) || 0;
             if (w <= 0 || u <= 0) return alert('Gramaje y Unidades son obligatorios');
-
-            totalQty = w * u; // Total grams
+            totalQty = w * u;
             details = { unitWeight: w, unitCount: u };
         } else {
             const q = parseFloat(document.getElementById('inp-simple-qty').value) || 0;
             if (q <= 0) return alert('Cantidad obligatoria');
             totalQty = q;
         }
-
-        // Add Logic
-        // Remove existing equal item to replace/update? Or just push? 
-        // Professional planner allows multiple entries (e.g. 10x250g and 5x500g of same dough). 
-        // So we just push new entry.
 
         currentPlan.items.push({
             type: selectedItemMeta.type,
@@ -212,10 +277,41 @@ function attachGlobalListeners() {
         renderItems();
         runSimulation();
 
-        // Reset Inputs
+        // Reset
         inputSel.value = '';
         selectedItemMeta = null;
         dynamicContainer.innerHTML = '';
+        btnAddCatalog.style.display = 'none';
+    };
+
+    // --- DYNAMIC ITEMS LOGIC ---
+    document.getElementById('btn-add-dynamic').onclick = () => {
+        const name = document.getElementById('dyn-name').value;
+        const qty = parseFloat(document.getElementById('dyn-qty').value);
+        const unit = document.getElementById('dyn-unit').value;
+        const cost = parseFloat(document.getElementById('dyn-cost').value);
+
+        if (!name || isNaN(qty) || qty <= 0 || isNaN(cost)) {
+            return alert('Por favor completa Nombre, Cantidad y Costo correctamente.');
+        }
+
+        currentPlan.items.push({
+            type: 'dynamic',
+            id: `temp-${Date.now()}`,
+            name: `✨ ${name}`,
+            quantity: qty,
+            unit: unit,
+            manualUnitCost: cost
+        });
+
+        renderItems();
+        runSimulation();
+
+        // Reset
+        document.getElementById('dyn-name').value = '';
+        document.getElementById('dyn-qty').value = '';
+        document.getElementById('dyn-cost').value = '';
+        document.getElementById('dyn-name').focus();
     };
 
     // Save
@@ -225,13 +321,13 @@ function attachGlobalListeners() {
         currentPlan.description = document.getElementById('plan-description').value;
 
         if (!currentPlan.name || currentPlan.items.length === 0) {
-            alert('⚠️ Debes agregar un nombre y al menos un producto.');
+            alert('⚠️ Debes agregar un nombre y al menos un ingrediente/producto.');
             return;
         }
 
         try {
             await PlansService.savePlan(currentPlan);
-            alert('Plan guardado exitosamente');
+            alert('Experimento guardado exitosamente');
             // Refresh
             const history = await PlansService.getPlans();
             const container = document.getElementById('app-content');
@@ -348,14 +444,16 @@ function renderItems() {
         const warningIcon = (sim.warnings && sim.warnings.length > 0) ? `<span title="${sim.warnings.join(', ')}" style="cursor:help;">⚠️</span>` : '';
 
         // Cells Data
-        let colUnitWeight = '-';
-        let colUnits = '-';
+        let colDetail = '-';
+        let costLabel = '';
 
         if (item.type === 'recipe' && item.unitWeight) {
-            colUnitWeight = `${item.unitWeight}g`;
-            colUnits = `${item.unitCount}`; // Units
+            colDetail = `${item.unitCount} und x ${item.unitWeight}g`;
+        } else if (item.type === 'dynamic') {
+            colDetail = `${item.quantity} ${item.unit}`;
+            costLabel = `<div style="font-size:0.65rem; color:#f59e0b;">Est: $${item.manualUnitCost}/u</div>`;
         } else {
-            colUnits = `${item.quantity}`; // Just quantity
+            colDetail = `${item.quantity} (Total)`;
         }
 
         // Breakdown HTML - FORCE RENDERING even if cost is 0
@@ -389,11 +487,13 @@ function renderItems() {
         <tr style="border-bottom: 1px solid #f1f5f9; vertical-align:top;">
             <td style="padding: 10px;">
                 <div style="font-weight:500; color:#334155;">${item.name} ${warningIcon}</div>
-                <div style="font-size:0.7rem; color:${item.type === 'recipe' ? '#f97316' : '#65a30d'}; text-transform:uppercase; font-weight:bold;">${item.type}</div>
+                <div style="font-size:0.7rem; color:${item.type === 'recipe' ? '#f97316' : (item.type === 'dynamic' ? '#f59e0b' : '#65a30d')}; text-transform:uppercase; font-weight:bold;">${item.type}</div>
                 ${breakdownRows}
             </td>
-            <td style="padding: 10px; color:#475569;">${colUnitWeight}</td>
-            <td style="padding: 10px; color:#475569;">${colUnits}</td>
+            <td style="padding: 10px; color:#475569;">
+                ${colDetail}
+                ${costLabel}
+            </td>
             <td style="padding: 10px; text-align:right; font-weight:bold; color:#0f172a;">${costStr}</td>
             <td style="padding: 10px; text-align: right;">
                 <button onclick="window.removePlanItem(${idx})" style="color: #cbd5e1; background: none; border: none; cursor: pointer; font-size:1.1rem; padding:5px;">✕</button>
