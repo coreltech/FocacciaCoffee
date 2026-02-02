@@ -29,6 +29,13 @@ export const SalesView = {
                         </select>
                     </div>
 
+                    <div class="input-group" style="margin-top:15px;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA DE RESERVA / ENTREGA</label>
+                        <input type="date" id="v-delivery-date" class="input-field" 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
+                        <small style="display:block; color:#64748b; font-size:0.7rem; margin-top:4px;">* Dejar vacío o poner fecha de hoy para entrega inmediata (descuenta stock).</small>
+                    </div>
+
                     <div id="manual-desc-container" class="input-group" style="display:none; margin-top:15px;">
                         <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">DESCRIPCIÓN DE VENTA MANUAL</label>
                         <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo..." 
@@ -401,6 +408,10 @@ export const SalesView = {
             priceInput.readOnly = true;
             priceInput.style.backgroundColor = "#f1f5f9";
             qtyInput.focus();
+
+            // Reset delivery date to empty (default to immediate) or today?
+            // Better to keep it empty or as user prefers. 
+            // The reload of the view handles full reset usually.
         }
     }
 };

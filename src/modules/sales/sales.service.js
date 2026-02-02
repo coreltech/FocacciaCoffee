@@ -57,8 +57,10 @@ export const SalesService = {
             p_amount_paid: saleData.amount_paid,
             p_payment_status: saleData.payment_status,
             p_payment_details: saleData.payment_details,
+            p_payment_details: saleData.payment_details,
             p_customer_id: saleData.customer_id,
-            p_product_name: saleData.product_name
+            p_product_name: saleData.product_name,
+            p_delivery_date: saleData.delivery_date || null // New Param
         });
 
         if (error) {

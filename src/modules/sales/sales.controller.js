@@ -230,7 +230,8 @@ function bindEvents(rates) {
             amount_paid: paid,
             payment_status: balance <= 0.01 ? 'Pagado' : 'Pendiente',
             payment_details: paymentDetails,
-            customer_id: custId || null
+            customer_id: custId || null,
+            delivery_date: document.getElementById('v-delivery-date').value || null // New Field
         };
 
         try {
