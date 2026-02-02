@@ -129,6 +129,7 @@ function bindEvents(rates) {
     const paymentContainer = document.getElementById('payment-container');
     const btnLoadMore = document.getElementById('btn-load-more');
     const btnAddCustomer = document.getElementById('btn-add-customer');
+    const deliveryDateInput = document.getElementById('v-delivery-date');
 
     const calculate = () => {
         const opt = catalogSelect.options[catalogSelect.selectedIndex];
@@ -152,7 +153,12 @@ function bindEvents(rates) {
         SalesView.updateTotals(total, total * rates.tasa_usd_ves);
 
         // Stock Logic
-        if (opt && opt.value && opt.value !== 'manual') {
+        const deliveryDate = deliveryDateInput.value;
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const isPreorder = deliveryDate && (deliveryDate > todayStr);
+
+        if (opt && opt.value && opt.value !== 'manual' && !isPreorder) {
             const stockDisp = parseFloat(opt.dataset.stock) || 0;
             SalesView.toggleStockWarning(qty > stockDisp);
         } else {
@@ -174,6 +180,8 @@ function bindEvents(rates) {
     // Inputs
     priceInput.oninput = calculate;
     qtyInput.oninput = calculate;
+    deliveryDateInput.onchange = calculate;
+    deliveryDateInput.oninput = calculate;
 
     // Add Payment Row
     addPayBtn.onclick = () => {
