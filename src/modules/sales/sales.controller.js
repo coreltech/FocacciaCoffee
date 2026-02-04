@@ -184,10 +184,10 @@ function bindEvents(rates) {
         const manualDesc = document.getElementById('v-manual-desc').value;
         const deliveryDate = deliveryDateInput.value || null;
 
-        if (!opt.value) return Toast.error("Selecciona un producto");
-        if (opt.value === 'manual' && !manualDesc) return Toast.error("Describe la venta manual");
-        if (price <= 0) return Toast.error("Precio inválido");
-        if (qty <= 0) return Toast.error("Cantidad inválida");
+        if (!opt.value) return Toast.show("Selecciona un producto", "error");
+        if (opt.value === 'manual' && !manualDesc) return Toast.show("Describe la venta manual", "error");
+        if (price <= 0) return Toast.show("Precio inválido", "error");
+        if (qty <= 0) return Toast.show("Cantidad inválida", "error");
 
         // Disable button if stock warning is visible? Already handled by toggleStockWarning
 
@@ -200,7 +200,7 @@ function bindEvents(rates) {
             delivery_date: deliveryDate
         });
 
-        Toast.success("Producto agregado al carrito");
+        Toast.show("Producto agregado al carrito", "success");
         SalesView.renderCart(cart, rates);
         bindDynamicEvents(); // Rebind delete cart buttons
 
@@ -320,7 +320,7 @@ function bindEvents(rates) {
                 await SalesService.registerSale(saleData);
             }
 
-            Toast.success("✅ Venta registrada exitosamente");
+            Toast.show("✅ Venta registrada exitosamente", "success");
             cart = []; // Clear
             SalesView.renderCart(cart, rates);
             loadSales(filterDate.value); // Reload
@@ -383,7 +383,7 @@ function bindEvents(rates) {
 
             try {
                 const newCustomer = await SalesService.registerCustomer({ name, phone, email });
-                Toast.success(`Cliente ${name} creado`);
+                Toast.show(`Cliente ${name} creado`, "success");
 
                 // Manually append to selection and select it
                 // We reload the whole catalog of customers to be safe and consistent
@@ -395,12 +395,6 @@ function bindEvents(rates) {
 
                 // Reload sales (which reloads customers)
                 loadSales(filterDate.value);
-
-                // Ideally we should auto-select the new one, but reload might wipe it?
-                // loadSales follows: populateCustomers. 
-                // Let's rely on PopulateCustomers rendering the list. 
-                // To select it, we can store it in a temp global or pass it?
-                // For now, let's just let user select it (it will be at top or alphabetical).
             } catch (err) {
                 console.error("Error creating customer:", err);
                 alert("Error al crear cliente: " + err.message);
