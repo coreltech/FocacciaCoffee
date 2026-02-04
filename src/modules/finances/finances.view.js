@@ -79,6 +79,7 @@ export const FinancesView = {
                     <div class="card" style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px;">
                         <h3 style="margin:0 0 15px 0; border-bottom:2px solid #f1f5f9; padding-bottom:10px; color:#15803d;">➕ Ingresar Capital</h3>
                         <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="date" id="cap-date" class="input-field" style="width:auto;" value="${new Date().toISOString().split('T')[0]}">
                             <select id="cap-currency" class="input-field" style="width:120px;">
                                 <option value="USD">USD ($)</option>
                                 <option value="VES">VES (Bs)</option>

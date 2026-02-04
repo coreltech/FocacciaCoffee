@@ -225,7 +225,7 @@ function initCapitalForm() {
 
         try {
             await FinancesService.addCapitalEntry({
-                date: new Date().toISOString().split('T')[0],
+                date: document.getElementById('cap-date').value || new Date().toISOString().split('T')[0],
                 amount: finalAmountUSD,
                 source,
                 notes
