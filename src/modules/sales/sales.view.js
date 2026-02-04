@@ -26,82 +26,86 @@ export const SalesView = {
                 <div class="stat-card" style="padding:25px;">
                     <h3 style="margin:0 0 20px 0; border-bottom: 2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">📝 Nueva Venta</h3>
                     
-                    <div class="input-group">
-                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRODUCTO</label>
-                        <select id="v-catalog-select" class="input-field" 
-                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                            <option value="">Cargando catálogo...</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group" style="margin-top:15px;">
+                    <!-- 1. FECHA (RESERVA/ENTREGA) - AHORA ARRIBA -->
+                    <div class="input-group" style="margin-bottom:15px;">
                         <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA DE RESERVA / ENTREGA</label>
                         <input type="date" id="v-delivery-date" class="input-field" 
                             style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
                         <small style="display:block; color:#64748b; font-size:0.7rem; margin-top:4px;">* Dejar vacío para entrega inmediata.</small>
                     </div>
 
-                    <div id="manual-desc-container" class="input-group" style="display:none; margin-top:15px;">
-                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">DESCRIPCIÓN DE VENTA MANUAL</label>
-                        <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo..." 
+                    <!-- 2. CLIENTE - AHORA ARRIBA -->
+                     <div class="input-group" style="margin-bottom:15px; border-bottom:1px dashed #e2e8f0; padding-bottom:15px;">
+                        <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
+                            CLIENTE
+                            <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO CLIENTE</button>
+                        </label>
+                        <select id="v-customer-id" class="input-field" 
                             style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            <option value="">Cliente Genérico</option>
+                        </select>
+                        
+                        <div id="new-customer-form" style="display:none; background:#eff6ff; padding:12px; border-radius:8px; margin-top:8px; border:1px solid #bfdbfe;">
+                            <label style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">REGISTRAR NUEVO CLIENTE</label>
+                            <input type="text" id="new-cust-name" placeholder="Nombre Completo *" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="email" id="new-cust-email" placeholder="Email (Opcional)" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <div style="display:flex; gap:5px;">
+                                <button id="btn-save-customer" style="flex:1; background:#2563eb; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar</button>
+                                <button id="btn-cancel-customer" style="width:30px; background:#ef4444; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">✕</button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px;">
+                    <!-- 3. SELECCION DE PRODUCTO -->
+                    <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+                         <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:#64748b; text-transform:uppercase;">➕ Agregar Ítems</h4>
                         <div class="input-group">
-                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRECIO UNIT. $</label>
-                            <input type="number" id="v-final-price" class="input-field" step="0.01" 
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRODUCTO</label>
+                            <select id="v-catalog-select" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="">Cargando catálogo...</option>
+                            </select>
+                        </div>
+
+                        <div id="manual-desc-container" class="input-group" style="display:none; margin-top:15px;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">DESCRIPCIÓN DE VENTA MANUAL</label>
+                            <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo..." 
                                 style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                         </div>
-                        <div class="input-group">
-                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">CANTIDAD</label>
-                            <input type="number" id="v-qty" class="input-field" value="1" min="1"
-                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px;">
+                            <div class="input-group">
+                                <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRECIO UNIT. $</label>
+                                <input type="number" id="v-final-price" class="input-field" step="0.01" 
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">CANTIDAD</label>
+                                <input type="number" id="v-qty" class="input-field" value="1" min="1"
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            </div>
                         </div>
+
+                        <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fef2f2; border-radius:6px; border:1px solid #fecaca;">⚠️ Cantidad supera el stock disponible</div>
+
+                        <button id="btn-add-to-cart" class="btn-secondary" 
+                            style="width:100%; padding:12px; margin-top:10px; background:#fff; color:#334155; border:2px dashed #cbd5e1; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
+                            🛒 Agregar al Carrito
+                        </button>
                     </div>
 
-                    <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fef2f2; border-radius:6px; border:1px solid #fecaca;">⚠️ Cantidad supera el stock disponible</div>
-
-                    <!-- BOTÓN AGREGAR AL CARRITO -->
-                    <button id="btn-add-to-cart" class="btn-secondary" 
-                        style="width:100%; padding:12px; margin-top:10px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
-                        🛒 Agregar al Carrito
-                    </button>
-
-                    <!-- SECCIÓN CARRITO -->
-                    <div id="cart-section" style="margin-top:25px; border-top:2px dashed #e2e8f0; padding-top:15px;">
+                    <!-- 4. SECCIÓN CARRITO -->
+                    <div id="cart-section" style="margin-top:25px; border-top:2px solid #e2e8f0; padding-top:15px;">
                         <h4 style="margin:0 0 10px 0; color:#475569;">🛍️ Carrito de Compra <span id="cart-count-badge" style="background:#ef4444; color:white; font-size:0.7rem; padding:2px 6px; border-radius:10px; display:none;">0</span></h4>
                         
                         <div id="cart-list" style="max-height: 200px; overflow-y: auto; margin-bottom:15px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px;">
                             <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin:10px 0;">Carrito vacío</p>
                         </div>
                         
-                        <!-- CLIENTE (AHORA GLOBAL PARA EL CARRITO) -->
-                        <div class="input-group">
-                            <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
-                                CLIENTE
-                                <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO CLIENTE</button>
-                            </label>
-                            <select id="v-customer-id" class="input-field" 
-                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                                <option value="">Cliente Genérico</option>
-                            </select>
-                            
-                            <div id="new-customer-form" style="display:none; background:#eff6ff; padding:12px; border-radius:8px; margin-top:8px; border:1px solid #bfdbfe;">
-                                <label style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">REGISTRAR NUEVO CLIENTE</label>
-                                <input type="text" id="new-cust-name" placeholder="Nombre Completo *" class="input-field" 
-                                    style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
-                                <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field" 
-                                    style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
-                                <input type="email" id="new-cust-email" placeholder="Email (Opcional)" class="input-field" 
-                                    style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
-                                <div style="display:flex; gap:5px;">
-                                    <button id="btn-save-customer" style="flex:1; background:#2563eb; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar</button>
-                                    <button id="btn-cancel-customer" style="width:30px; background:#ef4444; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">✕</button>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- TOTALES Y PAGOS -->
                         <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-top:15px;">
                              <label style="font-size:0.75rem; color:#64748b; font-weight:800; text-transform:uppercase; display:block; margin-bottom:12px;">💳 Métodos de Pago</label>
