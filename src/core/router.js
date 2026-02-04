@@ -17,6 +17,7 @@ const modulePermissions = {
     mermas: ['director', 'gerente'], // Director y gerente
     config_productos: ['director', 'gerente'], // Director y gerente
     compras: ['director', 'gerente'], // Director y gerente pueden registrar compras
+    finanzas: ['director', 'gerente'], // Director y Gerente
 };
 
 const routes = {
@@ -34,6 +35,7 @@ const routes = {
     mermas: () => import('../modules/waste/waste.controller.js'),
     config_productos: () => import('../modules/inventory/assembly_modern.controller.js'),
     compras: () => import('../modules/purchases/purchases.controller.js'),
+    finanzas: () => import('../modules/finances/finances.controller.js'),
 };
 
 /**
@@ -185,6 +187,7 @@ export async function initRouter() {
                 if (tab === 'reportes') await module.loadReports();
                 if (tab === 'biblioteca') await module.loadLibrary();
                 if (tab === 'compras') await module.loadPurchases();
+                if (tab === 'finanzas') await module.loadFinances();
 
             } catch (err) {
                 container.innerHTML = `
