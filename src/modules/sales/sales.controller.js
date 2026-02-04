@@ -5,6 +5,11 @@ import { Toast } from '../../ui/toast.js';
 let currentPage = 0;
 const PAGE_SIZE = 50;
 let salesSubscription = null;
+let currentRates = null;
+
+// STATE
+let cart = [];
+let viewMode = 'sale_date'; // 'sale_date' or 'delivery_date'
 
 export async function loadSales(selectedDate = new Date().toISOString().split('T')[0], append = false) {
     const container = document.getElementById('app-content');
@@ -15,23 +20,30 @@ export async function loadSales(selectedDate = new Date().toISOString().split('T
 
     // 1. Load Data
     try {
-        const data = await SalesService.getData(selectedDate, currentPage, PAGE_SIZE);
+        const data = await SalesService.getData(selectedDate, currentPage, PAGE_SIZE, viewMode);
+        currentRates = data.rates;
 
         // 2. Render Layout (Only if it's the first load, otherwise we just append)
         if (!append) {
             SalesView.renderLayout(container, selectedDate, data.rates);
             SalesView.populateCatalog(data.catalog);
             SalesView.populateCustomers(data.customers);
+
+            // Restore cart check? (Optional, skipping for simplicity)
+            SalesView.renderCart(cart, data.rates);
         }
 
         // 3. Render History & Summary
-        // Note: dailyStats is used for the summary (always correct for the day), sales is for the list (paginated)
         renderHistoryAndSummary(data.sales, data.dailyStats, append, data.totalCount);
 
-        // 4. Bind Events (Only on initial load to avoid duplicate listeners)
+        // 4. Bind Events (Only on initial load)
         if (!append) {
             bindEvents(data.rates);
             setupRealtime(selectedDate);
+
+            // Set checkbox state if needed based on viewMode
+            const chk = document.getElementById('chk-view-delivery');
+            if (chk) chk.checked = (viewMode === 'delivery_date');
         }
 
     } catch (err) {
@@ -45,7 +57,6 @@ export async function loadSales(selectedDate = new Date().toISOString().split('T
 }
 
 function renderHistoryAndSummary(sales, dailyStats, append, totalCount) {
-    // 1. Calculate Summary based on DAILY STATS (Global for the day, not just paginated)
     const resumen = { total: 0, credito: 0, metodos: {} };
 
     dailyStats.forEach(s => {
@@ -63,18 +74,12 @@ function renderHistoryAndSummary(sales, dailyStats, append, totalCount) {
         }
     });
 
-    // Only update summary if it's the first load or if we want to keep it live (it's fast enough)
-    SalesView.renderSummary(resumen);
-
-    // 2. Render List
+    if (!append) SalesView.renderSummary(resumen);
     SalesView.renderHistory(sales, append);
 
-    // 3. Handle Load More Button
     const displayedCount = (currentPage + 1) * PAGE_SIZE;
     SalesView.toggleLoadMore(totalCount > displayedCount);
 
-    // Bind dynamic button events for history items (Delete / Confirm Pay)
-    // We re-bind all because innerHTML might have changed or we appended new nodes
     bindDynamicEvents();
 }
 
@@ -83,7 +88,6 @@ function bindDynamicEvents() {
         btn.onclick = async () => {
             if (confirm("¿Eliminar registro?")) {
                 await SalesService.deleteSale(btn.dataset.id);
-                // Reload current view (reset to page 0 to avoid holes)
                 const date = document.getElementById('filter-date').value;
                 loadSales(date);
             }
@@ -99,6 +103,15 @@ function bindDynamicEvents() {
             loadSales(date);
         };
     });
+
+    // Remove from cart buttons
+    document.querySelectorAll('.cart-remove-btn').forEach(btn => {
+        btn.onclick = () => {
+            const idx = parseInt(btn.dataset.index);
+            cart.splice(idx, 1);
+            SalesView.renderCart(cart, currentRates);
+        };
+    });
 }
 
 function setupRealtime(selectedDate) {
@@ -108,11 +121,7 @@ function setupRealtime(selectedDate) {
 
     salesSubscription = SalesService.subscribeToSales((payload) => {
         console.log("Realtime update received:", payload);
-        // Reload currently viewed date if affected
         const activeDate = document.getElementById('filter-date')?.value || new Date().toISOString().split('T')[0];
-
-        // If it's today's date, we always reload for better UX
-        // Otherwise, reload only if the date matches exactly
         if (activeDate === selectedDate) {
             loadSales(activeDate);
         }
@@ -123,36 +132,22 @@ function bindEvents(rates) {
     const priceInput = document.getElementById('v-final-price');
     const qtyInput = document.getElementById('v-qty');
     const catalogSelect = document.getElementById('v-catalog-select');
-    const btnSubmit = document.getElementById('btn-submit-sale');
+    const btnAddToCart = document.getElementById('btn-add-to-cart'); // CHANGED from submit
+    const btnSubmitSale = document.getElementById('btn-submit-sale'); // NEW
     const addPayBtn = document.getElementById('add-pay-row');
     const filterDate = document.getElementById('filter-date');
+    const chkViewDelivery = document.getElementById('chk-view-delivery');
     const paymentContainer = document.getElementById('payment-container');
     const btnLoadMore = document.getElementById('btn-load-more');
     const btnAddCustomer = document.getElementById('btn-add-customer');
     const deliveryDateInput = document.getElementById('v-delivery-date');
 
-    const calculate = () => {
-        const opt = catalogSelect.options[catalogSelect.selectedIndex];
+    // Helper: Calculate current line item total
+    const calculateLineItem = () => {
         const qty = parseFloat(qtyInput.value) || 0;
-        const total = (parseFloat(priceInput.value) || 0) * qty;
-
-        let paidUsd = 0;
-        document.querySelectorAll('.pay-row').forEach(row => {
-            const val = parseFloat(row.querySelector('.p-amt').value) || 0;
-            const meth = row.querySelector('.p-meth').value;
-
-            if (meth.includes('Bs')) {
-                paidUsd += val / rates.tasa_usd_ves;
-            } else if (meth.includes('EUR')) {
-                paidUsd += (val * rates.tasa_eur_ves) / rates.tasa_usd_ves;
-            } else {
-                paidUsd += val;
-            }
-        });
-
-        SalesView.updateTotals(total, total * rates.tasa_usd_ves);
-
-        // Stock Logic
+        const price = parseFloat(priceInput.value) || 0;
+        // Check Stock
+        const opt = catalogSelect.options[catalogSelect.selectedIndex];
         const deliveryDate = deliveryDateInput.value;
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -164,8 +159,7 @@ function bindEvents(rates) {
         } else {
             SalesView.toggleStockWarning(false);
         }
-
-        return { total, paid: paidUsd, balance: total - paidUsd };
+        return qty * price;
     };
 
     // Catalog Change
@@ -174,87 +168,182 @@ function bindEvents(rates) {
         const isManual = opt.value === 'manual';
         const price = opt.dataset.price || "";
         SalesView.toggleManualMode(isManual, price);
-        calculate();
+        calculateLineItem();
     };
 
     // Inputs
-    priceInput.oninput = calculate;
-    qtyInput.oninput = calculate;
-    deliveryDateInput.onchange = calculate;
-    deliveryDateInput.oninput = calculate;
+    priceInput.oninput = calculateLineItem;
+    qtyInput.oninput = calculateLineItem;
+    deliveryDateInput.onchange = calculateLineItem;
+
+    // --- CART LOGIC ---
+    btnAddToCart.onclick = () => {
+        const opt = catalogSelect.options[catalogSelect.selectedIndex];
+        const qty = parseFloat(qtyInput.value) || 1;
+        const price = parseFloat(priceInput.value) || 0;
+        const manualDesc = document.getElementById('v-manual-desc').value;
+        const deliveryDate = deliveryDateInput.value || null;
+
+        if (!opt.value) return Toast.error("Selecciona un producto");
+        if (opt.value === 'manual' && !manualDesc) return Toast.error("Describe la venta manual");
+        if (price <= 0) return Toast.error("Precio inválido");
+        if (qty <= 0) return Toast.error("Cantidad inválida");
+
+        // Disable button if stock warning is visible? Already handled by toggleStockWarning
+
+        cart.push({
+            product_id: opt.value === 'manual' ? null : opt.value,
+            product_name: opt.value === 'manual' ? manualDesc : opt.text.split(' (')[0],
+            quantity: qty,
+            price: price,
+            total_amount: price * qty,
+            delivery_date: deliveryDate
+        });
+
+        Toast.success("Producto agregado al carrito");
+        SalesView.renderCart(cart, rates);
+        bindDynamicEvents(); // Rebind delete cart buttons
+
+        // Reset Inputs (keep date?)
+        qtyInput.value = 1;
+        catalogSelect.value = "";
+        SalesView.toggleManualMode(false, "");
+    };
+
+    // --- PAYMENT CALCULATOR ---
+    const updatePaymentCalc = () => {
+        let paidUsd = 0;
+        document.querySelectorAll('.pay-row').forEach(row => {
+            const val = parseFloat(row.querySelector('.p-amt').value) || 0;
+            const meth = row.querySelector('.p-meth').value;
+            if (meth.includes('Bs')) {
+                paidUsd += val / rates.tasa_usd_ves;
+            } else if (meth.includes('EUR')) {
+                paidUsd += (val * rates.tasa_eur_ves) / rates.tasa_usd_ves;
+            } else {
+                paidUsd += val;
+            }
+        });
+        return paidUsd;
+    };
+
+    // Bind payment inputs
+    const bindPayInputs = () => {
+        document.querySelectorAll('.p-amt').forEach(inp => inp.oninput = updatePaymentCalc);
+    };
 
     // Add Payment Row
     addPayBtn.onclick = () => {
         const row = SalesView.addPaymentRow();
-        row.querySelector('.p-amt').oninput = calculate;
+        row.querySelector('.p-amt').oninput = updatePaymentCalc;
     };
 
-    // Initial listener for the first payment row
-    const firstPay = paymentContainer.querySelector('.p-amt');
-    if (firstPay) firstPay.oninput = calculate;
+    // Auto-fill first payment row with Cart Total
+    SalesView.addPaymentRow(); // Init one
+    bindPayInputs();
 
-    // Submit Sale
-    btnSubmit.onclick = async () => {
-        const { total, paid, balance } = calculate();
-        const opt = catalogSelect.options[catalogSelect.selectedIndex];
+    // --- SUBMIT CART ---
+    btnSubmitSale.onclick = async () => {
+        if (cart.length === 0) return;
+
         const custId = document.getElementById('v-customer-id').value;
-        const manualDesc = document.getElementById('v-manual-desc').value;
+        const totalCartUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
+        const paidUSD = updatePaymentCalc();
+        const balance = totalCartUSD - paidUSD;
 
-        if (!opt.value) return alert("Selecciona producto");
-        if (opt.value === 'manual' && !manualDesc) return alert("Escribe qué estás vendiendo");
-        if (balance > 0.01 && !custId) return alert("Selecciona cliente para crédito");
+        // Validation
+        if (balance > 0.01 && !custId) return alert("⚠️ Para ventas a crédito (deuda pendiente), debes seleccionar un CLIENTE.");
 
-        const qty = parseFloat(qtyInput.value) || 0;
-        const paymentDetails = {
-            tasa_bcv: rates.tasa_usd_ves,
-            items: []
-        };
+        const isPaid = balance <= 0.01;
 
-        document.querySelectorAll('.pay-row').forEach(row => {
-            const rawVal = parseFloat(row.querySelector('.p-amt').value) || 0;
-            const meth = row.querySelector('.p-meth').value;
-            if (rawVal > 0) {
-                let usdVal = rawVal;
-                if (meth.includes('Bs')) {
-                    usdVal = rawVal / rates.tasa_usd_ves;
-                } else if (meth.includes('EUR')) {
-                    usdVal = (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves;
-                }
+        // Distribute payment across items (Proportional or Sequential? - Lets do Proportional for simplicity in reporting, or just flag them all as paid)
+        // Actually, if it's a single transaction "globally", and we split it into DB rows...
+        // We need to split the payment details too.
+        // STRATEGY: 
+        // 1. Calculate ratio of each item to total.
+        // 2. Assign proportional payment to each item.
+        // 3. This ensures individual item balances are correct.
 
-                paymentDetails.items.push({
-                    amount_usd: usdVal,
-                    amount_native: rawVal,
-                    method: meth,
-                    currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
-                });
-            }
-        });
+        if (!confirm(`¿Procesar venta por $${totalCartUSD.toFixed(2)}?`)) return;
 
-        const saleData = {
-            product_id: opt.value === 'manual' ? null : opt.value,
-            product_name: opt.value === 'manual' ? manualDesc : opt.text.split(' (')[0],
-            quantity: qty,
-            total_amount: total,
-            amount_paid: paid,
-            payment_status: balance <= 0.01 ? 'Pagado' : 'Pendiente',
-            payment_details: paymentDetails,
-            customer_id: custId || null,
-            delivery_date: document.getElementById('v-delivery-date').value || null // New Field
-        };
+        btnSubmitSale.disabled = true;
+        btnSubmitSale.innerText = "Procesando...";
 
         try {
-            console.log("Enviando venta:", saleData);
-            await SalesService.registerSale(saleData);
-            alert("✅ Venta registrada correctamente");
-            loadSales(filterDate.value); // Reload from scratch
+            // Collect Payment Details GLOBAL
+            const paymentMethods = [];
+            document.querySelectorAll('.pay-row').forEach(row => {
+                const rawVal = parseFloat(row.querySelector('.p-amt').value) || 0;
+                const meth = row.querySelector('.p-meth').value;
+                if (rawVal > 0) {
+                    paymentMethods.push({
+                        amount_native: rawVal,
+                        method: meth,
+                        // storing USD eq for logic
+                        amount_usd_eq: meth.includes('Bs') ? rawVal / rates.tasa_usd_ves : (meth.includes('EUR') ? (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves : rawVal),
+                        currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
+                    });
+                }
+            });
+
+            // Loop and Send
+            for (const item of cart) {
+                // Item Ratio
+                const itemRatio = item.total_amount / totalCartUSD;
+
+                // Construct proportional payment details for this item
+                const itemPaymentDetails = {
+                    tasa_bcv: rates.tasa_usd_ves,
+                    items: paymentMethods.map(pm => ({
+                        method: pm.method,
+                        currency: pm.currency,
+                        amount_native: pm.amount_native * itemRatio, // Proportional part of the native money
+                        amount_usd: pm.amount_usd_eq * itemRatio
+                    }))
+                };
+
+                const itemAmountPaid = paidUSD * itemRatio;
+                const itemBalance = item.total_amount - itemAmountPaid;
+
+                const saleData = {
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    quantity: item.quantity,
+                    total_amount: item.total_amount,
+                    amount_paid: itemAmountPaid,
+                    payment_status: itemBalance <= 0.01 ? 'Pagado' : 'Pendiente',
+                    payment_details: itemPaymentDetails,
+                    customer_id: custId || null,
+                    delivery_date: item.delivery_date
+                };
+
+                await SalesService.registerSale(saleData);
+            }
+
+            Toast.success("✅ Venta registrada exitosamente");
+            cart = []; // Clear
+            SalesView.renderCart(cart, rates);
+            loadSales(filterDate.value); // Reload
+
+            // Reset Payment inputs
+            document.getElementById('payment-container').innerHTML = '';
+            SalesView.addPaymentRow();
+
         } catch (err) {
-            console.error("Error en registro:", err);
+            console.error("Error submitting cart:", err);
             alert("Error: " + err.message);
+        } finally {
+            btnSubmitSale.disabled = false;
         }
     };
 
-    // Date Filter
+    // Filter Changes
     filterDate.onchange = (e) => loadSales(e.target.value);
+
+    chkViewDelivery.onchange = (e) => {
+        viewMode = e.target.checked ? 'delivery_date' : 'sale_date';
+        loadSales(filterDate.value);
+    };
 
     // Load More
     if (btnLoadMore) {
@@ -264,7 +353,6 @@ function bindEvents(rates) {
         };
     }
 
-    // Add Customer
     // Add Customer Logic
     const formNewCust = document.getElementById('new-customer-form');
     const inputName = document.getElementById('new-cust-name');
@@ -274,18 +362,15 @@ function bindEvents(rates) {
     const btnCancelCust = document.getElementById('btn-cancel-customer');
 
     if (btnAddCustomer && formNewCust) {
-        // Toggle Form
         btnAddCustomer.onclick = () => {
             formNewCust.style.display = 'block';
             inputName.focus();
         };
 
-        // Cancel
         btnCancelCust.onclick = () => {
             formNewCust.style.display = 'none';
         };
 
-        // Save
         btnSaveCust.onclick = async () => {
             const name = inputName.value.trim();
             const phone = inputPhone.value.trim();
@@ -293,21 +378,35 @@ function bindEvents(rates) {
 
             if (!name) return alert("El nombre es obligatorio");
 
+            btnSaveCust.disabled = true;
+            btnSaveCust.innerText = "..";
+
             try {
-                await SalesService.registerCustomer({ name, phone, email });
+                const newCustomer = await SalesService.registerCustomer({ name, phone, email });
                 Toast.success(`Cliente ${name} creado`);
 
-                // Clear and Hide
+                // Manually append to selection and select it
+                // We reload the whole catalog of customers to be safe and consistent
+                // Or just append locally to avoid reload flicker
                 inputName.value = '';
                 inputPhone.value = '';
                 inputEmail.value = '';
                 formNewCust.style.display = 'none';
 
-                // Reload data to show new customer in select
+                // Reload sales (which reloads customers)
                 loadSales(filterDate.value);
+
+                // Ideally we should auto-select the new one, but reload might wipe it?
+                // loadSales follows: populateCustomers. 
+                // Let's rely on PopulateCustomers rendering the list. 
+                // To select it, we can store it in a temp global or pass it?
+                // For now, let's just let user select it (it will be at top or alphabetical).
             } catch (err) {
                 console.error("Error creating customer:", err);
                 alert("Error al crear cliente: " + err.message);
+            } finally {
+                btnSaveCust.disabled = false;
+                btnSaveCust.innerText = "Guardar";
             }
         };
     }
