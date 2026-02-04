@@ -1,9 +1,14 @@
 export const FinancesView = {
-    renderLayout(container) {
+    renderLayout(container, rates) {
+        const rateText = rates ? `1$ = ${rates.tasa_usd_ves.toFixed(2)} Bs` : "Cargando tasa...";
+
         container.innerHTML = `
         <div class="finances-container">
             <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h1 style="font-size:1.8rem; margin:0;">💰 Gestión de Inversión y Capital</h1>
+                <div>
+                    <h1 style="font-size:1.8rem; margin:0;">💰 Gestión de Inversión y Capital</h1>
+                    <small style="color:#64748b; font-weight:bold;">Tasa del día: ${rateText}</small>
+                </div>
                 <button id="btn-download-report" class="btn-secondary" style="background:#fff; border:2px solid #cbd5e1; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; color:#475569;">
                     📄 Descargar Reporte PDF
                 </button>
@@ -43,7 +48,13 @@ export const FinancesView = {
                     <input type="text" id="inv-provider" class="input-field" placeholder="Proveedor / Beneficiario" style="width:100%; margin-bottom:10px;">
                     
                     <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;">
-                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-bottom:5px; display:block;">ÍTEMS DE LA FACTURA</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-bottom:5px; display:block;">ÍTEMS DE LA FACTURA</label>
+                            <select id="inv-currency" class="input-field" style="width:auto; padding:4px; font-size:0.8rem; margin-bottom:5px;">
+                                <option value="USD">Moneda: USD ($)</option>
+                                <option value="VES">Moneda: VES (Bs)</option>
+                            </select>
+                        </div>
                         <div id="invoice-items-container">
                             <!-- Items go here -->
                         </div>
@@ -52,10 +63,14 @@ export const FinancesView = {
 
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; margin-bottom:15px;">
                         <b style="color:#0f172a;">TOTAL FACTURA:</b>
-                        <b id="inv-total-display" style="font-size:1.2rem; color:#b91c1c;">$0.00</b>
+                        <div style="text-align:right;">
+                            <b id="inv-total-display" style="font-size:1.2rem; color:#b91c1c;">$0.00</b>
+                            <div id="inv-total-converted" style="font-size:0.8rem; color:#64748b; display:none;">Eq. $0.00</div>
+                        </div>
                     </div>
 
                     <button id="btn-save-expense" class="btn-primary" style="width:100%; background:#ef4444; color:white; padding:12px; border-radius:8px; border:none; cursor:pointer; font-weight:bold;">Guardar Gasto</button>
+                    <p id="inv-rate-hint" style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:5px; display:none;">Se convertirá a USD usando la tasa actual.</p>
                 </div>
 
                 <!-- SECCION DERECHA: NUEVO CAPITAL Y LISTAS -->
@@ -63,14 +78,20 @@ export const FinancesView = {
                      <!-- FORMULARIO CAPITAL -->
                     <div class="card" style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px;">
                         <h3 style="margin:0 0 15px 0; border-bottom:2px solid #f1f5f9; padding-bottom:10px; color:#15803d;">➕ Ingresar Capital</h3>
-                        <div style="display:flex; gap:10px;">
-                            <input type="number" id="cap-amount" placeholder="Monto ($)" class="input-field" style="flex:1;">
-                            <input type="text" id="cap-source" placeholder="Fuente / Socio" class="input-field" style="flex:2;">
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <select id="cap-currency" class="input-field" style="width:120px;">
+                                <option value="USD">USD ($)</option>
+                                <option value="VES">VES (Bs)</option>
+                            </select>
+                            <input type="number" id="cap-amount" placeholder="Monto" class="input-field" style="flex:1;">
                         </div>
-                        <div style="display:flex; gap:10px; margin-top:10px;">
+                        <input type="text" id="cap-source" placeholder="Fuente / Socio" class="input-field" style="width:100%; margin-bottom:10px;">
+                        
+                        <div style="display:flex; gap:10px;">
                             <input type="text" id="cap-notes" placeholder="Notas adicionales" class="input-field" style="flex:3;">
                             <button id="btn-save-capital" style="flex:1; background:#22c55e; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Ingresar</button>
                         </div>
+                        <p id="cap-rate-hint" style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:5px; display:none;">Se convertirá a USD usando la tasa actual.</p>
                     </div>
 
                     <!-- TABS HISTORIAL -->
@@ -107,7 +128,7 @@ export const FinancesView = {
         row.innerHTML = `
             <input type="text" class="item-desc input-field" placeholder="Descripción" style="padding:6px;">
             <input type="number" class="item-qty input-field" placeholder="Cant." value="1" style="padding:6px;">
-            <input type="number" class="item-price input-field" placeholder="Precio Unit." step="0.01" style="padding:6px;">
+            <input type="number" class="item-price input-field" placeholder="P. Unit." step="0.01" style="padding:6px;">
             <button class="btn-remove-item" style="background:#fee2e2; color:#ef4444; border:none; border-radius:4px; cursor:pointer;">×</button>
         `;
         container.appendChild(row);
