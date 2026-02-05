@@ -106,20 +106,20 @@ export const SalesService = {
             .eq('id', saleId);
     },
 
-    async registerCustomer({ name, phone, email }) {
+    async registerCustomer({ name, phone, email, address }) {
         // 1. Check if exists by Name or Phone
         let query = supabase.from('customers').select('*').or(`name.eq.${name},phone.eq.${phone}`);
         const { data: existing } = await query;
 
         if (existing && existing.length > 0) {
-            // Return the first match if found, don't create new
+            // Return the first match. Optionally update address if provided? 
+            // Let's keep it simple: return existing. User can edit if needed.
             return existing[0];
-            // Alternatively throw error: throw new Error("El cliente ya existe");
         }
 
         const { data, error } = await supabase
             .from('customers')
-            .insert([{ name, phone, email }])
+            .insert([{ name, phone, email, address }])
             .select()
             .single();
 
@@ -130,10 +130,10 @@ export const SalesService = {
         return data;
     },
 
-    async updateCustomer(id, { name, phone, email }) {
+    async updateCustomer(id, { name, phone, email, address }) {
         const { data, error } = await supabase
             .from('customers')
-            .update({ name, phone, email })
+            .update({ name, phone, email, address })
             .eq('id', id)
             .select()
             .single();

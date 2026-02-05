@@ -43,6 +43,12 @@ export const SalesView = {
                         </div>
                     </div>
 
+                    <!-- DIRECCION DE DELIVERY (CONDICIONAL) -->
+                    <div id="div-delivery-address" style="display:none; margin-bottom:15px; background:#f0f9ff; padding:10px; border-radius:6px; border:1px solid #bae6fd;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:5px; color:#0284c7;">📍 DIRECCIÓN DE ENTREGA</label>
+                        <textarea id="v-delivery-address" class="input-field" placeholder="Dirección detallada..." rows="2" style="width:100%; box-sizing:border-box; padding:8px;"></textarea>
+                    </div>
+
                     <!-- 2. CLIENTE -->
                      <div class="input-group" style="margin-bottom:15px; border-bottom:1px dashed #e2e8f0; padding-bottom:15px;">
                         <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
@@ -69,6 +75,8 @@ export const SalesView = {
                                 style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
                             <input type="email" id="new-cust-email" placeholder="Email (Opcional)" class="input-field" 
                                 style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <textarea id="new-cust-address" placeholder="Dirección Preferida (Opcional)" class="input-field" rows="2"
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;"></textarea>
                             <div style="display:flex; gap:5px;">
                                 <button id="btn-save-customer" style="flex:1; background:#2563eb; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar</button>
                                 <button id="btn-cancel-customer" style="width:30px; background:#ef4444; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">✕</button>
@@ -248,7 +256,8 @@ export const SalesView = {
         customers.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = c.phone ? `${c.name} (${c.phone})` : c.name;
+            opt.text = `${c.name} (${c.phone || 'Sin tlf'})`;
+            opt.dataset.address = c.address || ""; // Store Address
             select.appendChild(opt);
         });
 
