@@ -1,5 +1,5 @@
 import { SalesService } from './sales.service.js';
-import { SalesView } from './sales.view.js';
+import { SalesView } from './sales.view.v2.js';
 import { Toast } from '../../ui/toast.js';
 
 let currentPage = 0;
