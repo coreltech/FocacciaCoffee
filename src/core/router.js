@@ -20,26 +20,22 @@ const modulePermissions = {
     finanzas: ['director', 'gerente'], // Director y Gerente
 };
 
-// Extract version from the router's own URL (passed from index.html)
-const urlParams = new URL(import.meta.url).searchParams;
-const v = urlParams.get('v') || Date.now();
-
 const routes = {
-    dashboard: () => import(`../modules/dashboard/dashboard.js?v=${v}`),
-    tasas: () => import(`../modules/settings/settings.controller.js?v=${v}`),
-    suministros: () => import(`../modules/inventory/supplies.controller.js?v=${v}`),
-    recetas: () => import(`../modules/inventory/recipes_pro.controller.js?v=${v}`),
-    produccion: () => import(`../modules/production/production.controller.js?v=${v}`),
-    catalogo: () => import(`../modules/inventory/catalog.controller.js?v=${v}`),
-    ventas: () => import(`../modules/sales/sales.controller.js?v=${v}`),
-    administracion: () => import(`../modules/admin/admin.controller.js?v=${v}`),
-    laboratorio: () => import(`../modules/laboratorio/laboratorio.js?v=${v}`),
-    reportes: () => import(`../modules/reports/reports.js?v=${v}`),
-    biblioteca: () => import(`../modules/library/library.js?v=${v}`),
-    mermas: () => import(`../modules/waste/waste.controller.js?v=${v}`),
-    config_productos: () => import(`../modules/inventory/assembly_modern.controller.js?v=${v}`),
-    compras: () => import(`../modules/purchases/purchases.controller.js?v=${v}`),
-    finanzas: () => import(`../modules/finances/finances.controller.js?v=${v}`),
+    dashboard: () => import('../modules/dashboard/dashboard.js'),
+    tasas: () => import('../modules/settings/settings.controller.js'),
+    suministros: () => import('../modules/inventory/supplies.controller.js'),
+    recetas: () => import('../modules/inventory/recipes_pro.controller.js'),
+    produccion: () => import('../modules/production/production.controller.js'),
+    catalogo: () => import('../modules/inventory/catalog.controller.js'),
+    ventas: () => import('../modules/sales/sales.controller.js'),
+    administracion: () => import('../modules/admin/admin.controller.js'),
+    laboratorio: () => import('../modules/laboratorio/laboratorio.js'),
+    reportes: () => import('../modules/reports/reports.js'),
+    biblioteca: () => import('../modules/library/library.js'),
+    mermas: () => import('../modules/waste/waste.controller.js'),
+    config_productos: () => import('../modules/inventory/assembly_modern.controller.js'),
+    compras: () => import('../modules/purchases/purchases.controller.js'),
+    finanzas: () => import('../modules/finances/finances.controller.js'),
 };
 
 /**
