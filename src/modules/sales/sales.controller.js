@@ -223,134 +223,118 @@ function bindEvents(rates) {
     addPayBtn.onclick = () => {
         const row = SalesView.addPaymentRow();
         row.querySelector('.p-amt').oninput = updatePaymentCalc;
-        SalesView.addPaymentRow();
-        bindPayInputs();
+    };
 
-        // --- UI TOGGLES ---
-        const orderTypeSelect = document.getElementById('v-order-type');
-        const deliveryAddrDiv = document.getElementById('div-delivery-address');
-        const deliveryAddrInput = document.getElementById('v-delivery-address');
+    SalesView.addPaymentRow();
+    bindPayInputs();
 
-        if (orderTypeSelect) {
-            orderTypeSelect.onchange = () => {
-                const isDelivery = orderTypeSelect.value === 'delivery';
-                deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
-            };
-        }
+    // --- UI TOGGLES ---
+    const orderTypeSelect = document.getElementById('v-order-type');
+    const deliveryAddrDiv = document.getElementById('div-delivery-address');
 
-        // --- SUBMIT SALE ---
-        btnSubmitSale.onclick = async () => {
-            if (cart.length === 0) return Toast.show("El carrito está vacío", "error");
-
-            const custId = document.getElementById('v-customer-id').value;
-            const totalCartUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
-            const paidUSD = updatePaymentCalc();
-            const balance = totalCartUSD - paidUSD;
-            // NEW: Order Type
-            const orderType = document.getElementById('v-order-type').value;
-            const deliveryAddress = document.getElementById('v-delivery-address').value.trim();
-
-            if (orderType === 'delivery' && !deliveryAddress) {
-                return Toast.show("⚠️ Falta la dirección de entrega", "error");
-            }
-
-            if (balance > 0.01 && !custId) return alert("⚠️ Para ventas a crédito (deuda pendiente), debes seleccionar un CLIENTE.");
-
-            if (!confirm(`¿Procesar venta por $${totalCartUSD.toFixed(2)}?`)) return;
-
-            btnSubmitSale.disabled = true;
-            btnSubmitSale.innerText = "Procesando...";
-
-            try {
-                // Collect Payment Methods
-                const paymentMethods = [];
-                document.querySelectorAll('.pay-row').forEach(row => {
-                    const rawVal = parseFloat(row.querySelector('.p-amt').value) || 0;
-                    const meth = row.querySelector('.p-meth').value;
-                    if (rawVal > 0) {
-                        paymentMethods.push({
-                            amount_native: rawVal,
-                            method: meth,
-                            amount_usd_eq: meth.includes('Bs') ? rawVal / rates.tasa_usd_ves : (meth.includes('EUR') ? (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves : rawVal),
-                            currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
-                        });
-                    }
-                });
-
-                // Loop and Register Each Item
-                for (const item of cart) {
-                    const itemRatio = item.total_amount / totalCartUSD;
-
-                    // Distribute payment proportionally
-                    const itemPaymentDetails = {
-                        tasa_bcv: rates.tasa_usd_ves,
-                        order_type: orderType, // Added here
-                        delivery_address: orderType === 'delivery' ? deliveryAddress : null, // Store Address
-                        items: paymentMethods.map(pm => ({
-                            method: pm.method,
-                            currency: pm.currency,
-                            amount_native: pm.amount_native * itemRatio,
-                            amount_usd: pm.amount_usd_eq * itemRatio
-                        }))
-                    };
-
-                    const itemAmountPaid = paidUSD * itemRatio;
-                    const itemBalance = item.total_amount - itemAmountPaid;
-
-                    const saleData = {
-                        product_id: item.product_id,
-                        product_name: item.product_name,
-                        quantity: item.quantity,
-                        total_amount: item.total_amount,
-                        amount_paid: itemAmountPaid,
-                        payment_status: itemBalance <= 0.01 ? 'Pagado' : 'Pendiente',
-                        payment_details: itemPaymentDetails,
-                        customer_id: custId || null,
-                        delivery_date: item.delivery_date
-                    };
-
-                    await SalesService.registerSale(saleData);
-                }
-
-                Toast.show("✅ Venta registrada exitosamente", "success");
-                cart = [];
-                SalesView.renderCart(cart, rates);
-                loadSales(filterDate.value);
-
-                // Reset Payment inputs
-                document.getElementById('payment-container').innerHTML = '';
-                SalesView.addPaymentRow();
-                bindPayInputs();
-
-            } catch (err) {
-                console.error("Error submitting cart:", err);
-                SalesView.renderCart(cart, rates); // Re-render to ensure buttons work
-                alert("Error: " + err.message);
-            } finally {
-                btnSubmitSale.disabled = false;
-                btnSubmitSale.innerText = "Registrar Venta";
-            }
+    // Ensure initial state check in case of reload/render quirks, though display:none is default
+    if (orderTypeSelect) {
+        orderTypeSelect.onchange = () => {
+            const isDelivery = orderTypeSelect.value === 'delivery';
+            if (deliveryAddrDiv) deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
         };
-
-        // Filter Changes
-        filterDate.onchange = (e) => loadSales(e.target.value);
-
-        if (chkViewDelivery) {
-            chkViewDelivery.onchange = (e) => {
-                viewMode = e.target.checked ? 'delivery_date' : 'sale_date';
-                loadSales(filterDate.value);
-            };
-        }
-
-        if (btnLoadMore) {
-            btnLoadMore.onclick = () => {
-                currentPage++;
-                loadSales(filterDate.value, true);
-            };
-        }
-
-        initCustomerManagement();
     }
+
+    // --- SUBMIT SALE ---
+    btnSubmitSale.onclick = async () => {
+        if (cart.length === 0) return Toast.show("El carrito está vacío", "error");
+
+        const custId = document.getElementById('v-customer-id').value;
+        const totalCartUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
+        const paidUSD = updatePaymentCalc();
+        const balance = totalCartUSD - paidUSD;
+        // NEW: Order Type
+        const orderType = document.getElementById('v-order-type').value;
+        const deliveryAddress = document.getElementById('v-delivery-address').value.trim();
+
+        if (orderType === 'delivery' && !deliveryAddress) {
+            return Toast.show("⚠️ Falta la dirección de entrega", "error");
+        }
+
+        if (balance > 0.01 && !custId) return alert("⚠️ Para ventas a crédito (deuda pendiente), debes seleccionar un CLIENTE.");
+
+        if (!confirm(`¿Procesar venta por $${totalCartUSD.toFixed(2)}?`)) return;
+
+        btnSubmitSale.disabled = true;
+        btnSubmitSale.innerText = "Procesando...";
+
+        try {
+            // Collect Payment Methods
+            const paymentMethods = [];
+            document.querySelectorAll('.pay-row').forEach(row => {
+                const rawVal = parseFloat(row.querySelector('.p-amt').value) || 0;
+                const meth = row.querySelector('.p-meth').value;
+                if (rawVal > 0) {
+                    paymentMethods.push({
+                        amount_native: rawVal,
+                        method: meth,
+                        amount_usd_eq: meth.includes('Bs') ? rawVal / rates.tasa_usd_ves : (meth.includes('EUR') ? (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves : rawVal),
+                        currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
+                    });
+                }
+            });
+
+            // Loop and Register Each Item
+            for (const item of cart) {
+                const itemRatio = item.total_amount / totalCartUSD;
+
+                // Distribute payment proportionally
+                const itemPaymentDetails = {
+                    tasa_bcv: rates.tasa_usd_ves,
+                    order_type: orderType,
+                    delivery_address: orderType === 'delivery' ? deliveryAddress : null, // Store Address
+                    items: paymentMethods.map(pm => ({
+                        method: pm.method,
+                        currency: pm.currency,
+                        amount_native: pm.amount_native * itemRatio,
+                        amount_usd: pm.amount_usd_eq * itemRatio
+                    }))
+                };
+
+                const itemAmountPaid = paidUSD * itemRatio;
+                const itemBalance = item.total_amount - itemAmountPaid;
+
+                const saleData = {
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    quantity: item.quantity,
+                    total_amount: item.total_amount,
+                    amount_paid: itemAmountPaid,
+                    payment_status: itemBalance <= 0.01 ? 'Pagado' : 'Pendiente',
+                    payment_details: itemPaymentDetails,
+                    customer_id: custId || null,
+                    delivery_date: item.delivery_date
+                };
+
+                await SalesService.registerSale(saleData);
+            }
+
+            Toast.show("✅ Venta registrada exitosamente", "success");
+            cart = [];
+            SalesView.renderCart(cart, rates);
+            loadSales(filterDate.value);
+
+            // Reset Payment inputs
+            document.getElementById('payment-container').innerHTML = '';
+            SalesView.addPaymentRow();
+            bindPayInputs();
+
+        } catch (err) {
+            console.error("Error submitting cart:", err);
+            SalesView.renderCart(cart, rates); // Re-render to ensure buttons work
+            alert("Error: " + err.message);
+        } finally {
+            btnSubmitSale.disabled = false;
+            btnSubmitSale.innerText = "Registrar Venta";
+        }
+    };
+
+    initCustomerManagement();
 
     // --- CUSTOMER MANAGEMENT ISOLATED ---
     function initCustomerManagement() {
