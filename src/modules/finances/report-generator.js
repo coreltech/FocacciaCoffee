@@ -4,25 +4,18 @@ export class ReportGenerator {
     }
 
     async loadLib() {
-        if (window.jspdf && window.jspdf.jsPDF) return;
+        // 1. Try Global (CDN from index.html)
+        if (window.jspdf && window.jspdf.jsPDF) {
+            this.jsPDF = window.jspdf.jsPDF;
+            return;
+        }
 
-        // Dynamically load jspdf and autotable from CDN
-        // Note: In a real bundler env this should be imported, but for vanilla usage we inject scripts or use module imports if possible.
-        // Given the environment constraints, we can try importing from esm.sh if allowed, or assume global if user adds script to index.html
-        // Strategy: Use dynamic import from CDN esm.sh
-
+        // 2. Try Dynamic Import (Fallback)
         try {
             const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
             const { default: autoTable } = await import('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/+esm');
-
-            // Attach to window just in case or use locally
             this.jsPDF = jsPDF;
-            this.autoTable = autoTable; // AutoTable attaches itself to jsPDF usually, but ESM might be different
-
-            // For autotable ESM, it often needs to be applied to the doc
-            // Check docs: usually just importing it registers it if it's side-effecty, 
-            // OR we pass it to applyPlugin. Let's see.
-            // jspdf-autotable default export is a function that takes (doc) or is a plugin.
+            this.autoTable = autoTable;
         } catch (e) {
             console.error("Failed to load PDF libs", e);
             alert("Error cargando librería de PDF. Verifique su conexión.");
