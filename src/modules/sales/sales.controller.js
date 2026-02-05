@@ -475,8 +475,10 @@ function bindEvents(rates) {
                     formNewCust.style.display = 'none';
 
                     loadSales(filterDate.value);
-                    alert("Error: " + err.message);
+                } catch (err) {
+                    console.error("Error saving customer:", err);
+                    alert("Error: " + err.message); // Using alert as requested/used in context
                 }
-        };
+            };
         }
     }
