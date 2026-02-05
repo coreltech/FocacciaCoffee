@@ -233,11 +233,17 @@ function bindEvents(rates) {
     const deliveryAddrDiv = document.getElementById('div-delivery-address');
 
     // Ensure initial state check in case of reload/render quirks, though display:none is default
+    // Ensure initial state check in case of reload/render quirks, though display:none is default
     if (orderTypeSelect) {
-        orderTypeSelect.onchange = () => {
+        // Use addEventListener to avoid overwriting inline HTML handlers
+        orderTypeSelect.addEventListener('change', () => {
             const isDelivery = orderTypeSelect.value === 'delivery';
             if (deliveryAddrDiv) deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
-        };
+        });
+
+        // Trigger once to set initial state correctly
+        const isDelivery = orderTypeSelect.value === 'delivery';
+        if (deliveryAddrDiv) deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
     }
 
     // --- SUBMIT SALE ---
