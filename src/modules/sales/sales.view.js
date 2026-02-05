@@ -26,27 +26,43 @@ export const SalesView = {
                 <div class="stat-card" style="padding:25px;">
                     <h3 style="margin:0 0 20px 0; border-bottom: 2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">📝 Nueva Venta</h3>
                     
-                    <!-- 1. FECHA (RESERVA/ENTREGA) - AHORA ARRIBA -->
-                    <div class="input-group" style="margin-bottom:15px;">
-                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA DE RESERVA / ENTREGA</label>
-                        <input type="date" id="v-delivery-date" class="input-field" 
-                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
-                        <small style="display:block; color:#64748b; font-size:0.7rem; margin-top:4px;">* Dejar vacío para entrega inmediata.</small>
+                    <!-- 1. FECHA Y TIPO DE ENTREGA -->
+                    <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA DE RESERVA</label>
+                            <input type="date" id="v-delivery-date" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">🚚 TIPO DE ENTREGA</label>
+                            <select id="v-order-type" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="pickup">📍 Pickup (Retiro)</option>
+                                <option value="delivery">🛵 Delivery</option>
+                                <option value="dine_in">🍽️ En Local</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- 2. CLIENTE - AHORA ARRIBA -->
+                    <!-- 2. CLIENTE -->
                      <div class="input-group" style="margin-bottom:15px; border-bottom:1px dashed #e2e8f0; padding-bottom:15px;">
                         <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
                             CLIENTE
-                            <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO CLIENTE</button>
+                            <div style="display:flex; gap:5px;">
+                                <button id="btn-edit-customer" title="Editar Cliente Seleccionado" style="background:#f1f5f9; border:none; color:#64748b; font-size:0.9rem; cursor:pointer; padding:4px 8px; border-radius:4px;">✏️</button>
+                                <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO</button>
+                            </div>
                         </label>
-                        <select id="v-customer-id" class="input-field" 
-                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                            <option value="">Cliente Genérico</option>
-                        </select>
+                        <div style="display:flex; gap:5px;">
+                            <select id="v-customer-id" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="">Cliente Genérico</option>
+                            </select>
+                             <button id="btn-del-customer" title="Borrar Cliente" style="background:#fee2e2; border:none; color:#ef4444; font-size:0.9rem; cursor:pointer; padding:0 12px; border-radius:6px;">🗑️</button>
+                        </div>
                         
                         <div id="new-customer-form" style="display:none; background:#eff6ff; padding:12px; border-radius:8px; margin-top:8px; border:1px solid #bfdbfe;">
-                            <label style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">REGISTRAR NUEVO CLIENTE</label>
+                            <label id="lbl-cust-form-title" style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">RATA NUEVO CLIENTE</label>
+                            <input type="hidden" id="edit-cust-id">
                             <input type="text" id="new-cust-name" placeholder="Nombre Completo *" class="input-field" 
                                 style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
                             <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field" 

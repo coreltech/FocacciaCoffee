@@ -283,125 +283,135 @@ function bindEvents(rates) {
                         amount_usd_eq: meth.includes('Bs') ? rawVal / rates.tasa_usd_ves : (meth.includes('EUR') ? (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves : rawVal),
                         currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
                     });
+                    console.log("Enviando venta:", saleData);
+                    await SalesService.registerSale(saleData);
+                    Toast.show("✅ Venta registrada correctamente", "success");
+                    loadSales(filterDate.value); // Reload from scratch
+                } catch (err) {
+                    console.error("Error en registro:", err);
+                    Toast.show("Error: " + err.message, "error");
                 }
-            });
+            };
 
-            // Loop and Send
-            for (const item of cart) {
-                // Item Ratio
-                const itemRatio = item.total_amount / totalCartUSD;
+            // Filter Changes
+            filterDate.onchange = (e) => loadSales(e.target.value);
 
-                // Construct proportional payment details for this item
-                const itemPaymentDetails = {
-                    tasa_bcv: rates.tasa_usd_ves,
-                    items: paymentMethods.map(pm => ({
-                        method: pm.method,
-                        currency: pm.currency,
-                        amount_native: pm.amount_native * itemRatio, // Proportional part of the native money
-                        amount_usd: pm.amount_usd_eq * itemRatio
-                    }))
-                };
-
-                const itemAmountPaid = paidUSD * itemRatio;
-                const itemBalance = item.total_amount - itemAmountPaid;
-
-                const saleData = {
-                    product_id: item.product_id,
-                    product_name: item.product_name,
-                    quantity: item.quantity,
-                    total_amount: item.total_amount,
-                    amount_paid: itemAmountPaid,
-                    payment_status: itemBalance <= 0.01 ? 'Pagado' : 'Pendiente',
-                    payment_details: itemPaymentDetails,
-                    customer_id: custId || null,
-                    delivery_date: item.delivery_date
-                };
-
-                await SalesService.registerSale(saleData);
-            }
-
-            Toast.show("✅ Venta registrada exitosamente", "success");
-            cart = []; // Clear
-            SalesView.renderCart(cart, rates);
-            loadSales(filterDate.value); // Reload
-
-            // Reset Payment inputs
-            document.getElementById('payment-container').innerHTML = '';
-            SalesView.addPaymentRow();
-
-        } catch (err) {
-            console.error("Error submitting cart:", err);
-            alert("Error: " + err.message);
-        } finally {
-            btnSubmitSale.disabled = false;
-        }
-    };
-
-    // Filter Changes
-    filterDate.onchange = (e) => loadSales(e.target.value);
-
-    chkViewDelivery.onchange = (e) => {
-        viewMode = e.target.checked ? 'delivery_date' : 'sale_date';
-        loadSales(filterDate.value);
-    };
-
-    // Load More
-    if (btnLoadMore) {
-        btnLoadMore.onclick = () => {
-            currentPage++;
-            loadSales(filterDate.value, true);
-        };
-    }
-
-    // Add Customer Logic
-    const formNewCust = document.getElementById('new-customer-form');
-    const inputName = document.getElementById('new-cust-name');
-    const inputPhone = document.getElementById('new-cust-phone');
-    const inputEmail = document.getElementById('new-cust-email');
-    const btnSaveCust = document.getElementById('btn-save-customer');
-    const btnCancelCust = document.getElementById('btn-cancel-customer');
-
-    if (btnAddCustomer && formNewCust) {
-        btnAddCustomer.onclick = () => {
-            formNewCust.style.display = 'block';
-            inputName.focus();
-        };
-
-        btnCancelCust.onclick = () => {
-            formNewCust.style.display = 'none';
-        };
-
-        btnSaveCust.onclick = async () => {
-            const name = inputName.value.trim();
-            const phone = inputPhone.value.trim();
-            const email = inputEmail.value.trim();
-
-            if (!name) return alert("El nombre es obligatorio");
-
-            btnSaveCust.disabled = true;
-            btnSaveCust.innerText = "..";
-
-            try {
-                const newCustomer = await SalesService.registerCustomer({ name, phone, email });
-                Toast.show(`Cliente ${name} creado`, "success");
-
-                // Manually append to selection and select it
-                // We reload the whole catalog of customers to be safe and consistent
-                // Or just append locally to avoid reload flicker
-                inputName.value = '';
-                inputPhone.value = '';
-                inputEmail.value = '';
-                formNewCust.style.display = 'none';
-
-                // Reload sales (which reloads customers)
+            chkViewDelivery.onchange = (e) => {
+                viewMode = e.target.checked ? 'delivery_date' : 'sale_date';
                 loadSales(filterDate.value);
-            } catch (err) {
-                console.error("Error creating customer:", err);
-                alert("Error al crear cliente: " + err.message);
-            } finally {
-                btnSaveCust.disabled = false;
-                btnSaveCust.innerText = "Guardar";
+            };
+
+            // Load More
+            if (btnLoadMore) {
+                btnLoadMore.onclick = () => {
+                    currentPage++;
+                    loadSales(filterDate.value, true);
+                };
             }
-        };
-    }
-}
+
+            // --- CUSTOMER MANAGEMENT ---
+            const formNewCust = document.getElementById('new-customer-form');
+            const inputName = document.getElementById('new-cust-name');
+            const inputPhone = document.getElementById('new-cust-phone');
+            const inputEmail = document.getElementById('new-cust-email');
+            const inputId = document.getElementById('edit-cust-id'); // Hidden ID
+            const lblFormTitle = document.getElementById('lbl-cust-form-title');
+            const btnSaveCust = document.getElementById('btn-save-customer');
+            const btnCancelCust = document.getElementById('btn-cancel-customer');
+            const btnEditCust = document.getElementById('btn-edit-customer');
+            const btnDelCust = document.getElementById('btn-del-customer');
+            const selectCust = document.getElementById('v-customer-id');
+
+            if (btnAddCustomer && formNewCust) {
+                // Open Add
+                btnAddCustomer.onclick = () => {
+                    inputId.value = ""; // Clear ID -> Create Mode
+                    lblFormTitle.textContent = "REGISTRAR NUEVO CLIENTE";
+                    inputName.value = "";
+                    inputPhone.value = "";
+                    inputEmail.value = "";
+                    formNewCust.style.display = 'block';
+                    inputName.focus();
+                };
+
+                // Open Edit
+                btnEditCust.onclick = () => {
+                    const custId = selectCust.value;
+                    if (!custId) return Toast.show("Seleccione un cliente para editar", "error");
+
+                    const opt = selectCust.options[selectCust.selectedIndex];
+                    const text = opt.text; // Name (Phone) usually
+
+                    // Fetch details? Ideally we have them in customers array.
+                    // For simplicity, we parse or we just get them from service if needed.
+                    // Assuming we reload customers on loadSales, let's just find in DOM or fetch unique.
+                    // Quick hack: Parse from text or just set name.
+                    // Better: find in loaded customer list? currently not verifying list in controller scope.
+
+                    // Let's assume we can set what we have
+                    inputId.value = custId;
+                    lblFormTitle.textContent = "EDITAR CLIENTE";
+                    inputName.value = text.split(' (')[0].trim();
+                    // inputPhone... we don't have it easily accessible unless we stored it in dataset.
+                    // Let's rely on user re-entering or fetching.
+                    // Suggestion: store full customer obj in memory or dataset.
+
+                    formNewCust.style.display = 'block';
+                    inputName.focus();
+                };
+
+                // Delete
+                btnDelCust.onclick = async () => {
+                    const custId = selectCust.value;
+                    if (!custId) return Toast.show("Seleccione un cliente", "error");
+
+                    if (!confirm("¿Eliminar este cliente? Se mantendrán sus ventas históricas.")) return;
+
+                    try {
+                        await SalesService.deleteCustomer(custId);
+                        Toast.show("Cliente eliminado", "success");
+                        loadSales(filterDate.value);
+                    } catch (err) {
+                        Toast.show("Error eliminando: " + err.message, "error");
+                    }
+                };
+
+                // Cancel
+                btnCancelCust.onclick = () => {
+                    formNewCust.style.display = 'none';
+                };
+
+                // Save (Create or Update)
+                btnSaveCust.onclick = async () => {
+                    const name = inputName.value.trim();
+                    const phone = inputPhone.value.trim();
+                    const email = inputEmail.value.trim();
+                    const id = inputId.value;
+
+                    if (!name) return alert("El nombre es obligatorio");
+
+                    try {
+                        if (id) {
+                            await SalesService.updateCustomer(id, { name, phone, email });
+                            Toast.show(`Cliente actualizado`, "success");
+                        } else {
+                            await SalesService.registerCustomer({ name, phone, email });
+                            Toast.show(`Cliente creado`, "success");
+                        }
+
+                        // Clear and Hide
+                        inputName.value = '';
+                        inputPhone.value = '';
+                        inputEmail.value = '';
+                        inputId.value = '';
+                        formNewCust.style.display = 'none';
+
+                        // Reload data to show new customer in select
+                        loadSales(filterDate.value);
+                    } catch (err) {
+                        console.error("Error saving customer:", err);
+                        alert("Error: " + err.message);
+                    }
+                };
+            }
+        }

@@ -107,7 +107,16 @@ export const SalesService = {
     },
 
     async registerCustomer({ name, phone, email }) {
-        // Ensure unique phone/email handling if needed, but for now simple insert
+        // 1. Check if exists by Name or Phone
+        let query = supabase.from('customers').select('*').or(`name.eq.${name},phone.eq.${phone}`);
+        const { data: existing } = await query;
+
+        if (existing && existing.length > 0) {
+            // Return the first match if found, don't create new
+            return existing[0];
+            // Alternatively throw error: throw new Error("El cliente ya existe");
+        }
+
         const { data, error } = await supabase
             .from('customers')
             .insert([{ name, phone, email }])
@@ -116,9 +125,31 @@ export const SalesService = {
 
         if (error) {
             console.error("DB Create Customer Error:", error);
-            throw new Error("No se pudo crear el cliente. Verifique que no exista ya.");
+            throw new Error("No se pudo crear el cliente.");
         }
         return data;
+    },
+
+    async updateCustomer(id, { name, phone, email }) {
+        const { data, error } = await supabase
+            .from('customers')
+            .update({ name, phone, email })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteCustomer(id) {
+        const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
     },
 
     subscribeToSales(onUpdate) {
