@@ -82,11 +82,15 @@
   </main>
 
   <script type="module">
-    import { initRouter } from './src/core/router.js';
-    import { StateManager } from './src/core/state.js';
+    // Cache busting version
+    const v = Date.now();
 
     window.addEventListener('load', async () => {
       try {
+        // Dynamic imports to force fresh reload
+        const { StateManager } = await import(`./src/core/state.js?v=${v}`);
+        const { initRouter } = await import(`./src/core/router.js?v=${v}`);
+
         // Pre-carga de datos críticos (Tasas)
         await StateManager.init();
 
