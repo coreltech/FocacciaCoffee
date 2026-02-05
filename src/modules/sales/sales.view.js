@@ -35,7 +35,9 @@ export const SalesView = {
                         </div>
                         <div style="flex:1;">
                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">🚚 TIPO DE ENTREGA</label>
-                            <select id="v-order-type" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            <select id="v-order-type" class="input-field" 
+                                onchange="document.getElementById('div-delivery-address').style.display = (this.value === 'delivery') ? 'block' : 'none'"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                                 <option value="pickup">📍 Pickup (Retiro)</option>
                                 <option value="delivery">🛵 Delivery</option>
                                 <option value="dine_in">🍽️ En Local</option>
