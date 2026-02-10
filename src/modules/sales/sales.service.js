@@ -124,8 +124,7 @@ export const SalesService = {
                 payment_details: saleData.payment_details,
                 customer_id: saleData.customer_id,
                 delivery_date: saleData.delivery_date || null,
-                sale_date: finalDate,
-                created_by: saleData.payment_details?.seller_info?.id || null // Track seller if present
+                sale_date: finalDate
             };
 
             const { data: insData, error: insError } = await supabase
