@@ -12,7 +12,9 @@
   "license": "ISC",
   "description": "Sistema ERP para Focaccia Plus and Coffee",
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7"
   },
   "devDependencies": {
     "vite": "^7.3.1"

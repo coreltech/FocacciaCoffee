@@ -9,7 +9,7 @@ const modulePermissions = {
     recetas: ['director', 'gerente'], // Director y gerente pueden ver recetas
     produccion: ['director', 'gerente'], // Director y gerente pueden producir
     catalogo: ['director', 'gerente', 'asistente'], // Todos pueden ver catálogo
-    ventas: ['director', 'gerente', 'asistente'], // Todos pueden vender
+    ventas: ['director', 'gerente', 'asistente', 'vendedor'], // Vendedor agregado
     administracion: ['director'], // Solo director
     laboratorio: ['director'], // Solo director
     reportes: ['director', 'gerente'], // Director y gerente

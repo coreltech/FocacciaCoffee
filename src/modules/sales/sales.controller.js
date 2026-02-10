@@ -1,21 +1,31 @@
 import { SalesService } from './sales.service.js';
 import { SalesView } from './sales.view.v2.js';
 import { Toast } from '../../ui/toast.js';
+import { getCurrentRole, getCurrentUserId, getCurrentUserName } from '../../core/supabase.js';
 
+let cart = [];
+let currentRates = { tasa_usd_ves: 0, tasa_eur_ves: 0 };
+let salesSubscription = null;
+let viewMode = 'sales'; // 'sales', 'delivery_date', 'receivables'
 let currentPage = 0;
 const PAGE_SIZE = 50;
-let salesSubscription = null;
-let currentRates = null;
-
-// STATE
-let cart = [];
-let viewMode = 'sale_date'; // 'sale_date', 'delivery_date', 'receivables'
 
 export async function loadSales(startDate = new Date().toISOString().split('T')[0], endDate = null, append = false) {
     const container = document.getElementById('app-content');
 
+    // Check Role
+    const role = getCurrentRole();
+    const isVendor = role === 'vendedor';
+
     if (!append) {
         currentPage = 0;
+    }
+
+    if (isVendor) {
+        // Enforce today if vendor, or respect passed date if we decide to allow it later, 
+        // but for now strict today for safety or keep passed args if logic sends them.
+        // Let's rely on args but maybe default empty ones to today.
+        if (!startDate) startDate = new Date().toISOString().split('T')[0];
     }
 
     // 1. Load Data
@@ -35,9 +45,17 @@ export async function loadSales(startDate = new Date().toISOString().split('T')[
             SalesView.populateCustomers(data.customers);
             SalesView.renderCart(cart, data.rates);
 
+            // Apply Restrictions
+            if (isVendor) {
+                SalesView.applyVendorRestrictions();
+            }
+
             // Set Date Inputs
-            document.getElementById('filter-date-start').value = startDate;
-            document.getElementById('filter-date-end').value = endDate || startDate;
+            const startInput = document.getElementById('filter-date-start');
+            if (startInput) startInput.value = startDate;
+
+            const endInput = document.getElementById('filter-date-end');
+            if (endInput) endInput.value = endDate || startDate;
         }
 
         // 3. Render History & Summary
@@ -427,10 +445,21 @@ function bindEvents(rates) {
                 const itemRatio = item.total_amount / totalCartUSD;
 
                 // Distribute payment proportionally
+                // Seller Info Injection
+                const currentRole = getCurrentRole();
+                let sellerInfo = null;
+                if (currentRole === 'vendedor') {
+                    sellerInfo = {
+                        id: getCurrentUserId(),
+                        name: getCurrentUserName()
+                    };
+                }
+
                 const itemPaymentDetails = {
                     tasa_bcv: rates.tasa_usd_ves,
                     order_type: orderType,
                     delivery_address: orderType === 'delivery' ? deliveryAddress : null, // Store Address
+                    seller_info: sellerInfo, // NEW
                     items: paymentMethods.map(pm => ({
                         method: pm.method,
                         currency: pm.currency,

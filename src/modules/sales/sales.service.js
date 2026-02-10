@@ -10,22 +10,25 @@ export const SalesService = {
         let salesQuery = supabase.from('sales_orders')
             .select('*, customers(name)', { count: 'exact' });
 
+        // TEMPORARY DEBUG: Check columns
+        supabase.from('sales_orders').select('*').limit(1).then(console.log);
+
         // Apply Date Filter based on mode
         if (filterBy === 'delivery_date') {
-             // For delivery date, we might want a single date or range too.
-             // If endDate is provided, use range.
-             if (endDate) {
+            // For delivery date, we might want a single date or range too.
+            // If endDate is provided, use range.
+            if (endDate) {
                 salesQuery = salesQuery
                     .gte('delivery_date', startDate)
                     .lte('delivery_date', endDate);
-             } else {
+            } else {
                 salesQuery = salesQuery.eq('delivery_date', startDate);
-             }
+            }
         } else {
             // Default: sale_date
             // Handles both single date (startDate to startDate 23:59) and Range (startDate to endDate 23:59)
             const finalEnd = endDate ? endDate : startDate;
-            
+
             salesQuery = salesQuery
                 .gte('sale_date', `${startDate}T00:00:00`)
                 .lte('sale_date', `${finalEnd}T23:59:59`);
@@ -37,7 +40,7 @@ export const SalesService = {
 
         // Stats Query always for the specific range of Sale Date (Cash Flow)
         const finalEndStats = endDate ? endDate : startDate;
-        
+
         const [rates, catalog, customers, sales, stats] = await Promise.all([
             getGlobalRates(),
             supabase.from('sales_prices').select('*').eq('esta_activo', true).order('product_name'),
@@ -122,12 +125,12 @@ export const SalesService = {
             // Or just always update if present to be safe. 
             // We need the created ID. The RPC returns `new_sale_id`.
             if (data.new_sale_id) {
-                 // We append current time to keep relative order if multiple backdated on same day?
-                 // Or just set to T12:00:00. Let's start with T12:00:00 or current H:M:S
-                 const timePart = new Date().toISOString().split('T')[1]; 
-                 const fullDate = `${saleData.sale_date}T${timePart}`;
+                // We append current time to keep relative order if multiple backdated on same day?
+                // Or just set to T12:00:00. Let's start with T12:00:00 or current H:M:S
+                const timePart = new Date().toISOString().split('T')[1];
+                const fullDate = `${saleData.sale_date}T${timePart}`;
 
-                 await supabase.from('sales_orders')
+                await supabase.from('sales_orders')
                     .update({ sale_date: fullDate })
                     .eq('id', data.new_sale_id);
             }

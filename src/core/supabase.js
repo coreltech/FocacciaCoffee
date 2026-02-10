@@ -130,6 +130,14 @@ export function getCurrentUserName() {
 }
 
 /**
+ * Obtiene el ID del usuario actual desde localStorage
+ * @returns {string|null}
+ */
+export function getCurrentUserId() {
+    return localStorage.getItem('user_id');
+}
+
+/**
  * Verifica si hay una sesión activa
  * @returns {Promise<{isAuthenticated: boolean, user: object|null}>}
  */

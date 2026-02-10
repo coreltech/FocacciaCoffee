@@ -1,52 +1,29 @@
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+
 export class ReportGenerator {
     constructor() {
-        this.loaded = false;
+        this.loaded = true;
+        this.jsPDF = jsPDF;
     }
 
     async loadLib() {
-        if (window.jsPDF && typeof window.jsPDF === 'function') {
-            this.jsPDF = window.jsPDF;
-            return;
-        }
-        if (window.jspdf && window.jspdf.jsPDF) {
-            this.jsPDF = window.jspdf.jsPDF;
-            return;
-        }
-
-        // Final fallback attempt
-        try {
-            console.warn("Loading libraries via dynamic import fallback...");
-            const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
-            this.jsPDF = jsPDF;
-            // Try to load autotable
-            await import('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/+esm');
-        } catch (e) {
-            console.error(e);
-        }
+        // No-op, libraries are imported statically
+        return;
     }
 
     async generateInvestorReport(capital, expenses, balance) {
-        // ... (legacy method, same logic applicable)
+        // ... (legacy method kept for compatibility if needed)
     }
 
     async generateFullReport(data) {
-        await this.loadLib();
-
         if (!this.jsPDF) {
-            alert("Error crítico: La librería PDF no se cargó. Recarga la página.");
+            alert("Error crítico: La librería PDF no se cargó.");
             return;
         }
 
         try {
             const doc = new this.jsPDF();
-
-            // CHECK AUTOTABLE
-            if (typeof doc.autoTable !== 'function') {
-                console.warn("AutoTable not found on doc instance, checking global plugin...");
-                // Sometimes AutoTable is not attached to prototype in certain UMD builds, 
-                // but usually it is if window.jsPDF used.
-                // If this fails, we might need to rely on simple text or alert the user.
-            }
 
             const { capitalList, expensesList, totalCapital, totalExpenses, balance } = data;
 
@@ -122,5 +99,9 @@ export class ReportGenerator {
             }
 
             doc.save(`Reporte_Capital_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (e) {
+            console.error(e);
+            alert("Error generando reporte: " + e.message);
         }
+    }
 }

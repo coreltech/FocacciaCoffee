@@ -365,6 +365,48 @@ export const SalesView = {
         if (btn) btn.style.display = show ? 'block' : 'none';
     },
 
+    applyVendorRestrictions() {
+        // 1. Ocultar Pestaña de Cuentas por Cobrar
+        const btnRec = document.getElementById('btn-tab-receivables');
+        if (btnRec) btnRec.style.display = 'none';
+
+        // 2. Ocultar Filtros de Fecha (Solo Hoy)
+        const dateStart = document.getElementById('filter-date-start');
+        const dateEnd = document.getElementById('filter-date-end');
+        const dateArrow = document.querySelector('header span');
+
+        if (dateStart) dateStart.parentElement.style.display = 'none'; // Ocultar todo el bloque de fechas
+
+        // 3. Ocultar Checkbox de Ver Entregas (Si no es relevante)
+        const chkDelivery = document.getElementById('chk-view-delivery');
+        if (chkDelivery) chkDelivery.parentElement.style.display = 'none';
+
+        // 4. Simplificar Header
+        const headerTitle = document.getElementById('sales-title');
+        if (headerTitle) headerTitle.innerText = '📱 Modo Vendedor';
+
+        // 5. Ocultar Input de Fecha Retroactiva (Backdating)
+        const saleDateInput = document.getElementById('v-sale-date');
+        if (saleDateInput) {
+            saleDateInput.parentElement.style.display = 'none';
+        }
+
+        // 6. Optimización Móvil (CSS inyectado)
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .nav-bar { display: none !important; } /* Ocultar menú principal para ganar espacio */
+            body { padding-top: 10px !important; }
+            .sales-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+            .stat-card { padding: 15px !important; border-radius: 12px; }
+            .btn-add-cart { padding: 15px !important; font-size: 1.1rem !important; }
+            .catalog-item-btn { padding: 12px !important; }
+            #payment-container { padding: 10px; background: #f8fafc; border-radius: 8px; }
+            /* Ocultar botones peligrosos */
+            .btn-delete-sale, .btn-confirm-pay { display: none !important; }
+        `;
+        document.head.appendChild(style);
+    },
+
     renderHistory(sales, append = false) {
         const div = document.getElementById('sales-history');
 
