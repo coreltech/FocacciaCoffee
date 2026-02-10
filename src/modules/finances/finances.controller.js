@@ -200,11 +200,14 @@ function initCapitalForm() {
     const btnSave = document.getElementById('btn-save-capital');
     const currencySelect = document.getElementById('cap-currency');
     const rateHint = document.getElementById('cap-rate-hint');
+    const customRateInput = document.getElementById('cap-custom-rate');
 
     currencySelect.onchange = () => {
-        rateHint.style.display = currencySelect.value === 'VES' ? 'block' : 'none';
+        const isVES = currencySelect.value === 'VES';
+        rateHint.style.display = isVES ? 'block' : 'none';
+        customRateInput.style.display = isVES ? 'block' : 'none'; // Show/Hide Tasa input
         const input = document.getElementById('cap-amount');
-        input.placeholder = currencySelect.value === 'VES' ? 'Monto (Bs)' : 'Monto ($)';
+        input.placeholder = isVES ? 'Monto (Bs)' : 'Monto ($)';
     };
 
     btnSave.onclick = async () => {
@@ -212,7 +215,10 @@ function initCapitalForm() {
         const source = document.getElementById('cap-source').value.trim();
         let notes = document.getElementById('cap-notes').value.trim();
         const currency = currencySelect.value;
-        const rate = currentRates.tasa_usd_ves;
+        const customRate = parseFloat(customRateInput.value) || 0;
+
+        // Priority: Custom Rate > System Rate
+        const rate = (customRate > 0) ? customRate : currentRates.tasa_usd_ves;
 
         if (!rawAmount || rawAmount <= 0) return Toast.show("Monto inválido", "error");
         if (!source) return Toast.show("Indique la fuente del capital", "error");
@@ -236,6 +242,7 @@ function initCapitalForm() {
             document.getElementById('cap-amount').value = "";
             document.getElementById('cap-source').value = "";
             document.getElementById('cap-notes').value = "";
+            customRateInput.value = ""; // Clear rate
 
             refreshData();
         } catch (err) {
@@ -243,6 +250,35 @@ function initCapitalForm() {
             Toast.show("Error ingresando capital", "error");
         }
     };
+
+    // --- DELETE HANDLER (Delegation) ---
+    document.getElementById('tab-capital').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-del-cap')) {
+            if (!confirm("¿Eliminar este ingreso de capital?")) return;
+            try {
+                await FinancesService.deleteCapitalEntry(e.target.dataset.id);
+                Toast.show("Eliminado", "success");
+                refreshData(); // Refresh list/totals
+            } catch (error) {
+                console.error(error);
+                Toast.show("Error eliminando", "error");
+            }
+        }
+    });
+
+    document.getElementById('tab-expenses').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-del-exp')) {
+            if (!confirm("¿Eliminar este gasto?")) return;
+            try {
+                await FinancesService.deleteExpense(e.target.dataset.id);
+                Toast.show("Eliminado", "success");
+                refreshData();
+            } catch (error) {
+                console.error(error);
+                Toast.show("Error eliminando", "error");
+            }
+        }
+    });
 }
 
 function initTabs() {

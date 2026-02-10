@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export class ReportGenerator {
     constructor() {
@@ -35,7 +35,7 @@ export class ReportGenerator {
             doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 26);
 
             // 2. Summary
-            doc.autoTable({
+            autoTable(doc, {
                 startY: 35,
                 head: [['Capital Total', 'Total Gastos (Ejecutado)', 'Capital Disponible']],
                 body: [[
@@ -62,7 +62,7 @@ export class ReportGenerator {
                 `$${parseFloat(c.amount).toFixed(2)}`
             ]);
 
-            doc.autoTable({
+            autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 20,
                 head: [['Fecha', 'Fuente', 'Notas', 'Monto']],
                 body: capRows,
@@ -82,7 +82,7 @@ export class ReportGenerator {
                 `$${parseFloat(e.total_amount).toFixed(2)}`
             ]);
 
-            doc.autoTable({
+            autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 20,
                 head: [['Fecha', 'Proveedor', 'Factura', 'Detalles', 'Total']],
                 body: expRows,

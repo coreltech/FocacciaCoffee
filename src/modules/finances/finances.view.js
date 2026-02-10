@@ -76,15 +76,15 @@ export const FinancesView = {
                 <!-- SECCION DERECHA: NUEVO CAPITAL Y LISTAS -->
                 <div>
                      <!-- FORMULARIO CAPITAL -->
-                    <div class="card" style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px;">
                         <h3 style="margin:0 0 15px 0; border-bottom:2px solid #f1f5f9; padding-bottom:10px; color:#15803d;">➕ Ingresar Capital</h3>
-                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
                             <input type="date" id="cap-date" class="input-field" style="width:auto;" value="${new Date().toISOString().split('T')[0]}">
                             <select id="cap-currency" class="input-field" style="width:120px;">
                                 <option value="USD">USD ($)</option>
                                 <option value="VES">VES (Bs)</option>
                             </select>
                             <input type="number" id="cap-amount" placeholder="Monto" class="input-field" style="flex:1;">
+                            <input type="number" id="cap-custom-rate" placeholder="Tasa (Opcional)" class="input-field" style="width:100px; display:none;" step="0.01">
                         </div>
                         <input type="text" id="cap-source" placeholder="Fuente / Socio" class="input-field" style="width:100%; margin-bottom:10px;">
                         
@@ -92,7 +92,7 @@ export const FinancesView = {
                             <input type="text" id="cap-notes" placeholder="Notas adicionales" class="input-field" style="flex:3;">
                             <button id="btn-save-capital" style="flex:1; background:#22c55e; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Ingresar</button>
                         </div>
-                        <p id="cap-rate-hint" style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:5px; display:none;">Se convertirá a USD usando la tasa actual.</p>
+                        <p id="cap-rate-hint" style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:5px; display:none;">Se usará Tasa Actual. Para histórica, ingrésela en el campo Tasa.</p>
                     </div>
 
                     <!-- TABS HISTORIAL -->
