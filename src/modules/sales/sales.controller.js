@@ -297,10 +297,15 @@ function bindEvents(rates) {
         const opt = catalogSelect.options[catalogSelect.selectedIndex];
         const deliveryDate = deliveryDateInput.value;
         const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const isPreorder = deliveryDate && (deliveryDate > todayStr);
+        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const saleDateInput = document.getElementById('v-sale-date');
+        const saleDateVal = saleDateInput ? saleDateInput.value : todayStr;
 
-        if (opt && opt.value && opt.value !== 'manual' && !isPreorder) {
+        // Allow if preorder OR backdated (past date)
+        const isPreorder = deliveryDate && (deliveryDate > todayStr);
+        const isBackdated = saleDateVal < todayStr;
+
+        if (opt && opt.value && opt.value !== 'manual' && !isPreorder && !isBackdated) {
             const stockDisp = parseFloat(opt.dataset.stock) || 0;
             SalesView.toggleStockWarning(qty > stockDisp);
         } else {
@@ -320,6 +325,8 @@ function bindEvents(rates) {
     priceInput.oninput = calculateLineItem;
     qtyInput.oninput = calculateLineItem;
     deliveryDateInput.onchange = calculateLineItem;
+    const saleDateInput = document.getElementById('v-sale-date');
+    if (saleDateInput) saleDateInput.onchange = calculateLineItem;
 
     // --- CART LOGIC ---
     btnAddToCart.onclick = () => {
