@@ -5,13 +5,21 @@ export const SalesView = {
             <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
                 <div>
                     <h1 id="sales-title" style="font-size: 1.8rem; margin:0 0 8px 0;">🛒 Punto de Venta</h1>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <input type="date" id="filter-date" value="${initialDate}" class="input-field" 
-                            style="padding:8px 12px; width:auto; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px; box-sizing:border-box;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <input type="date" id="filter-date-start" value="${initialDate}" class="input-field" 
+                            style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
+                        <span style="font-weight:bold; color:#cbd5e1;">➔</span>
+                        <input type="date" id="filter-date-end" value="${initialDate}" class="input-field" 
+                            style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
                         
                         <div style="display:flex; align-items:center; gap:5px; background:white; padding:5px 10px; border-radius:6px; border:1px solid #e2e8f0;">
                             <input type="checkbox" id="chk-view-delivery" style="cursor:pointer;">
                             <label for="chk-view-delivery" style="font-size:0.8rem; cursor:pointer; user-select:none;">Ver Entregas/Reservas</label>
+                        </div>
+
+                        <div style="display:flex; gap:5px;">
+                            <button id="btn-tab-sales" class="tab-btn active" style="background:#2563eb; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋 Ventas</button>
+                            <button id="btn-tab-receivables" class="tab-btn" style="background:#f1f5f9; color:#64748b; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">💰 Cuentas por Cobrar</button>
                         </div>
                     </div>
                 </div>
@@ -29,7 +37,12 @@ export const SalesView = {
                     <!-- 1. FECHA Y TIPO DE ENTREGA -->
                     <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
                         <div style="flex:1;">
-                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA DE RESERVA</label>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA REGISTRO</label>
+                            <input type="date" id="v-sale-date" class="input-field" value="${initialDate}"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 ENTREGA (OPCIONAL)</label>
                             <input type="date" id="v-delivery-date" class="input-field" 
                                 style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
                         </div>
@@ -438,6 +451,65 @@ export const SalesView = {
         }).join('');
 
         div.insertAdjacentHTML('beforeend', html);
+    },
+
+    renderReceivables(sales, totalCount) {
+        const div = document.getElementById('sales-history');
+        const summaryDiv = document.getElementById('daily-summary');
+
+        // Receivables Summary
+        if (summaryDiv) {
+            const totalDebt = sales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
+            summaryDiv.innerHTML = `
+                <div style="background:#fff1f2; padding:20px; border-radius:12px; border:2px solid #fecaca; text-align:center;">
+                    <h4 style="margin:0 0 10px 0; color:#991b1b;">💰 Total por Cobrar (Mostrado)</h4>
+                    <b style="font-size:2rem; color:#ef4444;">$${totalDebt.toFixed(2)}</b>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#7f1d1d;">Registros: ${sales.length} / ${totalCount}</p>
+                </div>
+            `;
+        }
+
+        if (sales.length === 0) {
+            div.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">🎉 No hay cuentas por cobrar pendientes.</p>';
+            return;
+        }
+
+        const html = sales.map(s => {
+            const customerName = s.customers?.name || 'Cliente Desconocido';
+            const phone = s.customers?.phone || 'Sin Tlf';
+            const balance = parseFloat(s.balance_due).toFixed(2);
+            const total = parseFloat(s.total_amount).toFixed(2);
+            const paid = parseFloat(s.amount_paid).toFixed(2);
+            const dateStr = s.sale_date.split('T')[0];
+
+            return `
+                <div style="background:white; border:1px solid #fecaca; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid #ef4444; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1); position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="color:#64748b; font-size:0.75rem; margin-bottom:4px;">📅 ${dateStr} &bull; ID: ${s.id.slice(0, 8)}</div>
+                            <b style="font-size:1.1rem; color:#1e293b; display:block;">${customerName}</b>
+                            <span style="font-size:0.85rem; color:#64748b;">📞 ${phone}</span>
+                            <div style="margin-top:5px; font-size:0.85rem; color:#334155;">
+                                Producto: <b>${s.product_name}</b> <br>
+                                Total Venta: $${total} <br>
+                                Pagado: $${paid}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <small style="display:block; color:#991b1b; font-weight:bold;">DEUDA</small>
+                            <b style="font-size:1.4rem; color:#ef4444;">$${balance}</b>
+                        </div>
+                    </div>
+
+                    <button class="btn-confirm-pay" data-id="${s.id}" data-amount="${balance}"
+                        style="width:100%; margin-top:15px; background:#ef4444; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition: background 0.2s;">
+                        💸 REGISTRAR PAGO TOTAL ($${balance})
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        div.innerHTML = html;
     },
 
     addPaymentRow() {

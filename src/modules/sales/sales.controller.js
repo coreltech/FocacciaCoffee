@@ -9,9 +9,9 @@ let currentRates = null;
 
 // STATE
 let cart = [];
-let viewMode = 'sale_date'; // 'sale_date' or 'delivery_date'
+let viewMode = 'sale_date'; // 'sale_date', 'delivery_date', 'receivables'
 
-export async function loadSales(selectedDate = new Date().toISOString().split('T')[0], append = false) {
+export async function loadSales(startDate = new Date().toISOString().split('T')[0], endDate = null, append = false) {
     const container = document.getElementById('app-content');
 
     if (!append) {
@@ -20,15 +20,24 @@ export async function loadSales(selectedDate = new Date().toISOString().split('T
 
     // 1. Load Data
     try {
-        const data = await SalesService.getData(selectedDate, currentPage, PAGE_SIZE, viewMode);
+        if (viewMode === 'receivables') {
+            await loadReceivables(append);
+            return;
+        }
+
+        const data = await SalesService.getData(startDate, endDate, currentPage, PAGE_SIZE, viewMode);
         currentRates = data.rates;
 
         // 2. Render Layout (Only if it's the first load, otherwise we just append)
         if (!append) {
-            SalesView.renderLayout(container, selectedDate, data.rates);
+            SalesView.renderLayout(container, startDate, data.rates);
             SalesView.populateCatalog(data.catalog);
             SalesView.populateCustomers(data.customers);
             SalesView.renderCart(cart, data.rates);
+
+            // Set Date Inputs
+            document.getElementById('filter-date-start').value = startDate;
+            document.getElementById('filter-date-end').value = endDate || startDate;
         }
 
         // 3. Render History & Summary
@@ -37,7 +46,11 @@ export async function loadSales(selectedDate = new Date().toISOString().split('T
         // 4. Bind Events (Only on initial load)
         if (!append) {
             bindEvents(data.rates);
-            setupRealtime(selectedDate);
+            setupRealtime(startDate);
+
+            // Set Active Tab
+            updateTabState();
+
             const chk = document.getElementById('chk-view-delivery');
             if (chk) chk.checked = (viewMode === 'delivery_date');
         }
@@ -48,6 +61,72 @@ export async function loadSales(selectedDate = new Date().toISOString().split('T
             container.innerHTML = `<p style="color:red">Error cargando ventas: ${err.message}</p>`;
         } else {
             Toast.show("Error cargando más ventas: " + err.message, "error");
+        }
+    }
+}
+
+async function loadReceivables(append = false) {
+    const container = document.getElementById('app-content');
+    try {
+        if (!append) {
+            // We need rates/catalog/customers even in receivables for the form (if we keep form visible)
+            // Ideally we should keep the layout and just swap the history part?
+            // But existing renderLayout wipes everything.
+            // To avoid flickering, we should probably stick to renderLayout but changing the "History" part.
+            // Let's re-use getData but maybe we need a separate "Initial Load" for receivables?
+            const rates = await SalesService.getGlobalRates || ((await SalesService.getData(new Date().toISOString().split('T')[0])).rates); // Hacky fallback
+            // Better: Just fetch rates + Receivables
+            const [r, c, cust, rec] = await Promise.all([
+                SalesService.getData(new Date().toISOString().split('T')[0], null, 0, 1), // Wasteful but gets rates
+                Promise.resolve([]), // Catalog?
+                SalesService.getData(new Date().toISOString().split('T')[0]).then(d => d.customers),
+                SalesService.getReceivables(currentPage, PAGE_SIZE)
+            ]);
+
+            SalesView.renderLayout(container, new Date().toISOString().split('T')[0], r.rates);
+            SalesView.populateCatalog(r.catalog);
+            SalesView.populateCustomers(cust);
+            SalesView.renderCart(cart, r.rates);
+        }
+
+        const data = await SalesService.getReceivables(currentPage, PAGE_SIZE);
+        // Render Receivables specific view
+        SalesView.renderReceivables(data.sales, data.totalCount);
+
+        if (!append) {
+            bindEvents(currentRates || { tasa_usd_ves: 0 }); // We might miss rates if we didn't store them
+            updateTabState();
+        }
+
+        // Pagination logic for receivables? 
+        const displayedCount = (currentPage + 1) * PAGE_SIZE;
+        SalesView.toggleLoadMore(data.totalCount > displayedCount);
+        bindDynamicEvents();
+
+    } catch (err) {
+        console.error("Error loading receivables:", err);
+        container.innerHTML = `<p style="color:red">Error cargando Cuentas por Cobrar: ${err.message}</p>`;
+    }
+}
+
+function updateTabState() {
+    const btnSales = document.getElementById('btn-tab-sales');
+    const btnRec = document.getElementById('btn-tab-receivables');
+    if (btnSales && btnRec) {
+        if (viewMode === 'receivables') {
+            btnRec.classList.add('active');
+            btnRec.style.background = '#2563eb';
+            btnRec.style.color = 'white';
+            btnSales.classList.remove('active');
+            btnSales.style.background = '#f1f5f9';
+            btnSales.style.color = '#64748b';
+        } else {
+            btnSales.classList.add('active');
+            btnSales.style.background = '#2563eb';
+            btnSales.style.color = 'white';
+            btnRec.classList.remove('active');
+            btnRec.style.background = '#f1f5f9';
+            btnRec.style.color = '#64748b';
         }
     }
 }
@@ -84,8 +163,13 @@ function bindDynamicEvents() {
         btn.onclick = async () => {
             if (confirm("¿Eliminar registro?")) {
                 await SalesService.deleteSale(btn.dataset.id);
-                const date = document.getElementById('filter-date').value;
-                loadSales(date);
+                if (viewMode === 'receivables') {
+                    loadReceivables();
+                } else {
+                    const start = document.getElementById('filter-date-start').value;
+                    const end = document.getElementById('filter-date-end').value;
+                    loadSales(start, end);
+                }
             }
         };
     });
@@ -95,19 +179,27 @@ function bindDynamicEvents() {
             const amt = parseFloat(btn.dataset.amount);
             if (!confirm(`¿Registrar cobro de $${amt.toFixed(2)}?`)) return;
             await SalesService.confirmPendingPayment(btn.dataset.id, amt);
-            const date = document.getElementById('filter-date').value;
-            loadSales(date);
+
+            if (viewMode === 'receivables') {
+                loadReceivables();
+            } else {
+                const start = document.getElementById('filter-date-start').value;
+                const end = document.getElementById('filter-date-end').value;
+                loadSales(start, end);
+            }
         };
     });
 
     // Remove from cart buttons
     document.querySelectorAll('.cart-remove-btn').forEach(btn => {
-        btn.onclick = () => {
-            const idx = parseInt(btn.dataset.index);
-            cart.splice(idx, 1);
-            SalesView.renderCart(cart, currentRates);
-        };
+        btn.onclick = () => requestedCartRemove(btn);
     });
+
+    function requestedCartRemove(btn) {
+        const idx = parseInt(btn.dataset.index);
+        cart.splice(idx, 1);
+        SalesView.renderCart(cart, currentRates);
+    }
 }
 
 function setupRealtime(selectedDate) {
@@ -116,9 +208,13 @@ function setupRealtime(selectedDate) {
     }
     salesSubscription = SalesService.subscribeToSales((payload) => {
         console.log("Realtime update received:", payload);
-        const activeDate = document.getElementById('filter-date')?.value || new Date().toISOString().split('T')[0];
-        if (activeDate === selectedDate) {
-            loadSales(activeDate);
+        const start = document.getElementById('filter-date-start')?.value;
+        const end = document.getElementById('filter-date-end')?.value;
+        if (start && viewMode !== 'receivables') {
+            // Reload with current filters
+            loadSales(start, end);
+        } else if (viewMode === 'receivables') {
+            loadReceivables();
         }
     });
 }
@@ -130,10 +226,50 @@ function bindEvents(rates) {
     const btnAddToCart = document.getElementById('btn-add-to-cart');
     const btnSubmitSale = document.getElementById('btn-submit-sale');
     const addPayBtn = document.getElementById('add-pay-row');
-    const filterDate = document.getElementById('filter-date');
+
+    // New Date Range Inputs
+    const filterStart = document.getElementById('filter-date-start');
+    const filterEnd = document.getElementById('filter-date-end');
+
     const chkViewDelivery = document.getElementById('chk-view-delivery');
     const btnLoadMore = document.getElementById('btn-load-more');
     const deliveryDateInput = document.getElementById('v-delivery-date');
+
+    // Tabs
+    const btnTabSales = document.getElementById('btn-tab-sales');
+    const btnTabRec = document.getElementById('btn-tab-receivables');
+
+    if (btnTabSales) {
+        btnTabSales.onclick = () => {
+            viewMode = 'sale_date'; // or prev mode
+            currentPage = 0;
+            loadSales(filterStart.value, filterEnd.value);
+        };
+    }
+    if (btnTabRec) {
+        btnTabRec.onclick = () => {
+            viewMode = 'receivables';
+            currentPage = 0;
+            loadSales(null, null); // Load receivables
+        };
+    }
+
+    // Filter Change Events
+    const handleDateChange = () => {
+        currentPage = 0;
+        loadSales(filterStart.value, filterEnd.value);
+    };
+
+    if (filterStart) filterStart.onchange = handleDateChange;
+    if (filterEnd) filterEnd.onchange = handleDateChange;
+
+    if (chkViewDelivery) {
+        chkViewDelivery.onchange = () => {
+            viewMode = chkViewDelivery.checked ? 'delivery_date' : 'sale_date';
+            currentPage = 0;
+            loadSales(filterStart.value, filterEnd.value);
+        };
+    }
 
     // --- CALCULATOR LOGIC ---
     const calculateLineItem = () => {
@@ -257,6 +393,7 @@ function bindEvents(rates) {
         // NEW: Order Type
         const orderType = document.getElementById('v-order-type').value;
         const deliveryAddress = document.getElementById('v-delivery-address').value.trim();
+        const saleDate = document.getElementById('v-sale-date').value; // Backdating input
 
         if (orderType === 'delivery' && !deliveryAddress) {
             return Toast.show("⚠️ Falta la dirección de entrega", "error");
@@ -314,7 +451,8 @@ function bindEvents(rates) {
                     payment_status: itemBalance <= 0.01 ? 'Pagado' : 'Pendiente',
                     payment_details: itemPaymentDetails,
                     customer_id: custId || null,
-                    delivery_date: item.delivery_date
+                    delivery_date: item.delivery_date,
+                    sale_date: saleDate // Pass custom date to service
                 };
 
                 await SalesService.registerSale(saleData);
@@ -323,7 +461,12 @@ function bindEvents(rates) {
             Toast.show("✅ Venta registrada exitosamente", "success");
             cart = [];
             SalesView.renderCart(cart, rates);
-            loadSales(filterDate.value);
+            SalesView.renderCart(cart, rates);
+
+            // Reload based on current view
+            const start = document.getElementById('filter-date-start')?.value || saleDate;
+            const end = document.getElementById('filter-date-end')?.value || saleDate;
+            loadSales(start, end);
 
             // Reset Payment inputs
             document.getElementById('payment-container').innerHTML = '';
