@@ -530,7 +530,6 @@ function bindEvents(rates) {
         const btnEditCust = document.getElementById('btn-edit-customer');
         const btnDelCust = document.getElementById('btn-del-customer');
         const selectCust = document.getElementById('v-customer-id');
-        const filterDate = document.getElementById('filter-date');
         const deliveryAddrInput = document.getElementById('v-delivery-address'); // Main form address input
 
         // Auto-fill Delivery Address on Customer Select
@@ -595,7 +594,10 @@ function bindEvents(rates) {
                 try {
                     await SalesService.deleteCustomer(custId);
                     Toast.show("Cliente eliminado", "success");
-                    loadSales(filterDate.value);
+
+                    const s = document.getElementById('filter-date-start')?.value;
+                    const e = document.getElementById('filter-date-end')?.value;
+                    loadSales(s, e);
                 } catch (err) {
                     Toast.show("Error eliminando: " + err.message, "error");
                 }
@@ -636,7 +638,9 @@ function bindEvents(rates) {
                     inputId.value = '';
                     formNewCust.style.display = 'none';
 
-                    loadSales(filterDate.value);
+                    const s = document.getElementById('filter-date-start')?.value;
+                    const e = document.getElementById('filter-date-end')?.value;
+                    loadSales(s, e);
                 } catch (err) {
                     console.error("Error saving customer:", err);
                     alert("Error: " + err.message); // Using alert as requested/used in context
