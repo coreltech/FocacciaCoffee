@@ -108,10 +108,18 @@ class SettingsServiceImpl {
         if (error) throw error;
 
         // Maintain old history table for visuals if needed (mapping them for compatibility)
-        await supabase.from('rates_history').insert([{
+        const { error: historyError } = await supabase.from('rates_history').insert([{
             tasa_usd: usdVes,
-            tasa_eur: eurVes
+            tasa_eur: eurVes,
+            created_at: new Date().toISOString() // Force client-side timestamp to ensure order matches action
         }]);
+
+        if (historyError) {
+            console.error("Error saving history:", historyError);
+            // We don't throw here to avoid blocking the main update if history fails, 
+            // but we log it. Or should we warn the user?
+            // Let's log it for now.
+        }
 
         await this.refreshRates();
     }
@@ -122,7 +130,7 @@ class SettingsServiceImpl {
                 .from('rates_history')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(50);
 
             if (error) {
                 console.error('Supabase error in getHistory:', error);
