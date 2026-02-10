@@ -647,7 +647,7 @@ function bindEvents(rates) {
 
                     const s = document.getElementById('filter-date-start')?.value;
                     const e = document.getElementById('filter-date-end')?.value;
-                    loadSales(s, e);
+                    await loadSales(s, e);
                 } catch (err) {
                     console.error("Error saving customer:", err);
                     alert("Error: " + err.message); // Using alert as requested/used in context
