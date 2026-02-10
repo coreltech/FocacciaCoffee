@@ -97,6 +97,52 @@ export const SalesService = {
 
         // Call the Atomic RPC function created in SQL Phase
         // Note: RPC uses NOW() for sale_date. We will patch it if saleData.sale_date is present.
+        // Detect if Backdated (Sale Date < Today)
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const isBackdated = saleData.sale_date && saleData.sale_date.split('T')[0] < todayStr;
+
+        if (isBackdated) {
+            console.log("📅 Backdated sale detected. Bypassing stock check (Direct Insert).");
+
+            // Calculate fields derived in RPC
+            const balanceDue = saleData.total_amount - saleData.amount_paid;
+            // Append time to sale_date if not present, to avoid T00:00:00 confusion?
+            // saleData.sale_date comes as YYYY-MM-DD usually from controller default, 
+            // but might be used as is. Let's ensure it has a time or default to 12:00.
+            const finalDate = saleData.sale_date.includes('T')
+                ? saleData.sale_date
+                : `${saleData.sale_date}T${new Date().toLocaleTimeString('en-GB')}`; // Current time, selected date
+
+            const payload = {
+                product_id: saleData.product_id,
+                product_name: saleData.product_name,
+                quantity: saleData.quantity,
+                total_amount: saleData.total_amount,
+                amount_paid: saleData.amount_paid,
+                balance_due: balanceDue,
+                payment_status: saleData.payment_status,
+                payment_details: saleData.payment_details,
+                customer_id: saleData.customer_id,
+                delivery_date: saleData.delivery_date || null,
+                sale_date: finalDate,
+                created_by: saleData.payment_details?.seller_info?.id || null // Track seller if present
+            };
+
+            const { data: insData, error: insError } = await supabase
+                .from('sales_orders')
+                .insert([payload])
+                .select()
+                .single();
+
+            if (insError) {
+                console.error("Direct Insert Error:", insError);
+                throw insError;
+            }
+
+            return { success: true, new_sale_id: insData.id, message: "Venta histórica registrada (Sin impactar stock actual)" };
+        }
+
+        // --- NORMAL FLOW (Future/Today) -> Use RPC with Locking & Stock Check ---
         const { data, error } = await supabase.rpc('registrar_venta_atomica', {
             p_product_id: saleData.product_id,
             p_quantity: saleData.quantity,
@@ -116,24 +162,6 @@ export const SalesService = {
         if (!data.success) {
             console.error("RPC Business Logic Error:", data);
             throw new Error(data.message || data.error || 'Error registrando venta');
-        }
-
-        // --- BACKDATING LOGIC ---
-        // If a specific sale_date was requested (and it's not just "today"), update the record.
-        if (saleData.sale_date) {
-            // Check if it really differs from today to save an API call? 
-            // Or just always update if present to be safe. 
-            // We need the created ID. The RPC returns `new_sale_id`.
-            if (data.new_sale_id) {
-                // We append current time to keep relative order if multiple backdated on same day?
-                // Or just set to T12:00:00. Let's start with T12:00:00 or current H:M:S
-                const timePart = new Date().toISOString().split('T')[1];
-                const fullDate = `${saleData.sale_date}T${timePart}`;
-
-                await supabase.from('sales_orders')
-                    .update({ sale_date: fullDate })
-                    .eq('id', data.new_sale_id);
-            }
         }
 
         return data;
