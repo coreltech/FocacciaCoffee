@@ -177,8 +177,17 @@ export const SalesService = {
     },
 
     async registerCustomer({ name, phone, email, address }) {
-        // 1. Check if exists by Name or Phone
-        let query = supabase.from('customers').select('*').or(`name.eq.${name},phone.eq.${phone}`);
+        // 1. Check if exists by Name or Phone (if provided)
+        let query = supabase.from('customers').select('*');
+
+        // Build OR condition carefully
+        const conditions = [`name.eq.${name}`];
+        if (phone && phone.trim().length > 0) {
+            conditions.push(`phone.eq.${phone}`);
+        }
+
+        query = query.or(conditions.join(','));
+
         const { data: existing } = await query;
 
         if (existing && existing.length > 0) {
