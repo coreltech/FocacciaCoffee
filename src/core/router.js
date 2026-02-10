@@ -124,25 +124,35 @@ async function handleLogout() {
     }
 }
 
+/**
+ * Mantiene el estado de los módulos cargados
+ */
+const loadedModules = {};
+
 export async function initRouter() {
     // 1. Verificar autenticación
     const { isAuthenticated } = await checkAuth();
 
     if (!isAuthenticated) {
-        // Redirigir a login si no está autenticado
         window.location.href = '/login.html';
         return;
     }
 
-    // 2. Mostrar información del usuario y botón de logout
+    // 2. Mostrar información del usuario
     displayUserInfo();
 
     // 3. Ocultar botones según rol
     updateNavigationByRole();
 
-    // 4. Configurar navegación
+    // 4. Configurar navegación SPA Persistente
     const navButtons = document.querySelectorAll('.nav-btn:not(#logout-btn)');
-    const container = document.getElementById('app-content');
+    const mainContainer = document.getElementById('app-content');
+
+    // Limpiar contenedor principal al iniciar (por si acaso hay basura del HTML estático)
+    // Pero preservando si ya hay estructura válida (en recargas calientes)
+    if (!document.querySelector('.module-container')) {
+        mainContainer.innerHTML = '';
+    }
 
     navButtons.forEach(btn => {
         btn.onclick = async () => {
@@ -150,58 +160,130 @@ export async function initRouter() {
 
             // Verificar permisos
             if (!hasPermission(tab)) {
-                container.innerHTML = `
-                    <div class="stat-card" style="border: 2px solid #ef4444; background: #fef2f2;">
-                        <h3 style="color: #dc2626;">🚫 Acceso Denegado</h3>
-                        <p>No tienes permisos para acceder a este módulo.</p>
-                        <p style="font-size: 0.9rem; color: #666;">Tu rol actual: <b>${getCurrentRole()}</b></p>
-                    </div>
-                `;
+                alert(`🚫 Acceso Denegado: No tienes permisos para el módulo ${tab}.`);
                 return;
             }
 
+            // Actualizar estado visual de botones
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            container.innerHTML = '<div class="stat-card">Cargando...</div>';
+            // Ocultar todos los módulos activos
+            document.querySelectorAll('.module-container').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active-module');
+            });
+
+            // Verificar si el módulo ya existe
+            let moduleContainer = document.getElementById(`module-${tab}`);
+
+            if (moduleContainer) {
+                // Si existe, solo mostrarlo (Estado Preservado)
+                moduleContainer.style.display = 'block';
+                moduleContainer.classList.add('active-module');
+
+                // Opcional: Notificar al módulo que volvió a ser visible (e.g., para recargar datos frescos si es necesario)
+                // if (loadedModules[tab] && typeof loadedModules[tab].onShow === 'function') {
+                //     loadedModules[tab].onShow();
+                // }
+                return;
+            }
+
+            // Si NO existe, crearlo y cargarlo
+            moduleContainer = document.createElement('div');
+            moduleContainer.id = `module-${tab}`;
+            moduleContainer.className = 'module-container fade-in';
+            mainContainer.appendChild(moduleContainer);
+
+            // Mostrar spinner de carga dentro del nuevo contenedor
+            moduleContainer.innerHTML = `
+                <div class="loading-state" style="text-align:center; padding:40px; color:#64748b;">
+                    <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
+                    <h3>Cargando ${btn.innerText}...</h3>
+                </div>
+            `;
 
             try {
-                if (!routes[tab]) {
-                    throw new Error(`La ruta "${tab}" no está configurada en el router.`);
+                if (!routes[tab]) throw new Error(`Ruta ${tab} no configurada.`);
+
+                // Importar dinámicamente
+                const module = await routes[tab]();
+                loadedModules[tab] = module;
+
+                // Limpiar spinner (El módulo debe encargarse de llenar su contenedor)
+                // Hack: Para compatibilidad con módulos viejos que usan document.getElementById('app-content')
+                // Vamos a "engañarlos" o modificar la forma en que renderizan.
+                // SOLUCIÓN: Los módulos actuales suelen hacer `container = document.getElementById('app-content')`.
+                // Esto borraría a los otros módulos.
+                // NECESITAMOS que los módulos acepten un contenedor o usar un Proxy si no queremos tocarlos todos.
+                // PERO, para hacerlo bien, vamos a pasar el contenedor al método de carga si es posible, 
+                // o modificar temporalmente el getElementById (muy arriesgado).
+
+                // MEJOR ESTRATEGIA: La mayoría de los módulos (como vi en dashboard.js y sales.controller.js) hacen:
+                // const container = document.getElementById('app-content');
+                // container.innerHTML = ...
+
+                // Para que esto funcione sin refactorizar 15 archivos AHORA MISMO:
+                // Vamos a limpiar el mainContainer SOLO VISUALMENTE (display:none a los otros), 
+                // pero el problema es que si el módulo hace `innerHTML = ''` al app-content, BORRA TODO.
+
+                // REVISION DE EMERGENCIA:
+                // No puedo cambiar `app-content` en 15 archivos en un solo paso de manera segura.
+                // ESTRATEGIA "INTEGRACIÓN FLUIDA LITE":
+                // 1. Crear el `moduleContainer` dentro de `app-content`.
+                // 2. Antes de llamar al `loadX`, parchear `document.getElementById` temporalmente para que cuando pidan 'app-content',
+                //    devuelvan ESTE `moduleContainer`.
+
+                const originalGetElement = document.getElementById.bind(document);
+
+                // Monkey patch seguro solo para este tick
+                document.getElementById = (id) => {
+                    if (id === 'app-content') return moduleContainer;
+                    return originalGetElement(id);
+                };
+
+                try {
+                    // Ejecución dinámica
+                    if (tab === 'dashboard') await module.loadDashboard();
+                    else if (tab === 'tasas') await module.loadSettings();
+                    else if (tab === 'suministros') await module.loadSupplies();
+                    else if (tab === 'recetas') await module.loadRecipesPro();
+                    else if (tab === 'produccion') await module.loadProduction();
+                    else if (tab === 'catalogo') await module.loadCatalog();
+                    else if (tab === 'ventas') await module.loadSales();
+                    else if (tab === 'config_productos') await module.loadAssemblyModern();
+                    else if (tab === 'mermas') await module.loadWaste();
+                    else if (tab === 'administracion') await module.loadAdmin();
+                    else if (tab === 'laboratorio') await module.loadPlan();
+                    else if (tab === 'reportes') await module.loadReports();
+                    else if (tab === 'biblioteca') await module.loadLibrary();
+                    else if (tab === 'compras') await module.loadPurchases();
+                    else if (tab === 'finanzas') await module.loadFinances();
+
+                    // Restaurar
+                    document.getElementById = originalGetElement;
+                } catch (e) {
+                    document.getElementById = originalGetElement; // Restaurar en error
+                    throw e;
                 }
 
-                const module = await routes[tab]();
-
-                // Ejecución dinámica según el tab
-                if (tab === 'dashboard') await module.loadDashboard();
-                if (tab === 'tasas') await module.loadSettings();
-                if (tab === 'suministros') await module.loadSupplies();
-                if (tab === 'recetas') await module.loadRecipesPro();
-                if (tab === 'produccion') await module.loadProduction();
-                if (tab === 'catalogo') await module.loadCatalog();
-                if (tab === 'ventas') await module.loadSales();
-                if (tab === 'config_productos') await module.loadAssemblyModern();
-                if (tab === 'mermas') await module.loadWaste();
-                if (tab === 'administracion') await module.loadAdmin();
-                if (tab === 'laboratorio') await module.loadPlan(); // Function inside is still loadPlan
-                if (tab === 'reportes') await module.loadReports();
-                if (tab === 'biblioteca') await module.loadLibrary();
-                if (tab === 'compras') await module.loadPurchases();
-                if (tab === 'finanzas') await module.loadFinances();
+                moduleContainer.classList.add('active-module');
 
             } catch (err) {
-                container.innerHTML = `
-                    <div class="stat-card">
-                        <h3 style="color:red;">Error al cargar módulo</h3>
-                        <p>No se pudo cargar: <b>${tab}</b></p>
-                        <p style="font-size:0.8rem; color:#666;">Detalle: ${err.message}</p>
-                    </div>`;
-                console.error("Error en router:", err);
+                console.error("Error loading module:", err);
+                moduleContainer.innerHTML = `
+                    <div style="color:red; text-align:center; padding:20px;">
+                        <h3>Error cargando ${tab}</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
             }
         };
     });
 
-    // Cargar la primera pestaña visible por defecto
-    const firstVisibleButton = Array.from(navButtons).find(btn => btn.style.display !== 'none');
-    if (firstVisibleButton) firstVisibleButton.click();
+    // Cargar dashboard por defecto o la pestaña activa
+    const activeBtn = document.querySelector('.nav-btn.active') || document.querySelector('.nav-btn[data-tab="dashboard"]');
+    if (activeBtn && activeBtn.style.display !== 'none') {
+        activeBtn.click();
+    }
 }
