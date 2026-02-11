@@ -665,4 +665,5 @@ export const SalesView = {
                     </div>
                     `;
         }).join('');
-    },
+    }
+}
