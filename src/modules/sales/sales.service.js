@@ -62,15 +62,24 @@ export const SalesService = {
         };
     },
 
-    async getReceivables(page = 0, limit = 50) {
+    async getReceivables(page = 0, limit = 50, startDate = null, endDate = null) {
         const start = page * limit;
         const end = start + limit - 1;
 
-        const { data, count, error } = await supabase
+        let query = supabase
             .from('sales_orders')
             .select('*, customers(name, phone)', { count: 'exact' })
             .gt('balance_due', 0)
-            .neq('payment_status', 'Pagado')
+            .neq('payment_status', 'Pagado');
+
+        if (startDate) {
+            const finalEnd = endDate || startDate;
+            query = query
+                .gte('sale_date', `${startDate}T00:00:00`)
+                .lte('sale_date', `${finalEnd}T23:59:59`);
+        }
+
+        const { data, count, error } = await query
             .order('sale_date', { ascending: true }) // Oldest debt first
             .range(start, end);
 
@@ -267,7 +276,9 @@ export const SalesService = {
             // Count Totals
             const prod = item.product_name || "Producto Desconocido";
             if (!grouped[date].items[prod]) grouped[date].items[prod] = 0;
-            grouped[date].items[prod] += item.quantity;
+            // Force number conversation to avoid string concatenation or nulls
+            const qty = parseFloat(item.quantity) || 0;
+            grouped[date].items[prod] += qty;
 
             // Keep track of individual orders for detail view if needed later
             grouped[date].details.push({

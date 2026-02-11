@@ -1,5 +1,5 @@
 export const SalesView = {
-    renderLayout(container, initialDate, rates) {
+    renderLayout(container, initialDate, initialEndDate, rates) {
         container.innerHTML = `
         <div class="main-container">
             <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
@@ -9,7 +9,7 @@ export const SalesView = {
                         <input type="date" id="filter-date-start" value="${initialDate}" class="input-field" 
                             style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
                         <span style="font-weight:bold; color:#cbd5e1;">➔</span>
-                        <input type="date" id="filter-date-end" value="${initialDate}" class="input-field" 
+                        <input type="date" id="filter-date-end" value="${initialEndDate || initialDate}" class="input-field" 
                             style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
                         
                         <div style="display:flex; align-items:center; gap:5px; background:white; padding:5px 10px; border-radius:6px; border:1px solid #e2e8f0;">

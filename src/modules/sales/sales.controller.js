@@ -40,7 +40,7 @@ export async function loadSales(startDate = new Date().toISOString().split('T')[
 
         // 2. Render Layout (Only if it's the first load, otherwise we just append)
         if (!append) {
-            SalesView.renderLayout(container, startDate, data.rates);
+            SalesView.renderLayout(container, startDate, endDate, data.rates);
             SalesView.populateCatalog(data.catalog);
             SalesView.populateCustomers(data.customers);
             SalesView.renderCart(cart, data.rates);
@@ -102,16 +102,16 @@ async function loadReceivables(append = false, startDate = null, endDate = null)
                 SalesService.getData(startDate, null, 0, 1), // Fetch with relevant date to get rates? actually rates are global usually
                 Promise.resolve([]), // Catalog?
                 SalesService.getData(startDate).then(d => d.customers),
-                SalesService.getReceivables(currentPage, PAGE_SIZE)
+                SalesService.getReceivables(currentPage, PAGE_SIZE, startDate, endDate)
             ]);
 
-            SalesView.renderLayout(container, startDate, r.rates);
+            SalesView.renderLayout(container, startDate, endDate, r.rates);
             SalesView.populateCatalog(r.catalog);
             SalesView.populateCustomers(cust);
             SalesView.renderCart(cart, r.rates);
         }
 
-        const data = await SalesService.getReceivables(currentPage, PAGE_SIZE);
+        const data = await SalesService.getReceivables(currentPage, PAGE_SIZE, startDate, endDate);
         // Render Receivables specific view
         SalesView.renderReceivables(data.sales, data.totalCount);
 
