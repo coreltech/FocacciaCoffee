@@ -379,11 +379,25 @@ function bindEvents(rates) {
 
     const bindPayInputs = () => {
         document.querySelectorAll('.p-amt').forEach(inp => inp.oninput = updatePaymentCalc);
+        document.querySelectorAll('.btn-rm-pay-row').forEach(btn => {
+            btn.onclick = (e) => {
+                const row = e.target.closest('.pay-row');
+                if (document.querySelectorAll('.pay-row').length > 1) {
+                    row.remove();
+                    updatePaymentCalc();
+                } else {
+                    // If it's the last one, just clear it
+                    row.querySelector('.p-amt').value = '';
+                    row.querySelector('.p-ref').value = '';
+                    updatePaymentCalc();
+                }
+            };
+        });
     };
 
     addPayBtn.onclick = () => {
         const row = SalesView.addPaymentRow();
-        row.querySelector('.p-amt').oninput = updatePaymentCalc;
+        bindPayInputs(); // Re-bind new row
     };
 
     SalesView.addPaymentRow();
@@ -437,10 +451,13 @@ function bindEvents(rates) {
             document.querySelectorAll('.pay-row').forEach(row => {
                 const rawVal = parseFloat(row.querySelector('.p-amt').value) || 0;
                 const meth = row.querySelector('.p-meth').value;
+                const ref = row.querySelector('.p-ref').value.trim(); // Capture Ref
+
                 if (rawVal > 0) {
                     paymentMethods.push({
                         amount_native: rawVal,
                         method: meth,
+                        reference: ref, // Store Ref
                         amount_usd_eq: meth.includes('Bs') ? rawVal / rates.tasa_usd_ves : (meth.includes('EUR') ? (rawVal * rates.tasa_eur_ves) / rates.tasa_usd_ves : rawVal),
                         currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
                     });
@@ -471,7 +488,8 @@ function bindEvents(rates) {
                         method: pm.method,
                         currency: pm.currency,
                         amount_native: pm.amount_native * itemRatio,
-                        amount_usd: pm.amount_usd_eq * itemRatio
+                        amount_usd: pm.amount_usd_eq * itemRatio,
+                        reference: pm.reference // Include in item details
                     }))
                 };
 

@@ -149,17 +149,7 @@ export const SalesView = {
                         <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-top:15px;">
                              <label style="font-size:0.75rem; color:#64748b; font-weight:800; text-transform:uppercase; display:block; margin-bottom:12px;">💳 Métodos de Pago</label>
                              <div id="payment-container">
-                                <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;">
-                                    <input type="number" class="p-amt input-field" placeholder="Monto" disabled value="0">
-                                    <select class="p-meth input-field" style="font-size: 0.8rem;">
-                                        <option value="Efectivo $">💵 Efectivo $</option>
-                                        <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
-                                        <option value="Zelle $">📱 Zelle $</option>
-                                        <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
-                                        <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
-                                    </select>
-                                    <span class="p-currency-hint" style="font-size:0.7rem; display:flex; align-items:center;">$</span>
-                                </div>
+                                <!-- Dynamic rows invoked by controller -->
                              </div>
                              <button id="add-pay-row" style="font-size:0.8rem; color:#475569; background:none; border:none; cursor:pointer; text-decoration:underline;">+ Agregar otro método</button>
 
@@ -322,11 +312,17 @@ export const SalesView = {
         document.getElementById('cart-total-usd').innerText = `$${totalUSD.toFixed(2)}`;
         document.getElementById('cart-total-ves').innerText = `${totalVES.toFixed(2)} Bs`;
 
-        // Update Payment Input Default to Total if only 1 row
+        // Update Payment Input Default to Total if only 1 row and empty
         const payRows = document.querySelectorAll('.pay-row');
         if (payRows.length === 1 && totalUSD > 0) {
-            // First input defaults to total
-            // We generally trigger this via controller to avoid overriding user input too aggressively
+            const amtInput = payRows[0].querySelector('.p-amt');
+            // Only auto-fill if empty or equal to previous total (simple heuristic)
+            if (!amtInput.value || parseFloat(amtInput.value) === 0) {
+                amtInput.value = totalUSD.toFixed(2);
+                // Trigger input event manually if needed, but controller handles calculation on click/input
+                // We will rely on user interaction or final validation, but let's try to trigger it:
+                amtInput.dispatchEvent(new Event('input'));
+            }
         }
 
         // Enable/Disable Submit
@@ -557,71 +553,70 @@ export const SalesView = {
     addPaymentRow() {
         const container = document.getElementById('payment-container');
         const row = document.createElement('div');
-        row.className = 'pay-row';
-        row.style = 'display:grid; grid-template-columns: 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;';
-        row.innerHTML = `
-            <input type="number" class="p-amt input-field" placeholder="Monto">
-            <select class="p-meth input-field" style="font-size: 0.8rem;">
-                <option value="Efectivo $">💵 Efectivo $</option>
-                <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
-                <option value="Zelle $">📱 Zelle $</option>
-                <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
-                <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
-            </select>
-            <span class="p-currency-hint" style="font-size:0.7rem; display:flex; align-items:center;">$</span>
-        `;
-        container.appendChild(row);
+        <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;">
+            <input type="number" class="p-amt input-field" placeholder="Monto" step="0.01">
+                <select class="p-meth input-field" style="font-size: 0.8rem;">
+                    <option value="Efectivo $">💵 Efectivo $</option>
+                    <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
+                    <option value="Zelle $">📱 Zelle $</option>
+                    <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
+                    <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
+                    <option value="Punto de Venta">💳 Punto de Venta</option>
+                </select>
+                <input type="text" class="p-ref input-field" placeholder="Ref / Operación" style="font-size: 0.8rem;">
+                    <button class="btn-rm-pay-row" style="background:#fee2e2; color:#ef4444; border:none; border-radius:4px; cursor:pointer;">×</button>
+                    container.appendChild(row);
 
-        // Auto-update currency hint
-        const sel = row.querySelector('.p-meth');
-        const hint = row.querySelector('.p-currency-hint');
+                    // Auto-update currency hint
+                    const sel = row.querySelector('.p-meth');
+                    const hint = row.querySelector('.p-currency-hint');
         sel.onchange = () => {
             const val = sel.value;
-            if (val.includes('$')) hint.innerText = '$';
-            else if (val.includes('Bs')) hint.innerText = 'Bs';
-            else if (val.includes('EUR')) hint.innerText = '€';
+                    if (val.includes('$')) hint.innerText = '$';
+                    else if (val.includes('Bs')) hint.innerText = 'Bs';
+                    else if (val.includes('EUR')) hint.innerText = '€';
         };
 
-        return row;
+                    return row;
     },
 
-    updateTotals(totalUSD, totalVES) {
-        // Unused in new logic, managed by renderCart
-    },
+                    updateTotals(totalUSD, totalVES) {
+                        // Unused in new logic, managed by renderCart
+                    },
 
-    toggleStockWarning(show) {
-        document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
-        const btn = document.getElementById('btn-add-to-cart');
-        if (show) {
-            btn.disabled = true;
-            btn.style.opacity = "0.5";
-            btn.style.cursor = "not-allowed";
+                    toggleStockWarning(show) {
+                        document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
+                    const btn = document.getElementById('btn-add-to-cart');
+                    if (show) {
+                        btn.disabled = true;
+                    btn.style.opacity = "0.5";
+                    btn.style.cursor = "not-allowed";
         } else {
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.cursor = "pointer";
+                        btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.cursor = "pointer";
         }
     },
 
-    toggleManualMode(isManual, price) {
+                    toggleManualMode(isManual, price) {
         const manualContainer = document.getElementById('manual-desc-container');
-        const manualDesc = document.getElementById('v-manual-desc');
-        const priceInput = document.getElementById('v-final-price');
-        const qtyInput = document.getElementById('v-qty');
+                    const manualDesc = document.getElementById('v-manual-desc');
+                    const priceInput = document.getElementById('v-final-price');
+                    const qtyInput = document.getElementById('v-qty');
 
-        if (isManual) {
-            manualContainer.style.display = 'block';
-            priceInput.value = "";
-            priceInput.readOnly = false;
-            priceInput.style.backgroundColor = "#fff";
-            manualDesc.focus();
+                    if (isManual) {
+                        manualContainer.style.display = 'block';
+                    priceInput.value = "";
+                    priceInput.readOnly = false;
+                    priceInput.style.backgroundColor = "#fff";
+                    manualDesc.focus();
         } else {
-            manualContainer.style.display = 'none';
-            manualDesc.value = "";
-            priceInput.value = price;
-            priceInput.readOnly = true;
-            priceInput.style.backgroundColor = "#f1f5f9";
-            qtyInput.focus();
+                        manualContainer.style.display = 'none';
+                    manualDesc.value = "";
+                    priceInput.value = price;
+                    priceInput.readOnly = true;
+                    priceInput.style.backgroundColor = "#f1f5f9";
+                    qtyInput.focus();
         }
     }
 };

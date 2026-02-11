@@ -19,14 +19,28 @@ export const FinancesService = {
 
         if (errExp) throw errExp;
 
+        // Fetch Sales Revenue (Paid Sales)
+        // We want total amount paid from sales.
+        // sales_orders has 'amount_paid' column. We should sum it up.
+        // Note: This sums ALL time revenue. We might want to filter later, but for "Balance Sheet" (Total Available),
+        // we likely want Total In vs Total Out.
+        const { data: sales, error: errSales } = await supabase
+            .from('sales_orders')
+            .select('amount_paid');
+
+        if (errSales) throw errSales;
+
         // Calculate Totals
         const totalCapital = capital.reduce((sum, item) => sum + parseFloat(item.amount), 0);
         const totalExpenses = expenses.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
-        const balance = totalCapital - totalExpenses;
+        const totalSalesRevenue = sales.reduce((sum, item) => sum + (parseFloat(item.amount_paid) || 0), 0);
+
+        const balance = (totalCapital + totalSalesRevenue) - totalExpenses;
 
         return {
             totalCapital,
             totalExpenses,
+            totalSalesRevenue,
             balance,
             capitalList: capital,
             expensesList: expenses
