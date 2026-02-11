@@ -567,93 +567,87 @@ export const SalesView = {
     addPaymentRow() {
         const container = document.getElementById('payment-container');
         const row = document.createElement('div');
-        <div class="pay-row" style="display:grid; grid-template-columns: 1fr 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;">
+        row.className = 'pay-row';
+        row.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;';
+
+        row.innerHTML = `
             <input type="number" class="p-amt input-field" placeholder="Monto" step="0.01">
-                <select class="p-meth input-field" style="font-size: 0.8rem;">
-                    <option value="Efectivo $">💵 Efectivo $</option>
-                    <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
-                    <option value="Zelle $">📱 Zelle $</option>
-                    <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
-                    <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
-                    <option value="Punto de Venta">💳 Punto de Venta</option>
-                </select>
-                <input type="text" class="p-ref input-field" placeholder="Ref / Operación" style="font-size: 0.8rem;">
-                    <button class="btn-rm-pay-row" style="background:#fee2e2; color:#ef4444; border:none; border-radius:4px; cursor:pointer;">×</button>
-                    container.appendChild(row);
+            <select class="p-meth input-field" style="font-size: 0.8rem;">
+                <option value="Efectivo $">💵 Efectivo $</option>
+                <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
+                <option value="Zelle $">📱 Zelle $</option>
+                <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
+                <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
+                <option value="Punto de Venta">💳 Punto de Venta</option>
+            </select>
+            <input type="text" class="p-ref input-field" placeholder="Ref / Operación" style="font-size: 0.8rem;">
+            <button class="btn-rm-pay-row" style="background:#fee2e2; color:#ef4444; border:none; border-radius:4px; cursor:pointer;">×</button>
+        `;
 
-                    // Auto-update currency hint
-                    const sel = row.querySelector('.p-meth');
-                    const hint = row.querySelector('.p-currency-hint');
-        sel.onchange = () => {
-            const val = sel.value;
-                    if (val.includes('$')) hint.innerText = '$';
-                    else if (val.includes('Bs')) hint.innerText = 'Bs';
-                    else if (val.includes('EUR')) hint.innerText = '€';
-        };
-
-                    return row;
+        container.appendChild(row);
+        return row;
     },
 
-                    updateTotals(totalUSD, totalVES) {
-                        // Unused in new logic, managed by renderCart
-                    },
+    updateTotals(totalUSD, totalVES) {
+        // Unused in new logic, managed by renderCart
+    },
 
-                    toggleStockWarning(show) {
-                        document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
-                    const btn = document.getElementById('btn-add-to-cart');
-                    if (show) {
-                        btn.disabled = true;
-                    btn.style.opacity = "0.5";
-                    btn.style.cursor = "not-allowed";
+    toggleStockWarning(show) {
+        document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
+        const btn = document.getElementById('btn-add-to-cart');
+        if (show) {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
         } else {
-                        btn.disabled = false;
-                    btn.style.opacity = "1";
-                    btn.style.cursor = "pointer";
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
         }
     },
 
-                    toggleManualMode(isManual, price) {
+    toggleManualMode(isManual, price) {
         const manualContainer = document.getElementById('manual-desc-container');
-                    const manualDesc = document.getElementById('v-manual-desc');
-                    const priceInput = document.getElementById('v-final-price');
-                    const qtyInput = document.getElementById('v-qty');
+        const manualDesc = document.getElementById('v-manual-desc');
+        const priceInput = document.getElementById('v-final-price');
+        const qtyInput = document.getElementById('v-qty');
 
-                    if (isManual) {
-                        manualContainer.style.display = 'block';
-                    priceInput.value = "";
-                    priceInput.readOnly = false;
-                    priceInput.style.backgroundColor = "#fff";
-                    manualDesc.focus();
+        if (isManual) {
+            manualContainer.style.display = 'block';
+            priceInput.value = "";
+            priceInput.readOnly = false;
+            priceInput.style.backgroundColor = "#fff";
+            manualDesc.focus();
         } else {
-                        manualContainer.style.display = 'none';
-                    manualDesc.value = "";
-                    priceInput.value = price;
-                    priceInput.readOnly = true;
-                    priceInput.style.backgroundColor = "#f1f5f9";
-                    qtyInput.focus();
+            manualContainer.style.display = 'none';
+            manualDesc.value = "";
+            priceInput.value = price;
+            priceInput.readOnly = true;
+            priceInput.style.backgroundColor = "#f1f5f9";
+            qtyInput.focus();
         }
 
     },
 
-                    renderReservationsModal(data) {
+    renderReservationsModal(data) {
         const modal = document.getElementById('reservations-modal');
-                    const content = document.getElementById('reservations-content');
-                    modal.style.display = 'flex'; // Show modal
+        const content = document.getElementById('reservations-content');
+        modal.style.display = 'flex'; // Show modal
 
-                    const dates = Object.keys(data).sort(); // Ensure sorted date string YYYY-MM-DD
+        const dates = Object.keys(data).sort(); // Ensure sorted date string YYYY-MM-DD
 
-                    if (dates.length === 0) {
-                        content.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">No hay reservas futuras registradas.</p>';
-                    return;
+        if (dates.length === 0) {
+            content.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">No hay reservas futuras registradas.</p>';
+            return;
         }
 
         content.innerHTML = dates.map(date => {
             const dayData = data[date];
-                    // Format Date nicely
-                    const dateObj = new Date(date);
-                    const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
-                    const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
-                    const dateStr = adjustedDate.toLocaleDateString('es-VE', {weekday: 'long', day: 'numeric', month: 'long' });
+            // Format Date nicely
+            const dateObj = new Date(date);
+            const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
+            const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
+            const dateStr = adjustedDate.toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' });
 
             const itemsHtml = Object.entries(dayData.items).map(([prod, qty]) => `
                     <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
@@ -662,7 +656,7 @@ export const SalesView = {
                     </div>
                     `).join('');
 
-                    return `
+            return `
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:15px; margin-bottom:15px;">
                         <h3 style="margin:0 0 10px 0; color:#166534; font-size:1rem; text-transform:capitalize;">${dateStr}</h3>
                         <div style="background:white; padding:10px; border-radius:8px;">
