@@ -242,5 +242,42 @@ export const SalesService = {
                 onUpdate(payload);
             })
             .subscribe();
+    },
+
+    async getUpcomingReservations() {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+            .from('sales_orders')
+            .select('delivery_date, product_name, quantity, payment_status, customers(name)')
+            .gte('delivery_date', today)
+            .order('delivery_date', { ascending: true });
+
+        if (error) throw error;
+
+        // Aggregate by Date -> Product
+        const grouped = {};
+
+        data.forEach(item => {
+            const date = item.delivery_date;
+            if (!date) return; // Should not happen given the query, but safety first
+
+            if (!grouped[date]) grouped[date] = { items: {}, details: [] };
+
+            // Count Totals
+            const prod = item.product_name || "Producto Desconocido";
+            if (!grouped[date].items[prod]) grouped[date].items[prod] = 0;
+            grouped[date].items[prod] += item.quantity;
+
+            // Keep track of individual orders for detail view if needed later
+            grouped[date].details.push({
+                customer: item.customers?.name || "Cliente Genérico",
+                product: prod,
+                qty: item.quantity,
+                status: item.payment_status
+            });
+        });
+
+        return grouped;
     }
 };

@@ -154,13 +154,14 @@ export const RecipesProView = {
                         </div>
                     </div>
 
-                    <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                        <div class="input-group">
-                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 8px;">Pasos de Preparación</label>
-                            <textarea id="recipe-steps" class="input-field" placeholder="Describe el proceso..." 
-                                style="height: 120px; width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; resize: vertical;"></textarea>
+                    <div style="margin-top: 30px;">
+                        <div class="input-group" style="margin-bottom: 25px;">
+                            <label style="font-weight: 600; font-size: 1rem; display: block; margin-bottom: 12px; color: #1e293b;">📖 Pasos de Preparación</label>
+                            <textarea id="recipe-steps" class="input-field" placeholder="Describe el proceso detallado paso a paso..." 
+                                style="min-height: 400px; width: 100%; box-sizing: border-box; padding: 20px; border: 2px solid #cbd5e1; border-radius: 8px; resize: vertical; font-size: 1rem; line-height: 1.6;"></textarea>
                         </div>
-                        <div class="stat-card" style="background: #fdf2f8; border: 2px solid #fbcfe8; padding: 20px; border-radius: 10px;">
+
+                        <div class="stat-card" style="background: #fdf2f8; border: 2px solid #fbcfe8; padding: 20px; border-radius: 10px; max-width: 500px; padding: 20px;">
                             <h4 style="color: #9d174d; margin-top: 0; margin-bottom: 15px; font-size: 1rem;">Análisis Financiero</h4>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px;">
                                 <span style="font-size: 0.9rem;">Costo de Producción:</span>

@@ -20,6 +20,7 @@ export const SalesView = {
                         <div style="display:flex; gap:5px;">
                             <button id="btn-tab-sales" class="tab-btn active" style="background:#2563eb; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋 Ventas</button>
                             <button id="btn-tab-receivables" class="tab-btn" style="background:#f1f5f9; color:#64748b; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">💰 Cuentas por Cobrar</button>
+                            <button id="btn-view-reservations" class="tab-btn" style="background:#f1f5f9; color:#0f766e; border:1px solid #ccfbf1; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📅 Próximas Reservas</button>
                         </div>
                     </div>
                 </div>
@@ -186,6 +187,19 @@ export const SalesView = {
                 </div>
             </div>
         </div>
+
+        <div id="reservations-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+            <div style="background:white; width:90%; max-width:600px; max-height:80vh; border-radius:12px; padding:20px; display:flex; flex-direction:column; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+                    <h2 style="margin:0; font-size:1.2rem;">📅 Próximas Reservas</h2>
+                    <button id="btn-close-res-modal" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div id="reservations-content" style="flex:1; overflow-y:auto;">
+                    <p style="text-align:center; color:#64748b;">Cargando...</p>
+                </div>
+            </div>
+        </div>
+
 
         <style>
             .sales-grid {
@@ -618,5 +632,43 @@ export const SalesView = {
                     priceInput.style.backgroundColor = "#f1f5f9";
                     qtyInput.focus();
         }
-    }
-};
+
+    },
+
+                    renderReservationsModal(data) {
+        const modal = document.getElementById('reservations-modal');
+                    const content = document.getElementById('reservations-content');
+                    modal.style.display = 'flex'; // Show modal
+
+                    const dates = Object.keys(data).sort(); // Ensure sorted date string YYYY-MM-DD
+
+                    if (dates.length === 0) {
+                        content.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">No hay reservas futuras registradas.</p>';
+                    return;
+        }
+
+        content.innerHTML = dates.map(date => {
+            const dayData = data[date];
+                    // Format Date nicely
+                    const dateObj = new Date(date);
+                    const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
+                    const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
+                    const dateStr = adjustedDate.toLocaleDateString('es-VE', {weekday: 'long', day: 'numeric', month: 'long' });
+
+            const itemsHtml = Object.entries(dayData.items).map(([prod, qty]) => `
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
+                        <span style="color:#334155;">${prod}</span>
+                        <b style="color:#0f172a;">x${qty}</b>
+                    </div>
+                    `).join('');
+
+                    return `
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:15px; margin-bottom:15px;">
+                        <h3 style="margin:0 0 10px 0; color:#166534; font-size:1rem; text-transform:capitalize;">${dateStr}</h3>
+                        <div style="background:white; padding:10px; border-radius:8px;">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                    `;
+        }).join('');
+    },

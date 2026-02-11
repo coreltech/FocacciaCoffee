@@ -31,7 +31,7 @@ export async function loadSales(startDate = new Date().toISOString().split('T')[
     // 1. Load Data
     try {
         if (viewMode === 'receivables') {
-            await loadReceivables(append);
+            await loadReceivables(append, startDate, endDate);
             return;
         }
 
@@ -83,8 +83,12 @@ export async function loadSales(startDate = new Date().toISOString().split('T')[
     }
 }
 
-async function loadReceivables(append = false) {
+async function loadReceivables(append = false, startDate = null, endDate = null) {
     const container = document.getElementById('app-content');
+
+    // Default to today if not provided, or keep existing logic logic
+    if (!startDate) startDate = new Date().toISOString().split('T')[0];
+
     try {
         if (!append) {
             // We need rates/catalog/customers even in receivables for the form (if we keep form visible)
@@ -95,13 +99,13 @@ async function loadReceivables(append = false) {
             const rates = await SalesService.getGlobalRates || ((await SalesService.getData(new Date().toISOString().split('T')[0])).rates); // Hacky fallback
             // Better: Just fetch rates + Receivables
             const [r, c, cust, rec] = await Promise.all([
-                SalesService.getData(new Date().toISOString().split('T')[0], null, 0, 1), // Wasteful but gets rates
+                SalesService.getData(startDate, null, 0, 1), // Fetch with relevant date to get rates? actually rates are global usually
                 Promise.resolve([]), // Catalog?
-                SalesService.getData(new Date().toISOString().split('T')[0]).then(d => d.customers),
+                SalesService.getData(startDate).then(d => d.customers),
                 SalesService.getReceivables(currentPage, PAGE_SIZE)
             ]);
 
-            SalesView.renderLayout(container, new Date().toISOString().split('T')[0], r.rates);
+            SalesView.renderLayout(container, startDate, r.rates);
             SalesView.populateCatalog(r.catalog);
             SalesView.populateCustomers(cust);
             SalesView.renderCart(cart, r.rates);
@@ -257,6 +261,34 @@ function bindEvents(rates) {
     const btnTabSales = document.getElementById('btn-tab-sales');
     const btnTabRec = document.getElementById('btn-tab-receivables');
 
+    const btnViewReservations = document.getElementById('btn-view-reservations');
+    const btnCloseResModal = document.getElementById('btn-close-res-modal');
+
+    if (btnViewReservations) {
+        btnViewReservations.onclick = async () => {
+            try {
+                // Show modal with loading state immediately if possible, or just wait
+                // Ideally View should expose a method to showLoadingModal
+                SalesView.renderReservationsModal({}); // Or specific loading state
+                document.getElementById('reservations-modal').style.display = 'flex';
+                document.getElementById('reservations-content').innerHTML = '<p style="text-align:center; padding:20px;">Cargando datos...</p>';
+
+                const data = await SalesService.getUpcomingReservations();
+                SalesView.renderReservationsModal(data);
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando reservas: " + err.message);
+                document.getElementById('reservations-modal').style.display = 'none';
+            }
+        };
+    }
+
+    if (btnCloseResModal) {
+        btnCloseResModal.onclick = () => {
+            document.getElementById('reservations-modal').style.display = 'none';
+        };
+    }
+
     if (btnTabSales) {
         btnTabSales.onclick = () => {
             viewMode = 'sale_date'; // or prev mode
@@ -268,7 +300,7 @@ function bindEvents(rates) {
         btnTabRec.onclick = () => {
             viewMode = 'receivables';
             currentPage = 0;
-            loadSales(null, null); // Load receivables
+            loadSales(filterStart.value, filterEnd.value); // Load receivables with current dates
         };
     }
 
