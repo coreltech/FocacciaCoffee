@@ -20,8 +20,8 @@ export const FinancesService = {
         if (errExp) throw errExp;
 
         // --- GLOBAL CALCULATIONS (All Time) ---
-        const totalCapitalGlobal = capital.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-        const totalExpensesGlobal = expenses.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
+        const totalCapitalGlobal = capital.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        const totalExpensesGlobal = expenses.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
 
         // Removed Sales Revenue from assumption based on user request to isolate Investment/Expenses
         const globalBalance = totalCapitalGlobal - totalExpensesGlobal;
@@ -36,8 +36,8 @@ export const FinancesService = {
             filteredExp = expenses.filter(e => e.date >= startDate && e.date <= endDate);
         }
 
-        const totalExpensesRange = filteredExp.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
-        const totalCapitalRange = filteredCap.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+        const totalExpensesRange = filteredExp.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
+        const totalCapitalRange = filteredCap.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
         return {
             totalCapital: totalCapitalGlobal,  // Keep Global for "Capital Ingresado" card (usually static fund)
