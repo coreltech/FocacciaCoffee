@@ -34,7 +34,7 @@ export const FinancesView = {
                 
                 <!-- Card Gastos (Global) -->
                 <div style="background:#fff1f2; border:1px solid #fecaca; padding:20px; border-radius:12px; text-align:center; position:relative;">
-                    <h3 style="margin:0; color:#991b1b; font-size:0.9rem; text-transform:uppercase;">Total Ejecutado (Global)</h3>
+                    <h3 style="margin:0; color:#991b1b; font-size:0.9rem; text-transform:uppercase;">Total Ejecutado / Gastos</h3>
                     <b id="summary-expenses" style="display:block; font-size:2rem; color:#b91c1c; margin-top:5px;">$0.00</b>
                 </div>
 
