@@ -46,7 +46,11 @@ function updateDashboard(data) {
     document.getElementById('summary-capital').innerText = `$${data.totalCapital.toFixed(2)}`;
     // document.getElementById('summary-sales').innerText = `$${(data.totalSalesRevenue || 0).toFixed(2)}`;
     document.getElementById('summary-expenses').innerText = `$${data.totalExpenses.toFixed(2)}`;
-    document.getElementById('summary-balance').innerText = `$${data.balance.toFixed(2)}`;
+
+    const bal = data.balance;
+    const balEl = document.getElementById('summary-balance');
+    balEl.innerText = `$${bal.toFixed(2)}`;
+    balEl.style.color = bal < 0 ? '#ef4444' : '#2563eb'; // Red if negative
 }
 
 function bindEvents() {
