@@ -25,7 +25,7 @@ export class ReportGenerator {
         try {
             const doc = new this.jsPDF();
 
-            const { capitalList, expensesList, totalCapital, totalExpenses, balance } = data;
+            const { capitalList, expensesList, totalCapital, totalExpensesRange, balance } = data;
 
 
             // 1. Header
@@ -37,10 +37,10 @@ export class ReportGenerator {
             // 2. Summary
             autoTable(doc, {
                 startY: 35,
-                head: [['Capital Total', 'Total Gastos (Ejecutado)', 'Capital Disponible']],
+                head: [['Capital Total', 'Total Gastos (Rango)', 'Capital Disponible']],
                 body: [[
                     `$${totalCapital.toFixed(2)}`,
-                    `$${totalExpenses.toFixed(2)}`,
+                    `$${(totalExpensesRange || 0).toFixed(2)}`,
                     `$${balance.toFixed(2)}`
                 ]],
                 theme: 'plain',
