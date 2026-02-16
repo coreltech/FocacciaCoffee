@@ -1,5 +1,8 @@
 export const Toast = {
     show(message, type = 'success') {
+        // Suppress success/info messages (User Request: "Modo Debug")
+        if (type !== 'error') return;
+
         // Types: 'success', 'error', 'info'
         const container = document.getElementById('toast-container') || this.createContainer();
 

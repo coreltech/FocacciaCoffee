@@ -2,20 +2,32 @@ import { supabase } from '../../core/supabase.js';
 
 export const FinancesService = {
     // 1. Get Balance Sheet (Resumen)
-    async getBalanceSheet() {
-        // Fetch all capital entries
-        const { data: capital, error: errCap } = await supabase
+    async getBalanceSheet(startDate = null, endDate = null) {
+        // Fetch all capital entries (Optional: Apply filter here too if needed, but request specified expenses)
+        let queryCap = supabase
             .from('capital_entries')
             .select('*')
             .order('date', { ascending: false });
 
+        if (startDate && endDate) {
+            queryCap = queryCap.gte('date', startDate).lte('date', endDate);
+        }
+
+        const { data: capital, error: errCap } = await queryCap;
+
         if (errCap) throw errCap;
 
-        // Fetch all expenses
-        const { data: expenses, error: errExp } = await supabase
+        // Fetch expenses with filter
+        let queryExp = supabase
             .from('investment_expenses')
             .select('*')
             .order('date', { ascending: false });
+
+        if (startDate && endDate) {
+            queryExp = queryExp.gte('date', startDate).lte('date', endDate);
+        }
+
+        const { data: expenses, error: errExp } = await queryExp;
 
         if (errExp) throw errExp;
 

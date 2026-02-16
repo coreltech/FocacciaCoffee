@@ -4,11 +4,19 @@ export const FinancesView = {
 
         container.innerHTML = `
         <div class="finances-container">
-            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
                 <div>
                     <h1 style="font-size:1.8rem; margin:0;">💰 Gestión de Inversión y Capital</h1>
                     <small style="color:#64748b; font-weight:bold;">Tasa del día: ${rateText}</small>
                 </div>
+
+                <div style="display:flex; gap:10px; align-items:center; background:white; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                    <input type="date" id="filter-date-start" class="input-field" style="width:auto; padding:6px;" value="${new Date().toISOString().split('T')[0]}">
+                    <span>➔</span>
+                    <input type="date" id="filter-date-end" class="input-field" style="width:auto; padding:6px;" value="${new Date().toISOString().split('T')[0]}">
+                    <button id="btn-apply-filter" style="background:#2563eb; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold;">🔍 Filtrar</button>
+                </div>
+
                 <button id="btn-download-report" class="btn-secondary" style="background:#fff; border:2px solid #cbd5e1; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; color:#475569;">
                     📄 Descargar Reporte PDF
                 </button>

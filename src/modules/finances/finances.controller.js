@@ -30,7 +30,10 @@ export async function loadFinances() {
 
 async function refreshData() {
     try {
-        currentData = await FinancesService.getBalanceSheet();
+        const startDate = document.getElementById('filter-date-start')?.value;
+        const endDate = document.getElementById('filter-date-end')?.value;
+
+        currentData = await FinancesService.getBalanceSheet(startDate, endDate);
         updateDashboard(currentData);
         FinancesView.renderLists(currentData.expensesList, currentData.capitalList);
     } catch (err) {
@@ -51,6 +54,16 @@ function bindEvents() {
     initCapitalForm();
     initTabs();
     initReportBtn();
+    initFilters();
+}
+
+function initFilters() {
+    const btnFilter = document.getElementById('btn-apply-filter');
+    if (btnFilter) {
+        btnFilter.onclick = () => {
+            refreshData();
+        };
+    }
 }
 
 function initInvoiceForm() {
