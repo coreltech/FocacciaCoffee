@@ -30,10 +30,18 @@ export const FinancesService = {
         let filteredCap = capital;
         let filteredExp = expenses;
 
-        if (startDate && endDate) {
-            // String comparison works for YYYY-MM-DD
-            filteredCap = capital.filter(c => c.date >= startDate && c.date <= endDate);
-            filteredExp = expenses.filter(e => e.date >= startDate && e.date <= endDate);
+        if (startDate || endDate) {
+            // Partial filter support
+            filteredCap = capital.filter(c => {
+                const afterStart = !startDate || c.date >= startDate;
+                const beforeEnd = !endDate || c.date <= endDate;
+                return afterStart && beforeEnd;
+            });
+            filteredExp = expenses.filter(e => {
+                const afterStart = !startDate || e.date >= startDate;
+                const beforeEnd = !endDate || e.date <= endDate;
+                return afterStart && beforeEnd;
+            });
         }
 
         const totalExpensesRange = filteredExp.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);

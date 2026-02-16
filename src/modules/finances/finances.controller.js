@@ -34,7 +34,7 @@ async function refreshData() {
         const endDate = document.getElementById('filter-date-end')?.value;
 
         currentData = await FinancesService.getBalanceSheet(startDate, endDate);
-        updateDashboard(currentData, startDate && endDate);
+        updateDashboard(currentData, startDate || endDate);
         FinancesView.renderLists(currentData.expensesList, currentData.capitalList);
     } catch (err) {
         console.error("Error fetching finance data:", err);
