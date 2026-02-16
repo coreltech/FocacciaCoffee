@@ -9,16 +9,21 @@ export async function loadProduction() {
 
     try {
         currentData = await ProductionService.getData();
+        console.log("Production Data Loaded:", currentData);
 
         ProductionView.renderLayout(container);
+        ProductionView.renderAssemblyInfo(null); // Clear assembly info initially
         ProductionView.populateSelects(currentData.recipes, currentData.allInputs, currentData.catalog);
+
+        // Ensure we pass a valid array even if service failed silently
+        ProductionView.renderShoppingList(currentData.shoppingList || []);
 
         renderHistory();
         bindEvents();
 
     } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p>Error: ${err.message}</p>`;
+        console.error("Fatal Error in loadProduction:", err);
+        container.innerHTML = `<p style="color:red; padding:20px;">Error loading module: ${err.message}</p>`;
     }
 }
 
@@ -38,6 +43,28 @@ function bindEvents() {
     const pSelect = document.getElementById('p-catalog-id');
     const pQty = document.getElementById('p-unidades');
     const btnSave = document.getElementById('btn-save-production');
+    const btnCloseCycle = document.getElementById('btn-close-cycle'); // New Button
+
+    if (btnCloseCycle) {
+        btnCloseCycle.onclick = async () => {
+            if (confirm("⚠️ ¿Cerrar Planificación Semanal?\n\nAl confirmar, todos los pedidos 'Pendientes' pasarán a 'En Producción' y la lista de compras se limpiará para la próxima semana.\n\n¿Estás seguro?")) {
+                try {
+                    btnCloseCycle.disabled = true;
+                    btnCloseCycle.innerText = "Procesando...";
+
+                    await ProductionService.closeWeeklyCycle();
+
+                    alert("✅ Planificación cerrada. Pedidos actualizados.");
+                    loadProduction(); // Reload to refresh list
+                } catch (e) {
+                    console.error(e);
+                    alert("Error: " + e.message);
+                    btnCloseCycle.disabled = false;
+                    btnCloseCycle.innerText = "🔒 Cerrar Planificación";
+                }
+            }
+        };
+    }
 
     pSelect.onchange = async () => {
         const id = pSelect.value;

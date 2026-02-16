@@ -13,6 +13,7 @@ const modulePermissions = {
     administracion: ['director'], // Solo director
     laboratorio: ['director'], // Solo director
     reportes: ['director', 'gerente'], // Director y gerente
+    cierre_semanal: ['director', 'gerente'], // Director y gerente
     biblioteca: ['director', 'gerente', 'asistente'], // Todos
     mermas: ['director', 'gerente'], // Director y gerente
     config_productos: ['director', 'gerente'], // Director y gerente
@@ -31,6 +32,7 @@ const routes = {
     administracion: () => import('../modules/admin/admin.controller.js'),
     laboratorio: () => import('../modules/laboratorio/laboratorio.js'),
     reportes: () => import('../modules/reports/reports.js'),
+    cierre_semanal: () => import('../modules/reports/weekly_closure.controller.js'),
     biblioteca: () => import('../modules/library/library.js'),
     mermas: () => import('../modules/waste/waste.controller.js'),
     config_productos: () => import('../modules/inventory/assembly_modern.controller.js'),
@@ -256,6 +258,7 @@ export async function initRouter() {
                     else if (tab === 'administracion') await module.loadAdmin();
                     else if (tab === 'laboratorio') await module.loadPlan();
                     else if (tab === 'reportes') await module.loadReports();
+                    else if (tab === 'cierre_semanal') await module.loadWeeklyClosure();
                     else if (tab === 'biblioteca') await module.loadLibrary();
                     else if (tab === 'compras') await module.loadPurchases();
                     else if (tab === 'finanzas') await module.loadFinances();

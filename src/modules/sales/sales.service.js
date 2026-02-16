@@ -66,17 +66,28 @@ export const SalesService = {
         const start = page * limit;
         const end = start + limit - 1;
 
+        // Correct Logic: Fetch ALL relevant sales to allow filtering in frontend (Paid vs Unpaid)
+        // We order by balance_due DESC so debts appear first if mixed, or we can rely on frontend sorting.
+
         let query = supabase
             .from('sales_orders')
-            .select('*, customers(name, phone)', { count: 'exact' })
-            .gt('balance_due', 0)
-            .neq('payment_status', 'Pagado');
+            .select('*, customers(name, phone)', { count: 'exact' });
+        // Removed .gt('balance_due', 0) to include SOLVENT customers
+        // Removed .neq('payment_status', 'Pagado') 
 
         if (startDate) {
             const finalEnd = endDate || startDate;
             query = query
                 .gte('sale_date', `${startDate}T00:00:00`)
                 .lte('sale_date', `${finalEnd}T23:59:59`);
+        } else {
+            // If no date, maybe we only want Debt? 
+            // "Cuentas por Cobrar" implies debts. 
+            // But the user wants to see "Solvencias" too.
+            // If no date is passed, we probably should load EVERYTHING? Or maybe just debts + recent solvencies?
+            // For now, let's load everything but limited by pagination.
+            // Default to "Show me debts" if no date? 
+            // Actually, the view passes dates or defaults to today.
         }
 
         const { data, count, error } = await query
@@ -180,9 +191,45 @@ export const SalesService = {
     },
 
     async confirmPendingPayment(saleId, amount) {
+        // Legacy method, now forwards to partial with full amount? 
+        // Or we keep it for "Mark as Paid" quick actions.
+        // Let's update it to set full payment.
         return await supabase.from('sales_orders')
-            .update({ payment_status: 'Pagado', amount_paid: amount, balance_due: 0 })
+            .update({ payment_status: 'Pagado', amount_paid: amount, amount_paid_usd: amount, balance_due: 0 })
             .eq('id', saleId);
+    },
+
+    async registerPartialPayment(saleId, amountUSD, currentRate) {
+        // 1. Get current sale data
+        const { data: sale, error } = await supabase.from('sales_orders').select('total_amount, amount_paid_usd').eq('id', saleId).single();
+        if (error) throw error;
+
+        // 2. Calculate new totals
+        const previousPaid = parseFloat(sale.amount_paid_usd || 0);
+        const newPaid = previousPaid + amountUSD;
+        let balance = sale.total_amount - newPaid;
+
+        // Precision fix
+        if (balance < 0.01) balance = 0;
+
+        const status = balance === 0 ? 'Pagado' : 'Pendiente';
+
+        // 3. Update
+        const { data, error: updateError } = await supabase.from('sales_orders')
+            .update({
+                amount_paid_usd: newPaid,
+                balance_due: balance,
+                payment_status: status,
+                // We also update the legacy amount_paid (mixed currency) for compatibility, assuming USD for now or just tracking USD
+                // Let's keep amount_paid roughly synced or just leave it. 
+                // The requirement says "balance calculated from total - amount_paid_usd".
+            })
+            .eq('id', saleId)
+            .select()
+            .single();
+
+        if (updateError) throw updateError;
+        return data;
     },
 
     async registerCustomer({ name, phone, email, address }) {

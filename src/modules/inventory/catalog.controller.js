@@ -22,12 +22,13 @@ export async function loadCatalog() {
         ? InventoryService.getCatalogWithInactive()
         : InventoryService.getCatalog();
 
-    const [rates, productsData, recentLogs, recipesData, suppliesData] = await Promise.all([
+    const [rates, productsData, recentLogs, recipesData, suppliesData, costsData] = await Promise.all([
         getGlobalRates(),
         catalogPromise,
         supabase.from('production_logs').select('*').order('fecha_produccion', { ascending: false }),
         InventoryService.getRecipes(),
-        InventoryService.getSupplies()
+        InventoryService.getSupplies(),
+        InventoryService.getCatalogCosts()
     ]);
 
     currentLogs = recentLogs.data || [];
@@ -35,7 +36,7 @@ export async function loadCatalog() {
     supplies = suppliesData || [];
     products = productsData || [];
 
-    CatalogView.renderLayout(container, rates, productsData, currentLogs.slice(0, 20), isDirector, showInactive);
+    CatalogView.renderLayout(container, rates, productsData, currentLogs.slice(0, 20), isDirector, showInactive, costsData || []);
 
     bindEvents(rates, isDirector);
 

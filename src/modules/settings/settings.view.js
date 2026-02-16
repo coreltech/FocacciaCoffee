@@ -31,13 +31,42 @@ export const SettingsView = {
                     </div>
                 </div>
 
-                <div class="stat-card" style="padding: 25px; background: #f8fafc; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px dashed #cbd5e1; border-radius: 12px;">
-                    <p style="color: #64748b; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem;">Relación Actual</p>
-                    <h2 style="margin: 0; color: #0f172a; font-size: 2rem; font-weight: 700;">1 € = ${(rates.tasa_eur_ves / rates.tasa_usd_ves).toFixed(4)} $</h2>
+                <div class="stat-card" style="padding: 25px; background: #f8fafc; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px dashed #cbd5e1; border-radius: 12px; position:relative;">
+                    <div style="position:absolute; top:10px; right:10px;">
+                        ${rates.is_manual
+                ? '<span style="background:#fef2f2; color:#ef4444; padding:4px 8px; border-radius:4px; font-size:0.75rem; border:1px solid #fecaca;">🔒 Manual</span>'
+                : '<span style="background:#f0fdf4; color:#16a34a; padding:4px 8px; border-radius:4px; font-size:0.75rem; border:1px solid #bbf7d0;">☁️ BCV Auto</span>'}
+                    </div>
+
+                    <p style="color: #64748b; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem;">Tasas de Cambio Actuales</p>
+                    
+                    <div style="display:flex; gap:20px; align-items:center; margin-bottom:10px;">
+                        <div style="text-align:center;">
+                            <div style="font-size:0.8rem; color:#64748b;">USD ($)</div>
+                            <h2 style="margin: 0; color: #0f172a; font-size: 1.6rem; font-weight: 700;">${rates.tasa_usd_ves.toFixed(2)}</h2>
+                        </div>
+                        <div style="height:30px; width:1px; background:#cbd5e1;"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.8rem; color:#64748b;">EUR (€)</div>
+                            <h2 style="margin: 0; color: #0f172a; font-size: 1.6rem; font-weight: 700;">${rates.tasa_eur_ves.toFixed(2)}</h2>
+                        </div>
+                    </div>
+                    
+                    <div style="background:#f1f5f9; padding:5px 10px; border-radius:6px; font-size:0.85rem; color:#334155;">
+                        1 € = ${(rates.tasa_eur_ves / rates.tasa_usd_ves).toFixed(4)} $
+                    </div>
+
                     <div style="margin-top: 20px; text-align: center;">
                         <small style="color: #94a3b8; display: block; font-size: 0.75rem;">Último cambio:</small>
-                        <small style="color: #64748b; font-weight: 600; font-size: 0.85rem;">${rates.updated_at ? new Date(rates.updated_at).toLocaleString() : 'Sin registros'}</small>
+                        <small style="color: #64748b; font-weight: 600; font-size: 0.85rem;">
+                            ${rates.updated_at ? new Date(rates.updated_at).toLocaleString() : 'Sin registros'}
+                            <br>(${rates.last_update_source || 'MANUAL'})
+                        </small>
                     </div>
+
+                    <button id="btn-force-sync" style="margin-top:15px; background:none; border:1px solid #cbd5e1; color:#64748b; cursor:pointer; padding:6px 12px; border-radius:6px; font-size:0.8rem;">
+                        🔄 Sincronizar Ahora
+                    </button>
                 </div>
             </div>
 

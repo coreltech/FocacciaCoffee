@@ -1,5 +1,5 @@
 export const CatalogView = {
-    renderLayout(container, rates, products, recentLogs, isDirector = false, showInactive = false) {
+    renderLayout(container, rates, products, recentLogs, isDirector = false, showInactive = false, costsData = []) {
         container.innerHTML = `
         <div class="main-container">
             <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-wrap:wrap; gap:15px;">
@@ -260,6 +260,7 @@ export const CatalogView = {
                                     <th style="padding:12px 10px;">FOTO</th>
                                     <th>PRODUCTO</th>
                                     <th>PRECIO</th>
+                                    <th>MARGEN</th>
                                     <th>STOCK</th>
                                     <th>ACCIONES</th>
                                 </tr>
@@ -291,10 +292,10 @@ export const CatalogView = {
             }
         </style>
         `;
-        this.renderTable(products);
+        this.renderTable(products, costsData);
     },
 
-    renderTable(products) {
+    renderTable(products, costsData = []) {
         const body = document.getElementById('catalog-body');
         const summaryDiv = document.getElementById('low-stock-summary');
         const countSpan = document.getElementById('low-stock-count');
@@ -328,6 +329,32 @@ export const CatalogView = {
                         ${isInactive ? '<small style="color:#dc2626; font-weight:800; font-size:0.7rem; display:block;">⛔ INACTIVO</small>' : ''}
                     </td>
                     <td style="font-weight:bold; color:${isInactive ? '#94a3b8' : '#0f172a'};">$${p.precio_venta_final.toFixed(2)}</td>
+                    <td>
+                        ${(() => {
+                    if (isInactive) return '<span style="color:#94a3b8">--</span>';
+                    const costItem = costsData.find(c => c.catalog_id === p.id);
+                    if (!costItem || !costItem.margin_percentage) return '<span style="color:#94a3b8; font-size:0.8rem;">N/A</span>';
+
+                    const margin = parseFloat(costItem.margin_percentage);
+                    let color = '#16a34a'; // Green > 30%
+                    let bg = '#dcfce7';
+
+                    if (margin < 15) {
+                        color = '#dc2626'; bg = '#fee2e2'; // Red
+                    } else if (margin <= 30) {
+                        color = '#d97706'; bg = '#fef3c7'; // Yellow
+                    }
+
+                    return `
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="font-weight:bold; color:${color}; background:${bg}; padding:4px 8px; border-radius:6px; font-size:0.85rem; width:fit-content;">
+                                        ${margin}%
+                                    </span>
+                                    <small style="font-size:0.7rem; color:#64748b;">$${costItem.production_cost_usd.toFixed(2)}</small>
+                                </div>
+                            `;
+                })()}
+                    </td>
                     <td>
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <span style="padding:4px 10px; border-radius:15px; font-weight:bold; font-size:0.9rem; width:fit-content;

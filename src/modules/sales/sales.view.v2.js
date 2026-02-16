@@ -505,24 +505,56 @@ export const SalesView = {
         div.insertAdjacentHTML('beforeend', html);
     },
 
-    renderReceivables(sales, totalCount) {
+    renderReceivables(sales, totalCount, rates) {
         const div = document.getElementById('sales-history');
         const summaryDiv = document.getElementById('daily-summary');
 
         // Receivables Summary
+        // Receivables Summary & Filters
         if (summaryDiv) {
-            const totalDebt = sales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
+            const paidSales = sales.filter(s => {
+                const balance = parseFloat(s.balance_due) || 0;
+                return balance <= 0.01;
+            });
+            const pendingSales = sales.filter(s => {
+                const balance = parseFloat(s.balance_due) || 0;
+                return balance > 0.01;
+            });
+
+            // Calculate totals for "Paid/Solvent" view
+            const totalCollectedUSD = paidSales.reduce((acc, s) => acc + (parseFloat(s.amount_paid_usd || s.amount_paid || s.total_amount) || 0), 0);
+            const totalCollectedVES = totalCollectedUSD * (rates.tasa_usd_ves || 0);
+
+            // Calculate totals for "Pending" view
+            const totalDebt = pendingSales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
+
             summaryDiv.innerHTML = `
-                <div style="background:#fff1f2; padding:20px; border-radius:12px; border:2px solid #fecaca; text-align:center;">
-                    <h4 style="margin:0 0 10px 0; color:#991b1b;">💰 Total por Cobrar (Mostrado)</h4>
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+                    <button id="btn-filter-pending" class="filter-btn active" style="padding:10px 20px; border-radius:8px; border:none; background:#ef4444; color:white; font-weight:bold; cursor:pointer;">Pendientes (${pendingSales.length})</button>
+                    <button id="btn-filter-paid" class="filter-btn" style="padding:10px 20px; border-radius:8px; border:none; background:#f1f5f9; color:#64748b; font-weight:bold; cursor:pointer;">Pagados / Solventes (${paidSales.length})</button>
+                </div>
+
+                <div id="summary-pending" style="background:#fff1f2; padding:20px; border-radius:12px; border:2px solid #fecaca; text-align:center;">
+                    <h4 style="margin:0 0 10px 0; color:#991b1b;">💰 Total por Cobrar</h4>
                     <b style="font-size:2rem; color:#ef4444;">$${totalDebt.toFixed(2)}</b>
-                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#7f1d1d;">Registros: ${sales.length} / ${totalCount}</p>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#7f1d1d;">${pendingSales.length} órdenes pendientes</p>
+                </div>
+
+                <div id="summary-paid" style="display:none; background:#f0fdf4; padding:20px; border-radius:12px; border:2px solid #bbf7d0; text-align:center;">
+                    <h4 style="margin:0 0 10px 0; color:#166534;">✅ Dinero en Caja (Solventes)</h4>
+                    <b style="font-size:2rem; color:#16a34a;">$${totalCollectedUSD.toFixed(2)}</b>
+                    <div style="font-size:1rem; color:#15803d; margin-top:5px;">~ ${totalCollectedVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs</div>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#14532d;">${paidSales.length} órdenes cobradas</p>
                 </div>
             `;
         }
 
+        // Logic to filter the list based on selection (default pending)
+        // We need to know which filter is active. We can store it in a closure or just render all and hide via CSS?
+        // Better: Render all but give them classes, then use buttons to toggle visibility.
+
         if (sales.length === 0) {
-            div.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">🎉 No hay cuentas por cobrar pendientes.</p>';
+            div.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">🎉 No hay movimientos en este período.</p>';
             return;
         }
 
@@ -531,15 +563,23 @@ export const SalesView = {
             const phone = s.customers?.phone || 'Sin Tlf';
             const balance = parseFloat(s.balance_due).toFixed(2);
             const total = parseFloat(s.total_amount).toFixed(2);
-            const paid = parseFloat(s.amount_paid).toFixed(2);
+            const paid = parseFloat(s.amount_paid_usd || s.amount_paid || 0).toFixed(2);
             const dateStr = s.sale_date.split('T')[0];
+            const rate = rates?.tasa_usd_ves || 0;
+
+            const isPaid = parseFloat(s.balance_due) <= 0.01;
+            const rowClass = isPaid ? 'row-paid' : 'row-pending';
+            const displayStyle = isPaid ? 'none' : 'block'; // Default show pending
+
+            // Date of full payment? We don't have it easily unless we query payments. 
+            // We can show "Pagado" check.
 
             return `
-                <div style="background:white; border:1px solid #fecaca; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid #ef4444; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1); position:relative;">
+                <div class="${rowClass}" style="display:${displayStyle}; background:white; border:1px solid ${isPaid ? '#bbf7d0' : '#fecaca'}; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid ${isPaid ? '#16a34a' : '#ef4444'}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position:relative;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
                             <div style="color:#64748b; font-size:0.75rem; margin-bottom:4px;">📅 ${dateStr} &bull; ID: ${s.id.slice(0, 8)}</div>
-                            <b style="font-size:1.1rem; color:#1e293b; display:block;">${customerName}</b>
+                            <b style="font-size:1.1rem; color:#1e293b; display:block;">${customerName} ${isPaid ? '✅' : ''}</b>
                             <span style="font-size:0.85rem; color:#64748b;">📞 ${phone}</span>
                             <div style="margin-top:5px; font-size:0.85rem; color:#334155;">
                                 Producto: <b>${s.product_name}</b> <br>
@@ -548,20 +588,76 @@ export const SalesView = {
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <small style="display:block; color:#991b1b; font-weight:bold;">DEUDA</small>
-                            <b style="font-size:1.4rem; color:#ef4444;">$${balance}</b>
+                            <small style="display:block; color:${isPaid ? '#15803d' : '#991b1b'}; font-weight:bold;">${isPaid ? 'COBRADO' : 'DEUDA'}</small>
+                            <b style="font-size:1.4rem; color:${isPaid ? '#16a34a' : '#ef4444'};">$${isPaid ? total : balance}</b>
                         </div>
                     </div>
 
-                    <button class="btn-confirm-pay" data-id="${s.id}" data-amount="${balance}"
-                        style="width:100%; margin-top:15px; background:#ef4444; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition: background 0.2s;">
-                        💸 REGISTRAR PAGO TOTAL ($${balance})
-                    </button>
+                    ${!isPaid ? `
+                    <!-- CALCULADORA DE PAGO (SOLO PENDIENTES) -->
+                    <div style="background:#fff7ed; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #ffedd5;">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#d97706; display:block; margin-bottom:5px;">🧮 ABONO / PAGO PARCIAL ($)</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="number" class="input-partial-pay" data-id="${s.id}" data-rate="${rate}" 
+                                placeholder="Monto $" step="0.01" max="${balance}"
+                                style="flex:1; padding:8px; border:1px solid #fdba74; border-radius:6px;">
+                            <button class="btn-register-partial" data-id="${s.id}"
+                                style="background:#f97316; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold;">
+                                Registrar
+                            </button>
+                        </div>
+                        <div style="margin-top:5px; font-size:0.8rem; color:#9a3412;">
+                            Cobrar hoy: <b class="calc-ves-display" id="calc-${s.id}">0.00 Bs</b>
+                            <small style="color:#ca8a04;">(Tasa: ${rate})</small>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             `;
         }).join('');
 
         div.innerHTML = html;
+
+        // Bind Filter Events inline (or better in controller?)
+        // Since we render HTML here, let's add listeners if elements exist
+        const btnPending = document.getElementById('btn-filter-pending');
+        const btnPaid = document.getElementById('btn-filter-paid');
+        const sumPending = document.getElementById('summary-pending');
+        const sumPaid = document.getElementById('summary-paid');
+
+        if (btnPending && btnPaid) {
+            btnPending.onclick = () => {
+                btnPending.classList.add('active');
+                btnPending.style.background = '#ef4444';
+                btnPending.style.color = 'white';
+
+                btnPaid.classList.remove('active');
+                btnPaid.style.background = '#f1f5f9';
+                btnPaid.style.color = '#64748b';
+
+                sumPending.style.display = 'block';
+                sumPaid.style.display = 'none';
+
+                div.querySelectorAll('.row-pending').forEach(el => el.style.display = 'block');
+                div.querySelectorAll('.row-paid').forEach(el => el.style.display = 'none');
+            };
+
+            btnPaid.onclick = () => {
+                btnPaid.classList.add('active');
+                btnPaid.style.background = '#16a34a';
+                btnPaid.style.color = 'white';
+
+                btnPending.classList.remove('active');
+                btnPending.style.background = '#f1f5f9';
+                btnPending.style.color = '#64748b';
+
+                sumPending.style.display = 'none';
+                sumPaid.style.display = 'block';
+
+                div.querySelectorAll('.row-pending').forEach(el => el.style.display = 'none');
+                div.querySelectorAll('.row-paid').forEach(el => el.style.display = 'block');
+            };
+        }
     },
 
     addPaymentRow() {

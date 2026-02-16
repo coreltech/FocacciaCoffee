@@ -12,6 +12,39 @@ export const ProductionView = {
             </header>
 
             <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
+                
+                <!-- NEW: SHOPPING LIST SECTION -->
+                <div class="stat-card" style="border-top: 5px solid #8b5cf6; padding: 25px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                                🛒 Lista de Compras (Planificación Semanal)
+                            </h3>
+                            <p style="color:#64748b; font-size:0.85rem; margin:4px 0 0 0;">Basado en pedidos "Pendientes".</p>
+                        </div>
+                        <button id="btn-close-cycle" class="btn-primary" 
+                            style="background:#7c3aed; padding:10px 16px; border:none; color:white; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
+                            🔒 Cerrar Planificación
+                        </button>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <table style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="background:#f8fafc; color:#64748b; text-align:left; position:sticky; top:0;">
+                                    <th style="padding:10px;">INSUMO</th>
+                                    <th>CANT. TOTAL</th>
+                                    <th>A COMPRAR</th>
+                                    <th>COSTO EST.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopping-list-body">
+                                <tr><td colspan="4" style="padding:15px; text-align:center;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="stat-card" style="border-top: 5px solid #0284c7; max-width: 700px; margin: 0 auto; width: 100%; padding:30px;">
                     <h3 style="margin:0 0 15px 0; font-size:1.1rem;">📦 Registrar Producción (PT)</h3>
                     <p style="color: #64748b; font-size: 0.9rem; margin:0 0 20px 0;">Selecciona un producto configurado para sumar stock al mostrador.</p>
@@ -155,6 +188,50 @@ export const ProductionView = {
         histDiv.querySelectorAll('.btn-del-log').forEach(b => {
             b.onclick = () => onDeleteLog(b.dataset.id);
         });
+    },
+
+    renderShoppingList(items) {
+        const tbody = document.getElementById('shopping-list-body');
+        const btnClose = document.getElementById('btn-close-cycle');
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#64748b;">✅ No hay pedidos pendientes por planificar.</td></tr>';
+            if (btnClose) btnClose.disabled = true;
+            if (btnClose) btnClose.style.opacity = '0.5';
+            return;
+        }
+
+        if (btnClose) {
+            btnClose.disabled = false;
+            btnClose.style.opacity = '1';
+        }
+
+        let totalCost = 0;
+
+        tbody.innerHTML = items.map(i => {
+            const cost = parseFloat(i.costo_estimado_usd || 0);
+            totalCost += cost;
+            return `
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:10px;">
+                    <strong>${i.insumo_nombre}</strong><br>
+                    <small style="color:#94a3b8;">${i.categoria}</small>
+                </td>
+                <td>${i.cantidad_total_necesaria} ${i.unidad_medida}</td>
+                <td>
+                    <span style="background:#f3e8ff; color:#6b21a8; padding:3px 8px; border-radius:12px; font-weight:bold;">
+                        ${i.paquetes_a_comprar} u
+                    </span>
+                </td>
+                <td style="font-weight:bold;">$${i.costo_estimado_usd}</td>
+            </tr>
+            `;
+        }).join('') + `
+            <tr style="background:#f8fafc; font-weight:bold; border-top:2px solid #e2e8f0;">
+                <td colspan="3" style="padding:10px; text-align:right;">TOTAL ESTIMADO:</td>
+                <td style="color:#7c3aed;">$${totalCost.toFixed(2)}</td>
+            </tr>
+        `;
     },
 
     resetForm() {

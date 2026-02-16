@@ -44,4 +44,30 @@ function bindEvents() {
             alert("Error: " + err.message);
         }
     };
+
+    const strBtn = document.getElementById('btn-force-sync');
+    if (strBtn) {
+        strBtn.onclick = async () => {
+            strBtn.disabled = true;
+            strBtn.textContent = "⏳ Sincronizando...";
+            try {
+                const res = await SettingsService.syncRates();
+                if (res.status === 'error') throw new Error(res.reason);
+
+                if (res.status === 'skipped') {
+                    alert("⚠️ No se sincronizó porque hay un cambio manual reciente (hoy).");
+                } else if (res.status === 'updated') {
+                    let msg = `✅ Tasas sincronizadas con BCV ($${res.new_usd}).`;
+                    if (res.driftAlert) msg += `\n\n${res.driftAlert}`;
+                    alert(msg);
+                }
+
+                loadSettings();
+            } catch (err) {
+                alert("Error sincronizando: " + err.message);
+                strBtn.disabled = false;
+                strBtn.textContent = "🔄 Sincronizar Ahora";
+            }
+        };
+    }
 }

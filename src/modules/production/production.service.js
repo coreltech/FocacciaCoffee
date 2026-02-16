@@ -9,12 +9,36 @@ export const ProductionService = {
             supabase.from('production_logs').select('*').order('fecha_produccion', { ascending: false }).limit(10)
         ]);
 
+        let shoppingList = { data: [] };
+        try {
+            // Fetch separate to avoid breaking the whole page if view fails
+            const res = await supabase.from('v_shopping_list').select('*');
+            if (res.error) {
+                console.error("Error fetching shopping list:", res.error);
+            } else {
+                shoppingList = res;
+            }
+        } catch (err) {
+            console.error("Critical error fetching shopping list:", err);
+        }
+
         return {
             recipes: recipes.data || [],
             allInputs: inputs.data || [],
             catalog: catalog.data || [],
-            logs: logs.data || []
+            logs: logs.data || [],
+            shoppingList: shoppingList.data || []
         };
+    },
+
+    async closeWeeklyCycle() {
+        const { error } = await supabase
+            .from('sales_orders')
+            .update({ fulfillment_status: 'en_produccion' })
+            .eq('fulfillment_status', 'pendiente');
+
+        if (error) throw error;
+        return true;
     },
 
     async getIngredientCost(id, type) {

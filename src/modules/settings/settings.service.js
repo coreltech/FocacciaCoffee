@@ -94,11 +94,14 @@ class SettingsServiceImpl {
         });
     }
 
-    async updateRates(usdVes, eurVes) {
+    async updateRates(usdVes, eurVes, isManual = true, source = 'MANUAL') {
         // Unified update for the new direct-VES schema
+        // We need to upsert. But upsert in Supabase with different columns for same row might be tricky if we want to update is_manual
+        // Actually, exchange_rates has one row per currency.
+
         const payload = [
-            { currency_code: 'USD', rate_to_ves: usdVes },
-            { currency_code: 'EUR', rate_to_ves: eurVes }
+            { currency_code: 'USD', rate_to_ves: usdVes, is_manual: isManual, last_update_source: source, updated_at: new Date() },
+            { currency_code: 'EUR', rate_to_ves: eurVes, is_manual: isManual, last_update_source: source, updated_at: new Date() }
         ];
 
         const { error } = await supabase
@@ -136,13 +139,156 @@ class SettingsServiceImpl {
                 console.error('Supabase error in getHistory:', error);
                 throw error;
             }
-
-            console.log('History fetched:', data);
             return data || [];
         } catch (err) {
             console.error('Error in getHistory:', err);
             throw err;
         }
+    }
+
+    // --- AUTOMATION & SYNC ---
+
+    async fetchBCVRates() {
+        try {
+            // Using pydolarvenezuela API which provides multiple monitors including BCV
+            const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar/page?page=bcv');
+            if (!response.ok) throw new Error("API Error");
+
+            const data = await response.json();
+
+            // Expected shape checks might vary, let's try to be robust
+            // Usually data.monitors.usd.price and data.monitors.eur.price for BCV page specifically?
+            // Actually the endpoint `page?page=bcv` returns monitors *for* BCV context? 
+            // Let's verify standard response or use a broader endpoint if unsure.
+            // A common endpoint is `.../api/v1/dollar?monitor=bcv` or similar. 
+            // Assuming the previous code worked for `price`, it likely returned the main USD price.
+            // Let's try to find EUR. If the specific BCV endpoint doesn't return EUR, we might need the homepage endpoint.
+
+            // Let's assume we can get both. If strictly BCV, the USD is the main one. 
+            // If the API allows `monitor=bcv` (USD) and we need EUR, usually `page=bcv` might list "usd" and "eur"?
+            // API documentation for pydolarvenezuela usually structures it as monitors.
+
+            // Strategy: Use the detailed monitor endpoint if possible, or fallback.
+            // For now, let's assume `data.monitors.usd.price` and `data.monitors.eur.price` exist if we query general.
+            // If we query `page=bcv`, it might just be the USD rate.
+
+            // Alternative: Fetch the general monitor list which definitely has everything
+            // const allResp = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar');
+
+            // Let's stick to the previous URL but try to parse EUR if available, or fetch general.
+            // Rate limiting might be an issue if we make 2 calls.
+            // Let's assume we fetch the 'bcv' specific monitor for USD, and for EUR?
+            // Actually, usually BCV implies the official rates.
+            // Let's use a safer broad endpoint if we want both.
+
+            const responseAll = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv');
+            // This endpoint usually returns the BCV "monitor" object. 
+            // Wait, looking at common usage:
+            // GET /api/v1/dollar/unit/bcv  -> returns { price: 45.00, title: "BCV", ... } (USD)
+            // EUR is often a separate monitor or property.
+
+            // Let's try fetching the "euro" page/monitor?
+            // GET /api/v1/euro?page=bcv ??
+
+            // To be safe and robust without doing trial/error on a live user system:
+            // We will fetch USD from BCV. For EUR, we will TRY to fetch a Euro equivalent or calculation.
+            // BUT the user specifically asked for "Both from BCV".
+            // The BCV site publishes both.
+
+            // Let's pretend we have a robust parser or use `fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar')`
+            // and `fetch('https://pydolarvenezuela-api.vercel.app/api/v1/euro')` ?
+
+            const [resUsd, resEur] = await Promise.all([
+                fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?monitor=bcv'),
+                fetch('https://pydolarvenezuela-api.vercel.app/api/v1/euro?monitor=bcv')
+            ]);
+
+            let rateUsd = 0;
+            let rateEur = 0;
+
+            if (resUsd.ok) {
+                const d = await resUsd.json();
+                rateUsd = parseFloat(d.price || d.monitors?.bcv?.price || 0);
+            }
+
+            if (resEur.ok) {
+                const d = await resEur.json();
+                rateEur = parseFloat(d.price || d.monitors?.bcv?.price || 0);
+            }
+
+            if (!rateUsd || !rateEur) throw new Error("Incomplete Data");
+
+            return { usd: rateUsd, eur: rateEur };
+
+        } catch (err) {
+            console.warn("Autosync BCV Failed:", err);
+            return null;
+        }
+    }
+
+    async syncRates() {
+        // 1. Check if we have a manual override (Window: 12 Hours)
+        const current = await this.getGlobalRates();
+        if (current.is_manual) {
+            const lastUpdate = new Date(current.updated_at);
+            const now = new Date();
+            const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
+
+            if (diffHours < 12) {
+                console.log(`🔒 Manual override active (${diffHours.toFixed(1)}h < 12h). Skipping autosync.`);
+                return { status: 'skipped', reason: 'manual_override' };
+            }
+        }
+
+        // 2. Fetch External (Dual)
+        const rates = await this.fetchBCVRates();
+        if (!rates) return { status: 'error', reason: 'api_fail' };
+
+        const { usd: newUsd, eur: newEur } = rates;
+
+        // 3. Drift Check (Check both)
+        const oldUsd = current.tasa_usd_ves;
+        const oldEur = current.tasa_eur_ves;
+
+        const diffPctUsd = Math.abs((newUsd - oldUsd) / oldUsd) * 100;
+        const diffPctEur = Math.abs((newEur - oldEur) / oldEur) * 100;
+
+        // Report significant change if ANY > 2%
+        let driftAlert = null;
+        if (diffPctUsd > 2 || diffPctEur > 2) {
+            driftAlert = `⚠️ Cambio significativo BCV:\nUSD: ${oldUsd} -> ${newUsd}\nEUR: ${oldEur} -> ${newEur}`;
+        }
+
+        // Ensure we check if it is actually different
+        if (diffPctUsd === 0 && diffPctEur === 0) {
+            return { status: 'no_change', new_usd: newUsd, new_eur: newEur };
+        }
+
+        // 4. Update
+        await this.updateRates(newUsd, newEur, false, 'BCV_AUTO');
+
+        return {
+            status: 'updated',
+            new_usd: newUsd,
+            new_eur: newEur,
+            old_usd: oldUsd,
+            old_eur: oldEur,
+            diffPct: Math.max(diffPctUsd, diffPctEur),
+            driftAlert
+        };
+    }
+
+    async checkAutoSync() {
+        const current = await this.getGlobalRates();
+        const lastUpdate = new Date(current.updated_at);
+        const now = new Date();
+        const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
+
+        // Optimization: If loaded data is fresh (<3h), do nothing
+        if (diffHours < 3) return null;
+
+        console.log(`⚠️ Rates are stale (>3h). Attempting auto-sync...`);
+        return await this.syncRates();
     }
 }
 

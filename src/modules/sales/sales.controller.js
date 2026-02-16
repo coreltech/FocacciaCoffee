@@ -112,8 +112,13 @@ async function loadReceivables(append = false, startDate = null, endDate = null)
         }
 
         const data = await SalesService.getReceivables(currentPage, PAGE_SIZE, startDate, endDate);
-        // Render Receivables specific view
-        SalesView.renderReceivables(data.sales, data.totalCount);
+        // Render Receivables specific view with rates
+        // Ensure currentRates is populated if we came straight to receivables
+        if (!currentRates.tasa_usd_ves && !append) {
+            const { rates } = await SalesService.getData(new Date().toISOString().split('T')[0], null, 0, 1);
+            currentRates = rates;
+        }
+        SalesView.renderReceivables(data.sales, data.totalCount, currentRates);
 
         if (!append) {
             bindEvents(currentRates || { tasa_usd_ves: 0 }); // We might miss rates if we didn't store them
@@ -222,6 +227,43 @@ function bindDynamicEvents() {
         cart.splice(idx, 1);
         SalesView.renderCart(cart, currentRates);
     }
+
+    // --- PARTIAL PAYMENT LOGIC ---
+    document.querySelectorAll('.input-partial-pay').forEach(inp => {
+        inp.oninput = (e) => {
+            const val = parseFloat(e.target.value) || 0;
+            const rate = parseFloat(e.target.dataset.rate) || 0;
+            const vesDisplay = document.getElementById(`calc-${e.target.dataset.id}`);
+            if (vesDisplay) {
+                vesDisplay.textContent = (val * rate).toFixed(2) + ' Bs';
+            }
+        };
+    });
+
+    document.querySelectorAll('.btn-register-partial').forEach(btn => {
+        btn.onclick = async () => {
+            const id = btn.dataset.id;
+            const input = document.querySelector(`.input-partial-pay[data-id="${id}"]`);
+            const amountVal = parseFloat(input.value);
+
+            if (!amountVal || amountVal <= 0) return alert("Ingrese un monto válido");
+            if (!confirm(`¿Registrar abono de $${amountVal.toFixed(2)}?`)) return;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = "...";
+                await SalesService.registerPartialPayment(id, amountVal, currentRates.tasa_usd_ves);
+
+                alert("✅ Abono registrado");
+                loadReceivables(); // Reload list
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
+                btn.disabled = false;
+                btn.textContent = "Registrar";
+            }
+        };
+    });
 }
 
 function setupRealtime(selectedDate) {
