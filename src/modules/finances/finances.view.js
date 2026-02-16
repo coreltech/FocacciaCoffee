@@ -32,10 +32,16 @@ export const FinancesView = {
 
                 <!-- Card Ventas REMOVED by user request -->
                 
-                <!-- Card Gastos -->
+                <!-- Card Gastos (Global) -->
                 <div style="background:#fff1f2; border:1px solid #fecaca; padding:20px; border-radius:12px; text-align:center; position:relative;">
-                    <h3 style="margin:0; color:#991b1b; font-size:0.9rem; text-transform:uppercase;">Total Ejecutado / Gastos</h3>
+                    <h3 style="margin:0; color:#991b1b; font-size:0.9rem; text-transform:uppercase;">Total Ejecutado (Global)</h3>
                     <b id="summary-expenses" style="display:block; font-size:2rem; color:#b91c1c; margin-top:5px;">$0.00</b>
+                </div>
+
+                <!-- Card Range Expenses (Visible only when filtering) -->
+                <div id="card-range-expenses" style="display:none; background:#f5f3ff; border:1px solid #ddd6fe; padding:20px; border-radius:12px; text-align:center;">
+                    <h3 style="margin:0; color:#5b21b6; font-size:0.9rem; text-transform:uppercase;">Gastos del Periodo</h3>
+                    <b id="summary-range-expenses" style="display:block; font-size:2rem; color:#6d28d9; margin-top:5px;">$0.00</b>
                 </div>
 
                 <!-- Card Disponible -->
