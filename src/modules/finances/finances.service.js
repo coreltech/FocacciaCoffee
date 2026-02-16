@@ -3,47 +3,53 @@ import { supabase } from '../../core/supabase.js';
 export const FinancesService = {
     // 1. Get Balance Sheet (Resumen)
     async getBalanceSheet(startDate = null, endDate = null) {
-        // Fetch all capital entries (Optional: Apply filter here too if needed, but request specified expenses)
-        let queryCap = supabase
+        // Fetch ALL capital entries (No DB filter, handle in memory for dual-purpose)
+        const { data: capital, error: errCap } = await supabase
             .from('capital_entries')
             .select('*')
             .order('date', { ascending: false });
 
-        if (startDate && endDate) {
-            queryCap = queryCap.gte('date', startDate).lte('date', endDate);
-        }
-
-        const { data: capital, error: errCap } = await queryCap;
-
         if (errCap) throw errCap;
 
-        // Fetch expenses with filter
-        let queryExp = supabase
+        // Fetch ALL expenses (No DB filter)
+        const { data: expenses, error: errExp } = await supabase
             .from('investment_expenses')
             .select('*')
             .order('date', { ascending: false });
 
-        if (startDate && endDate) {
-            queryExp = queryExp.gte('date', startDate).lte('date', endDate);
-        }
-
-        const { data: expenses, error: errExp } = await queryExp;
-
         if (errExp) throw errExp;
 
-        // Calculate Totals
-        const totalCapital = capital.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-        const totalExpenses = expenses.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
+        // --- GLOBAL CALCULATIONS (All Time) ---
+        const totalCapitalGlobal = capital.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+        const totalExpensesGlobal = expenses.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
 
         // Removed Sales Revenue from assumption based on user request to isolate Investment/Expenses
-        const balance = totalCapital - totalExpenses;
+        const globalBalance = totalCapitalGlobal - totalExpensesGlobal;
+
+        // --- FILTERING (Range) ---
+        let filteredCap = capital;
+        let filteredExp = expenses;
+
+        if (startDate && endDate) {
+            // String comparison works for YYYY-MM-DD
+            filteredCap = capital.filter(c => c.date >= startDate && c.date <= endDate);
+            filteredExp = expenses.filter(e => e.date >= startDate && e.date <= endDate);
+        }
+
+        const totalExpensesRange = filteredExp.reduce((sum, item) => sum + parseFloat(item.total_amount), 0);
+        const totalCapitalRange = filteredCap.reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
         return {
-            totalCapital,
-            totalExpenses,
-            balance,
-            capitalList: capital,
-            expensesList: expenses
+            totalCapital: totalCapitalGlobal,  // Keep Global for "Capital Ingresado" card (usually static fund)
+            totalCapitalRange,                 // Available if needed
+
+            totalExpensesGlobal,               // Available if needed
+            totalExpensesRange,                // For "Total Ejecutado / Gastos" card (Contextual)
+
+            balance: globalBalance,            // For "Capital Disponible" card (Must be actual cash on hand)
+
+            capitalList: filteredCap,
+            expensesList: filteredExp
         };
     },
 

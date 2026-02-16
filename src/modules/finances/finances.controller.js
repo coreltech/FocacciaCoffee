@@ -33,6 +33,16 @@ async function refreshData() {
         const startDate = document.getElementById('filter-date-start')?.value;
         const endDate = document.getElementById('filter-date-end')?.value;
 
+        // Update UI Title for Expenses
+        const expCardTitle = document.querySelector('#summary-expenses').previousElementSibling;
+        if (expCardTitle) {
+            if (startDate && endDate) {
+                expCardTitle.innerText = `Total Ejecutado (Rango)`;
+            } else {
+                expCardTitle.innerText = `Total Ejecutado / Gastos`;
+            }
+        }
+
         currentData = await FinancesService.getBalanceSheet(startDate, endDate);
         updateDashboard(currentData);
         FinancesView.renderLists(currentData.expensesList, currentData.capitalList);
@@ -45,8 +55,11 @@ async function refreshData() {
 function updateDashboard(data) {
     document.getElementById('summary-capital').innerText = `$${data.totalCapital.toFixed(2)}`;
     // document.getElementById('summary-sales').innerText = `$${(data.totalSalesRevenue || 0).toFixed(2)}`;
-    document.getElementById('summary-expenses').innerText = `$${data.totalExpenses.toFixed(2)}`;
 
+    // Show RANGE Total for Expenses (requested indicator)
+    document.getElementById('summary-expenses').innerText = `$${data.totalExpensesRange.toFixed(2)}`;
+
+    // Show GLOBAL Balance for Available Capital
     const bal = data.balance;
     const balEl = document.getElementById('summary-balance');
     balEl.innerText = `$${bal.toFixed(2)}`;
