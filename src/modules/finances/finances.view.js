@@ -30,11 +30,7 @@ export const FinancesView = {
                     <b id="summary-capital" style="display:block; font-size:2rem; color:#15803d; margin-top:5px;">$0.00</b>
                 </div>
 
-                <!-- Card Ventas -->
-                <div style="background:#ecfccb; border:1px solid #d9f99d; padding:20px; border-radius:12px; text-align:center;">
-                    <h3 style="margin:0; color:#3f6212; font-size:0.9rem; text-transform:uppercase;">Ingresos por Ventas</h3>
-                    <b id="summary-sales" style="display:block; font-size:2rem; color:#4d7c0f; margin-top:5px;">$0.00</b>
-                </div>
+                <!-- Card Ventas REMOVED by user request -->
                 
                 <!-- Card Gastos -->
                 <div style="background:#fff1f2; border:1px solid #fecaca; padding:20px; border-radius:12px; text-align:center; position:relative;">

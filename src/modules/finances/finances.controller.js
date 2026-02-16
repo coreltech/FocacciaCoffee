@@ -44,7 +44,7 @@ async function refreshData() {
 
 function updateDashboard(data) {
     document.getElementById('summary-capital').innerText = `$${data.totalCapital.toFixed(2)}`;
-    document.getElementById('summary-sales').innerText = `$${(data.totalSalesRevenue || 0).toFixed(2)}`;
+    // document.getElementById('summary-sales').innerText = `$${(data.totalSalesRevenue || 0).toFixed(2)}`;
     document.getElementById('summary-expenses').innerText = `$${data.totalExpenses.toFixed(2)}`;
     document.getElementById('summary-balance').innerText = `$${data.balance.toFixed(2)}`;
 }

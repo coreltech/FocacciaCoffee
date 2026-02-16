@@ -352,9 +352,23 @@ export const SalesView = {
 
     renderSummary(resumen) {
         const div = document.getElementById('daily-summary');
-        // Ocultar resumen de ventas por solicitud del usuario
-        div.style.display = 'none';
-        div.innerHTML = ''; 
+        div.style.display = 'block'; // Ensure it's visible again
+        div.innerHTML = `
+            <h4 style="margin:0 0 10px 0;">📊 Cierre del Día</h4>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div style="background:#f0fdf4; padding:10px; border-radius:8px;">
+                    <small style="display:block; color:#166534;">ENTRÓ EN CAJA</small>
+                    <b style="font-size:1.1rem;">$${(resumen.total - resumen.credito).toFixed(2)}</b>
+                </div>
+                <div style="background:#fff1f2; padding:10px; border-radius:8px;">
+                    <small style="display:block; color:#991b1b;">EN CRÉDITO</small>
+                    <b style="font-size:1.1rem;">$${resumen.credito.toFixed(2)}</b>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                ${Object.entries(resumen.metodos).map(([m, val]) => `<div style="font-size:0.7rem; background:#f8fafc; padding:4px 8px; border-radius:4px;">${m}: <b>$${val.toFixed(2)}</b></div>`).join('')}
+            </div>
+        `;
     },
 
     toggleLoadMore(show) {
