@@ -33,18 +33,8 @@ async function refreshData() {
         const startDate = document.getElementById('filter-date-start')?.value;
         const endDate = document.getElementById('filter-date-end')?.value;
 
-        // Update UI Title for Expenses
-        const expCardTitle = document.querySelector('#summary-expenses').previousElementSibling;
-        if (expCardTitle) {
-            if (startDate && endDate) {
-                expCardTitle.innerText = `Total Ejecutado (Rango)`;
-            } else {
-                expCardTitle.innerText = `Total Ejecutado / Gastos`;
-            }
-        }
-
         currentData = await FinancesService.getBalanceSheet(startDate, endDate);
-        updateDashboard(currentData);
+        updateDashboard(currentData, startDate && endDate);
         FinancesView.renderLists(currentData.expensesList, currentData.capitalList);
     } catch (err) {
         console.error("Error fetching finance data:", err);
@@ -52,14 +42,25 @@ async function refreshData() {
     }
 }
 
-function updateDashboard(data) {
+function updateDashboard(data, isFiltered) {
     document.getElementById('summary-capital').innerText = `$${data.totalCapital.toFixed(2)}`;
     // document.getElementById('summary-sales').innerText = `$${(data.totalSalesRevenue || 0).toFixed(2)}`;
 
-    // Show RANGE Total for Expenses (requested indicator)
-    document.getElementById('summary-expenses').innerText = `$${data.totalExpensesRange.toFixed(2)}`;
+    // 1. Expense Card remains GLOBAL
+    document.getElementById('summary-expenses').innerText = `$${data.totalExpensesGlobal.toFixed(2)}`;
 
-    // Show GLOBAL Balance for Available Capital
+    // 2. New Range Card (Indicator)
+    const rangeCard = document.getElementById('card-range-expenses');
+    if (rangeCard) {
+        if (isFiltered) {
+            rangeCard.style.display = 'block';
+            document.getElementById('summary-range-expenses').innerText = `$${data.totalExpensesRange.toFixed(2)}`;
+        } else {
+            rangeCard.style.display = 'none';
+        }
+    }
+
+    // 3. Keep Global Balance
     const bal = data.balance;
     const balEl = document.getElementById('summary-balance');
     balEl.innerText = `$${bal.toFixed(2)}`;
