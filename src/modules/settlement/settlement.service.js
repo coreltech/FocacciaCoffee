@@ -91,15 +91,11 @@ export const SettlementService = {
             const rawName = s.product_name || (costItem ? costItem.product_name : 'Producto Desconocido');
             const cleanName = rawName.replace(/^RESERVA:\s*/i, '').trim();
 
-            // 2. Smart Quantity Deduction
+            // 2. Quantity Logic (Reverted to Safe Default)
+            // Note: 'total_amount' is Order Total, not Line Total, so we cannot divide by unit cost responsibly.
             let qty = parseFloat(s.quantity);
-            if (isNaN(qty) || qty === 0) { // Check for NaN as well
-                // Try to deduce from Total Amount / Unit Cost
-                if (unitCost > 0 && amount > 0) {
-                    qty = Math.round(amount / unitCost);
-                } else {
-                    qty = 1; // Fallback
-                }
+            if (!qty || qty === 0) {
+                qty = 1; // Fallback to 1 to avoid inflation (e.g. 40 units from a $40 ticket)
             }
 
             const saleCost = unitCost * qty;
@@ -108,7 +104,7 @@ export const SettlementService = {
 
             return {
                 ...s,
-                clean_product_name: cleanName, // Pass cleaned name
+                clean_product_name: cleanName,
                 effective_amount: amount,
                 theoretical_cost: saleCost,
                 unit_cost: unitCost,
@@ -121,12 +117,13 @@ export const SettlementService = {
         const productGrouping = {};
 
         processedSales.forEach(s => {
-            const key = s.clean_product_name; // Use Name as key for visual grouping
+            // Use normalized key for grouping (ignore case)
+            const key = s.clean_product_name.trim().toLowerCase();
 
             if (!productGrouping[key]) {
                 productGrouping[key] = {
-                    id: s.product_id, // Keep one ID for reference
-                    name: key,
+                    id: s.product_id,
+                    name: s.clean_product_name, // Keep original casing for display
                     quantity: 0,
                     unit_cost: s.unit_cost,
                     total_cost: 0,
