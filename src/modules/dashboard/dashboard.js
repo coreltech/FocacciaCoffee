@@ -69,6 +69,59 @@ export async function loadDashboard() {
         if (targetBtn) targetBtn.click();
     };
 
+    // --- WORKFLOW LOGIC ---
+    const dayOfWeek = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+    let workflowPhase = {
+        title: "Modo: Tomar Pedidos",
+        desc: "Fase de recolección de reservas para la semana.",
+        icon: "📝",
+        color: "#3b82f6", // Blue
+        action: "ventas",
+        btnText: "Ir a Reservas"
+    };
+
+    if (dayOfWeek >= 0 && dayOfWeek <= 3) {
+        // Domingo (0) a Miércoles (3)
+        workflowPhase = {
+            title: "Fase: Tomar Reservas",
+            desc: "Abierto para recibir pedidos hasta el miércoles.",
+            icon: "📝",
+            color: "#3b82f6", // Blue
+            action: "ventas",
+            btnText: "Gestionar Pedidos"
+        };
+    } else if (dayOfWeek === 4) {
+        // Jueves (4)
+        workflowPhase = {
+            title: "Fase: Producción",
+            desc: "Día de preparación de masa y mise en place.",
+            icon: "🥣",
+            color: "#eab308", // Yellow
+            action: "produccion",
+            btnText: "Ir a Producción"
+        };
+    } else if (dayOfWeek === 5) {
+        // Viernes (5)
+        workflowPhase = {
+            title: "Fase: Horneado y Despacho",
+            desc: "Hornear focaccias frescas y coordinar entregas.",
+            icon: "🔥",
+            color: "#f97316", // Orange
+            action: "produccion",
+            btnText: "Ver Producción"
+        };
+    } else if (dayOfWeek === 6) {
+        // Sábado (6)
+        workflowPhase = {
+            title: "Fase: Despacho y Entregas",
+            desc: "Entrega final a clientes y cierre de semana.",
+            icon: "🚚",
+            color: "#10b981", // Green
+            action: "ventas", // Or dispatch module if exists (sales for now)
+            btnText: "Ver Entregas"
+        };
+    }
+
     container.innerHTML = `
         <style>
             .dashboard-gourmet {
@@ -80,6 +133,21 @@ export async function loadDashboard() {
             }
 
             @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+            .workflow-banner {
+                background: linear-gradient(135deg, ${workflowPhase.color} 0%, #ffffff 100%);
+                border-left: 8px solid ${workflowPhase.color};
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
 
             .hero-gourmet-structured {
                 margin-bottom: 30px;
@@ -207,6 +275,21 @@ export async function loadDashboard() {
             <div class="hero-gourmet-structured">
                 <h1 style="font-size: 2.8rem; margin: 0; font-weight: 900; color: var(--coffee);">${saludo} <span style="font-size: 1.5rem;">${emoji}</span></h1>
                 <p style="font-size: 1.2rem; color: var(--terracotta); font-weight: 600; font-family: var(--font-head); margin-top: 5px;">${mensajeDelDia}</p>
+            </div>
+
+            <!-- WORKFLOW BANNER -->
+            <div class="workflow-banner">
+                <div>
+                    <h2 style="margin:0; font-size: 1.4rem; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.8rem;">${workflowPhase.icon}</span> 
+                        ${workflowPhase.title}
+                    </h2>
+                    <p style="margin: 5px 0 0 0; color: #475569; font-weight: 500;">${workflowPhase.desc}</p>
+                </div>
+                <button onclick="navTo('${workflowPhase.action}')" 
+                    style="background: white; color: ${workflowPhase.color}; border: 2px solid ${workflowPhase.color}; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+                    ${workflowPhase.btnText} →
+                </button>
             </div>
 
             <!-- SECCIÓN KPIs y ACCIONES -->
