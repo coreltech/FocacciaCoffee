@@ -22,19 +22,21 @@ export async function loadAdmin() {
 // State
 let currentExpenses = [];
 
-// The loadLists function is now integrated into loadAdmin and can be removed or refactored if still needed elsewhere.
-// For now, I'll comment it out as its functionality is absorbed.
-/*
 async function loadLists() {
-    const [assets, expenses] = await Promise.all([
-        AdminService.getAssets(),
-        AdminService.getExpenses()
-    ]);
-    currentExpenses = expenses;
-    AdminView.renderAssets(assets);
-    AdminView.renderExpenses(expenses);
+    try {
+        const [assets, expenses, contributions] = await Promise.all([
+            AdminService.getAssets(),
+            AdminService.getExpenses(),
+            AdminService.getContributions() // Ensure this exists in AdminService
+        ]);
+        currentExpenses = expenses;
+        AdminView.renderAssets(assets);
+        AdminView.renderExpenses(expenses);
+        AdminView.renderContributions(contributions); // Ensure this exists in AdminView
+    } catch (e) {
+        console.error("Error loading lists", e);
+    }
 }
-*/
 
 function bindEvents(rates) {
     // Tabs

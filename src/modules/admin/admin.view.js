@@ -23,6 +23,10 @@ export const AdminView = {
                     style="padding:12px 20px; background:#f1f5f9; color:#64748b; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
                     💸 Gastos
                 </button>
+                <button class="nav-btn" id="tab-contributions" 
+                    style="padding:12px 20px; background:#f1f5f9; color:#64748b; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
+                    💰 Aportes
+                </button>
                 <button class="nav-btn" id="tab-debug" 
                     style="padding:12px 20px; background:#f1f5f9; color:#64748b; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; opacity:${isDebug ? 1 : 0.5}; cursor:${isDebug ? 'pointer' : 'not-allowed'}; transition:all 0.2s;">
                     🐞 Debug
@@ -150,6 +154,68 @@ export const AdminView = {
                 </div>
             </div>
 
+            <!-- CONTRIBUTIONS PANEL -->
+            <div id="panel-contributions" class="stat-card" style="display:none; padding:25px;">
+                <h3 style="margin:0 0 20px 0; border-bottom:2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">💰 Aportes de Capital</h3>
+                
+                <!-- New Contribution Form -->
+                <div style="background:#f0fdf4; padding:20px; border-radius:12px; border:1px solid #bbf7d0; margin-bottom:30px;">
+                    <h4 style="margin:0 0 15px 0; color:#166534;">➕ Registrar Nuevo Aporte</h4>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:18px;">
+                         <div>
+                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Fecha</label>
+                             <input id="contrib-date" type="date" class="input-field" value="${new Date().toISOString().split('T')[0]}"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Socio</label>
+                            <select id="contrib-partner" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="Agustin Lugo">Agustín Lugo</option>
+                                <option value="Juan Marquez">Juan Márquez</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Monto (USD)</label>
+                            <input id="contrib-amount" type="number" class="input-field" placeholder="0.00"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Descripción / Notas</label>
+                        <input id="contrib-desc" class="input-field" placeholder="Ej: Inyección de capital enero..." 
+                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                    </div>
+                    
+                    <button id="btn-add-contrib" class="btn-primary" 
+                        style="width:100%; padding:14px; background:#16a34a; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                        💾 Registrar Aporte
+                    </button>
+                </div>
+
+                <!-- Contributions History -->
+                <div>
+                     <h4 style="margin:0 0 15px 0; font-size:1.1rem; color:#334155;">Historial de Aportes</h4>
+                     <div style="overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0;">
+                         <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                            <thead style="background:#f8fafc; color:#64748b; font-weight:bold; text-align:left;">
+                                <tr>
+                                    <th style="padding:12px;">Fecha</th>
+                                    <th style="padding:12px;">Socio</th>
+                                    <th style="padding:12px;">Descripción</th>
+                                    <th style="padding:12px;">Monto (USD)</th>
+                                    <th style="padding:12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contrib-table-body">
+                                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>
+                            </tbody>
+                         </table>
+                     </div>
+                </div>
+            </div>
+
             <!-- DEBUG PANEL -->
             <div id="panel-debug" class="stat-card" style="display:none; border:2px solid #ef4444; padding:25px;">
                 <h3 style="margin:0 0 20px 0; border-bottom:2px solid #ef4444; padding-bottom:12px; color:#dc2626; font-size:1.1rem;">🐞 ZONA DE PELIGRO (DEBUG)</h3>
@@ -202,7 +268,7 @@ export const AdminView = {
         `;
     },
 
-    renderContributionsTable(list) {
+    renderContributions(list) {
         const tbody = document.getElementById('contrib-table-body');
         if (!tbody) return;
         tbody.innerHTML = list.map(c => `
