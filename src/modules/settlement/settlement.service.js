@@ -40,7 +40,7 @@ export const SettlementService = {
         // Eliminamos el filtro de activo para incluir productos históricos/desactivados
         const costsQuery = supabase
             .from('sales_prices')
-            .select('id, product_name, costo_unitario_referencia');
+            .select('id, product_name, costo_unitario_referencia, precio_venta_final');
 
         // Execute all queries concurrently
         const [salesRes, purchasesRes, expensesRes, contributionsRes, costsRes] = await Promise.all([
@@ -82,6 +82,7 @@ export const SettlementService = {
             // Find cost by matching product_id (sales_orders) to id (sales_prices)
             const costItem = productCosts.find(c => c.id === s.product_id);
             const unitCost = costItem ? parseFloat(costItem.costo_unitario_referencia || 0) : 0;
+            const unitPrice = costItem ? parseFloat(costItem.precio_venta_final || 0) : 0;
 
             if (!costItem) {
                 console.warn(`⚠️ [DEBUG] No cost found for product_id: ${s.product_id} (${s.product_name || 'Unk'})`);
@@ -91,11 +92,22 @@ export const SettlementService = {
             const rawName = s.product_name || (costItem ? costItem.product_name : 'Producto Desconocido');
             const cleanName = rawName.replace(/^RESERVA:\s*/i, '').trim();
 
-            // 2. Quantity Logic (Reverted to Safe Default)
-            // Note: 'total_amount' is Order Total, not Line Total, so we cannot divide by unit cost responsibly.
+            // 2. Smart Quantity Deduction (Safe Mode)
             let qty = parseFloat(s.quantity);
             if (!qty || qty === 0) {
-                qty = 1; // Fallback to 1 to avoid inflation (e.g. 40 units from a $40 ticket)
+                // Deduce from Total Amount / Unit Price (Not Cost!)
+                // E.g. Sale $15 / Price $5 = 3 units.
+                if (unitPrice > 0 && Math.abs(parseFloat(s.total_amount)) > 0) {
+                    const deduced = Math.round(parseFloat(s.total_amount) / unitPrice);
+                    // Sanity check: If deduced is reasonable (>0 and <100)
+                    if (deduced > 0 && deduced < 100) {
+                        qty = deduced;
+                    } else {
+                        qty = 1;
+                    }
+                } else {
+                    qty = 1; // Fallback
+                }
             }
 
             const saleCost = unitCost * qty;
@@ -108,6 +120,7 @@ export const SettlementService = {
                 effective_amount: amount,
                 theoretical_cost: saleCost,
                 unit_cost: unitCost,
+                unit_price: unitPrice,
                 quantity: qty
             };
         });
