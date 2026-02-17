@@ -418,6 +418,31 @@ export const SettlementView = {
                 gapEl.style.color = '#16a34a'; // Green
                 gapMsg.innerText = "Gastaste MENOS de lo que indica la receta. Estás consumiendo stock existente o siendo muy eficiente.";
             }
+
+            // POPULATE BREAKDOWN TABLE
+            const tbody = document.getElementById('prof-breakdown-body');
+            if (tbody && p.breakdown) {
+                if (p.breakdown.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#94a3b8;">No hay ventas registradas en este periodo.</td></tr>';
+                } else {
+                    tbody.innerHTML = p.breakdown.map(item => `
+                        <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">
+                            <td style="padding: 8px;">${item.name}</td>
+                            <td style="padding: 8px; text-align: center;">${item.quantity.toFixed(1)}</td>
+                            <td style="padding: 8px; text-align: right;">$${item.unit_cost.toFixed(2)}</td>
+                            <td style="padding: 8px; text-align: right; font-weight: bold;">$${item.total_cost.toFixed(2)}</td>
+                        </tr>
+                    `).join('');
+
+                    // Add Total Row
+                    tbody.innerHTML += `
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="padding: 10px; text-align: right;">COSTO TOTAL RECETAS:</td>
+                            <td style="padding: 10px; text-align: right; color: #dc2626;">$${p.theoreticalCost.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
         }
 
         // 4. RECOMMENDATION
