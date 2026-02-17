@@ -6,6 +6,9 @@ export const SettlementService = {
      * Basado en Flujo de Caja (Cobrado vs Pagado).
      */
     async getPreview(startDate, endDate) {
+        console.log("🚀 [DEBUG] getPreview STARTED - Version 777");
+        alert("DEBUG: Calculando Liquidación... (Si ves esto, el código nuevo está corriendo)");
+
         // 1. VENTAS (Entradas Reales - Cobrado - Criterio CAJA)
         const salesQuery = supabase
             .from('sales_orders')
