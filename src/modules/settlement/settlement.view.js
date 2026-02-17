@@ -498,34 +498,39 @@ export const SettlementView = {
             ? ['Fecha', 'Proveedor', 'Documento', 'Monto ($)']
             : type === 'expense'
                 ? ['Fecha', 'Descripción', 'Categoría', 'Monto ($)']
-                : ['Fecha', 'Cliente', 'Estado', 'Monto ($)']; // Updated Sales Headers
+                : ['Fecha', 'Cliente', 'Producto', 'Estado', 'Monto ($)']; // Added Product column
 
         const rows = items.map(item => {
             if (type === 'purchase') {
                 return `
                     <tr>
-                        <td>${new Date(item.purchase_date).toLocaleDateString()}</td>
-                        <td>${item.supplier?.name || '-'}</td>
-                        <td>${item.document_number || '-'}</td>
-                        <td class="text-right">$${parseFloat(item.total_usd || 0).toFixed(2)}</td>
-                    </tr>`;
-            } else if (type === 'expense') {
-                return `
-                    <tr>
-                        <td>${new Date(item.expense_date).toLocaleDateString()}</td>
-                        <td>${item.description}</td>
-                        <td>${item.category}</td>
-                        <td class="text-right">$${parseFloat(item.amount_usd || 0).toFixed(2)}</td>
-                    </tr>`;
-            } else { // Sales
-                return `
-                    <tr>
-                        <td>${new Date(item.sale_date).toLocaleDateString()}</td>
-                        <td>${item.customer_name || 'Cliente Casual'}</td>
-                        <td>${item.payment_status}</td>
-                        <td class="text-right">$${parseFloat(item.amount_paid_usd || 0).toFixed(2)}</td>
-                    </tr>`;
+                        <td style="padding:10px;">${new Date(item.purchase_date).toLocaleDateString()}</td>
+                        <td style="padding:10px;">${item.supplier?.name || '-'}</td>
+                        <td style="padding:10px;">${item.document_number || '-'}</td>
+                        <td style="padding:10px; font-weight:bold;">$${parseFloat(item.total_usd).toFixed(2)}</td>
+                    </tr>
+                `;
             }
+            if (type === 'expense') {
+                return `
+                    <tr>
+                        <td style="padding:10px;">${new Date(item.expense_date).toLocaleDateString()}</td>
+                        <td style="padding:10px;">${item.description || '-'}</td>
+                        <td style="padding:10px;"><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; fornt-size:0.8rem; border-radius:12px;">${item.category || 'General'}</span></td>
+                        <td style="padding:10px; font-weight:bold;">$${parseFloat(item.amount_usd).toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+            // Sale
+            return `
+                <tr>
+                    <td style="padding:10px;">${new Date(item.sale_date || item.created_at).toLocaleDateString()}</td>
+                    <td style="padding:10px;">${item.customer_name || item.client_name || 'Cliente'}</td>
+                    <td style="padding:10px; font-weight:500;">${item.product_name || '-'} <span style="font-size:0.8em; color:#64748b;">(x${item.quantity})</span></td>
+                    <td style="padding:10px;">${item.payment_status}</td>
+                    <td style="padding:10px; font-weight:bold;">$${parseFloat(item.total_amount).toFixed(2)}</td>
+                </tr>
+            `;
         }).join('');
 
         const modalHtml = `

@@ -89,7 +89,9 @@ export const SettlementService = {
                 console.warn(`⚠️ [DEBUG] Cost is 0 for product: ${costItem.product_name} (ID: ${costItem.id})`);
             }
 
-            const saleCost = unitCost * (parseFloat(s.quantity) || 0);
+            // Fix: Default quantity to 1 if null (Legacy records)
+            const qty = parseFloat(s.quantity) || 1;
+            const saleCost = unitCost * qty;
 
             totalTheoreticalCost += saleCost;
 
@@ -97,7 +99,8 @@ export const SettlementService = {
                 ...s,
                 effective_amount: amount,
                 theoretical_cost: saleCost,
-                unit_cost: unitCost
+                unit_cost: unitCost,
+                quantity: qty // Ensure sanitized quantity is passed
             };
         });
 
@@ -115,7 +118,7 @@ export const SettlementService = {
                         total_sales: 0
                     };
                 }
-                productGrouping[s.product_id].quantity += parseFloat(s.quantity) || 0;
+                productGrouping[s.product_id].quantity += s.quantity; // Use sanitized quantity
                 productGrouping[s.product_id].total_cost += s.theoretical_cost;
                 productGrouping[s.product_id].total_sales += s.effective_amount;
             }
