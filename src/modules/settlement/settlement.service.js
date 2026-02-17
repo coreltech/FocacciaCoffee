@@ -101,6 +101,29 @@ export const SettlementService = {
             };
         });
 
+        // --- GROUPING LOGIC FOR BREAKDOWN TABLE ---
+        const productGrouping = {};
+        processedSales.forEach(s => {
+            if (s.product_id) {
+                if (!productGrouping[s.product_id]) {
+                    productGrouping[s.product_id] = {
+                        id: s.product_id,
+                        name: s.product_name || 'Producto Desconocido',
+                        quantity: 0,
+                        unit_cost: s.unit_cost,
+                        total_cost: 0,
+                        total_sales: 0
+                    };
+                }
+                productGrouping[s.product_id].quantity += parseFloat(s.quantity) || 0;
+                productGrouping[s.product_id].total_cost += s.theoretical_cost;
+                productGrouping[s.product_id].total_sales += s.effective_amount;
+            }
+        });
+
+        // Convert grouping map to array and Sort by Total Cost (Highest first)
+        const productBreakdown = Object.values(productGrouping).sort((a, b) => b.total_cost - a.total_cost);
+
         const totalIn = processedSales.reduce((sum, s) => sum + s.effective_amount, 0);
 
         // B. Salidas
