@@ -158,7 +158,8 @@ export const SettlementService = {
                 theoreticalCost: totalTheoreticalCost,
                 theoreticalProfit: totalIn - totalTheoreticalCost,
                 actualCost: totalOut, // Purchases + Expenses
-                gap: totalOut - totalTheoreticalCost // Positive = Spent more than theoretical (Stocking/Waste). Negative = Spent less.
+                gap: totalOut - totalTheoreticalCost, // Positive = Spent more than theoretical (Stocking/Waste). Negative = Spent less.
+                breakdown: productBreakdown
             },
             details: {
                 expensesBreakdown: expenses,
