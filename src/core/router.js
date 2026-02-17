@@ -19,6 +19,7 @@ const modulePermissions = {
     config_productos: ['director', 'gerente'], // Director y gerente
     compras: ['director', 'gerente'], // Director y gerente pueden registrar compras
     finanzas: ['director', 'gerente'], // Director y Gerente
+    liquidacion: ['director', 'gerente', 'admin'], // Socios
 };
 
 const routes = {
@@ -38,6 +39,7 @@ const routes = {
     config_productos: () => import('../modules/inventory/assembly_modern.controller.js'),
     compras: () => import('../modules/purchases/purchases.controller.js'),
     finanzas: () => import('../modules/finances/finances.controller.js'),
+    liquidacion: () => import('../modules/settlement/settlement.controller.js'),
 };
 
 /**
@@ -144,6 +146,7 @@ export async function initRouter() {
     displayUserInfo();
 
     // 3. Ocultar botones según rol
+    console.log("Aplicando permisos para rol:", getCurrentRole());
     updateNavigationByRole();
 
     // 4. Configurar navegación SPA Persistente
@@ -262,6 +265,7 @@ export async function initRouter() {
                     else if (tab === 'biblioteca') await module.loadLibrary();
                     else if (tab === 'compras') await module.loadPurchases();
                     else if (tab === 'finanzas') await module.loadFinances();
+                    else if (tab === 'liquidacion') await module.loadSettlement();
 
                     // Restaurar
                     document.getElementById = originalGetElement;
