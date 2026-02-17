@@ -85,42 +85,62 @@ export const SettlementService = {
 
             if (!costItem) {
                 console.warn(`⚠️ [DEBUG] No cost found for product_id: ${s.product_id} (${s.product_name || 'Unk'})`);
-            } else if (unitCost === 0) {
-                console.warn(`⚠️ [DEBUG] Cost is 0 for product: ${costItem.product_name} (ID: ${costItem.id})`);
             }
 
-            // Fix: Default quantity to 1 if null (Legacy records)
-            const qty = parseFloat(s.quantity) || 1;
+            // 1. Normalize Name (Remove "RESERVA: " prefix)
+            const rawName = s.product_name || (costItem ? costItem.product_name : 'Producto Desconocido');
+            const cleanName = rawName.replace(/^RESERVA:\s*/i, '').trim();
+
+            // 2. Smart Quantity Deduction
+            let qty = parseFloat(s.quantity);
+            if (isNaN(qty) || qty === 0) { // Check for NaN as well
+                // Try to deduce from Total Amount / Unit Cost
+                if (unitCost > 0 && amount > 0) {
+                    qty = Math.round(amount / unitCost);
+                } else {
+                    qty = 1; // Fallback
+                }
+            }
+
             const saleCost = unitCost * qty;
 
             totalTheoreticalCost += saleCost;
 
             return {
                 ...s,
+                clean_product_name: cleanName, // Pass cleaned name
                 effective_amount: amount,
                 theoretical_cost: saleCost,
                 unit_cost: unitCost,
-                quantity: qty // Ensure sanitized quantity is passed
+                quantity: qty
             };
         });
 
         // --- GROUPING LOGIC FOR BREAKDOWN TABLE ---
+        // Group by Clean Name to merge "Reserva" variants even if IDs differ
         const productGrouping = {};
+
         processedSales.forEach(s => {
-            if (s.product_id) {
-                if (!productGrouping[s.product_id]) {
-                    productGrouping[s.product_id] = {
-                        id: s.product_id,
-                        name: s.product_name || 'Producto Desconocido',
-                        quantity: 0,
-                        unit_cost: s.unit_cost,
-                        total_cost: 0,
-                        total_sales: 0
-                    };
-                }
-                productGrouping[s.product_id].quantity += s.quantity; // Use sanitized quantity
-                productGrouping[s.product_id].total_cost += s.theoretical_cost;
-                productGrouping[s.product_id].total_sales += s.effective_amount;
+            const key = s.clean_product_name; // Use Name as key for visual grouping
+
+            if (!productGrouping[key]) {
+                productGrouping[key] = {
+                    id: s.product_id, // Keep one ID for reference
+                    name: key,
+                    quantity: 0,
+                    unit_cost: s.unit_cost,
+                    total_cost: 0,
+                    total_sales: 0
+                };
+            }
+            // Update
+            productGrouping[key].quantity += s.quantity;
+            productGrouping[key].total_cost += s.theoretical_cost;
+            productGrouping[key].total_sales += s.effective_amount;
+
+            // If unit cost was 0 and now we found one (from another row with same name), update it
+            if (productGrouping[key].unit_cost === 0 && s.unit_cost > 0) {
+                productGrouping[key].unit_cost = s.unit_cost;
             }
         });
 
