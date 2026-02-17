@@ -345,9 +345,10 @@ export const SettlementView = {
         if (recEl) {
             const card = recEl.closest('div'); // The container div
             const text = recEl.closest('p');   // The paragraph containing text
+            const netUtil = balance.netUtility;
 
-            if (util > 0) {
-                if (data.balance.partnerA === 0 && data.balance.fund > 0 && util > 0) {
+            if (netUtil > 0) {
+                if (data.balance.partnerA === 0 && data.balance.fund > 0 && netUtil > 0) {
                     // Caso Umbral Minimo
                     recEl.innerText = "La utilidad es baja (<$20). Se destina todo al Fondo de Inversión.";
                     if (card) {

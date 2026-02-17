@@ -1,8 +1,8 @@
 
-import { SettlementView } from './settlement.view.js?v=2';
-import { SettlementService } from './settlement.service.js?v=fixed_2';
-import { SettlementPDF } from './settlement-pdf.js';
-import { SettlementExcel } from './settlement-excel.js';
+import { SettlementView } from './settlement.view.js?v=fixed_3';
+import { SettlementService } from './settlement.service.js?v=fixed_3';
+import { SettlementPDF } from './settlement-pdf.js?v=fixed_3';
+import { SettlementExcel } from './settlement-excel.js?v=fixed_3';
 import { Toast } from '../../ui/toast.js';
 
 let currentSummary = null;

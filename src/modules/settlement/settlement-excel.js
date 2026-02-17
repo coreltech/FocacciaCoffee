@@ -68,7 +68,29 @@ export class SettlementExcel {
         // El service debería devolver la lista de compras también.
 
         const wsExp = XLSX.utils.aoa_to_sheet([...expHeader, ...expRows]);
-        XLSX.utils.book_append_sheet(wb, wsExp, "Gastos y Compras");
+        XLSX.utils.book_append_sheet(wb, wsExp, "Gastos Operativos");
+
+        // --- 4. Hoja de Compras ---
+        const purchHeader = [["Fecha", "Proveedor", "Documento", "Total (USD)"]];
+        const purchRows = (data.details?.purchasesBreakdown || []).map(p => [
+            p.purchase_date,
+            p.supplier?.name || 'Desconocido',
+            p.document_number || '-',
+            p.total_usd
+        ]);
+        const wsPurch = XLSX.utils.aoa_to_sheet([...purchHeader, ...purchRows]);
+        XLSX.utils.book_append_sheet(wb, wsPurch, "Compras (Insumos)");
+
+        // --- 5. Hoja de Aportes ---
+        const contribHeader = [["Fecha", "Socio", "Descripción", "Monto (USD)"]];
+        const contribRows = (data.details?.contributions || []).map(c => [
+            c.contribution_date,
+            c.partner_name,
+            c.description,
+            c.amount
+        ]);
+        const wsContrib = XLSX.utils.aoa_to_sheet([...contribHeader, ...contribRows]);
+        XLSX.utils.book_append_sheet(wb, wsContrib, "Aportes de Capital");
 
         // --- DESCARGAR ---
         XLSX.writeFile(wb, `Liquidacion_Excel_${data.period.endDate}.xlsx`);
