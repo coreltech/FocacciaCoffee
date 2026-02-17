@@ -149,6 +149,35 @@ export const SettlementView = {
                             <label style="display:block; color:#64748b; font-size:0.8rem; text-transform:uppercase;">Socio Operativo / Inversionista</label>
                             <b style="color:#334155; font-size:1rem;">Juan Manuel Márquez</b>
                         </div>
+                        </div>
+                    </div>
+
+                    <!-- ANALISIS DE RENTABILIDAD -->
+                    <h3 style="margin-bottom:15px; color:#334155; border-left:4px solid #8b5cf6; padding-left:10px;">📊 Análisis Comp: Receta vs Caja</h3>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-bottom:25px;">
+                        <!-- Teórico -->
+                        <div style="background:#f5f3ff; padding:15px; border-radius:8px; border:1px solid #ddd6fe;">
+                            <h4 style="margin:0 0 10px 0; color:#5b21b6; font-size:0.95rem;">Estándar (Según Recetas)</h4>
+                            <div style="font-size:0.9rem; color:#334155; margin-bottom:4px;">Ventas Totales: <b style="float:right;" id="prof-total-sales">$0.00</b></div>
+                            <div style="font-size:0.9rem; color:#dc2626; margin-bottom:4px;">Costo de Receta: <b style="float:right;" id="prof-theo-cost">-$0.00</b></div>
+                            <div style="margin-top:8px; border-top:1px solid #ddd6fe; padding-top:6px; font-weight:bold; color:#5b21b6;">
+                                Ganancia Teórica: <span style="float:right;" id="prof-theo-profit">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Comparativa -->
+                        <div style="background:#fff1f2; padding:15px; border-radius:8px; border:1px solid #fecdd3;">
+                             <h4 style="margin:0 0 10px 0; color:#be123c; font-size:0.95rem;">Eficiencia de Gasto</h4>
+                             <div style="font-size:0.9rem; color:#334155; margin-bottom:4px;">Salidas Reales (Caja): <b style="float:right;" id="prof-real-out">$0.00</b></div>
+                             <div style="font-size:0.9rem; color:#334155; margin-bottom:4px;">Costo Teórico (Receta): <b style="float:right;" id="prof-theo-cost-2">$0.00</b></div>
+                             <div style="margin-top:8px; border-top:1px solid #fecdd3; padding-top:6px; font-weight:bold;">
+                                 Diferencia (Gap): <span style="float:right;" id="prof-gap">$0.00</span>
+                             </div>
+                             <small style="display:block; margin-top:6px; color:#64748b; font-style:italic;" id="prof-gap-msg">
+                                Comparativa de gastos reales vs ideales.
+                             </small>
+                        </div>
                     </div>
 
                     <!-- RESUMEN REPARTICION -->
@@ -340,7 +369,36 @@ export const SettlementView = {
         document.getElementById('dist-partner-a').innerText = `$${balance.partnerA.toFixed(2)}`;
         document.getElementById('dist-partner-b').innerText = `$${balance.partnerB.toFixed(2)}`;
 
-        // 3. RECOMMENDATION
+        // 3.5. PROFITABILITY ANALYSIS
+        if (data.profitability) {
+            const p = data.profitability;
+            document.getElementById('prof-total-sales').innerText = `$${p.totalSales.toFixed(2)}`;
+            document.getElementById('prof-theo-cost').innerText = `-$${p.theoreticalCost.toFixed(2)}`;
+            document.getElementById('prof-theo-cost-2').innerText = `$${p.theoreticalCost.toFixed(2)}`; // Positive for comparison
+            document.getElementById('prof-theo-profit').innerText = `$${p.theoreticalProfit.toFixed(2)}`;
+
+            document.getElementById('prof-real-out').innerText = `$${p.actualCost.toFixed(2)}`;
+
+            const gap = p.gap; // Actual - Theoretical
+            const gapEl = document.getElementById('prof-gap');
+            const gapMsg = document.getElementById('prof-gap-msg');
+
+            // Logic:
+            // Gap > 0: Real Expenses > Theoretical Cost. (Spent more than recipe says).
+            // Gap < 0: Real Expenses < Theoretical Cost. (Spent less, high efficiency or using stock).
+
+            if (gap > 0) {
+                gapEl.innerText = `+$${gap.toFixed(2)} (Exceso)`;
+                gapEl.style.color = '#dc2626'; // Red
+                gapMsg.innerText = "Gastaste MÁS de lo que indica la receta. Posible: Compra de Stock, Desperdicio o Robo.";
+            } else {
+                gapEl.innerText = `${gap.toFixed(2)} (Ahorro)`;
+                gapEl.style.color = '#16a34a'; // Green
+                gapMsg.innerText = "Gastaste MENOS de lo que indica la receta. Estás consumiendo stock existente o siendo muy eficiente.";
+            }
+        }
+
+        // 4. RECOMMENDATION
         const recEl = document.getElementById('sys-recommendation');
         if (recEl) {
             const card = recEl.closest('div'); // The container div

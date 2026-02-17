@@ -35,12 +35,16 @@ export const SettlementService = {
             .lte('contribution_date', `${endDate}T23:59:59`)
             .order('contribution_date', { ascending: false });
 
+        // 5. COSTOS DE PRODUCTOS (Para Rentabilidad Teórica vs Real)
+        const costsQuery = supabase.from('v_catalog_costs').select('product_id, cost_usd');
+
         // Execute all queries concurrently
-        const [salesRes, purchasesRes, expensesRes, contributionsRes] = await Promise.all([
+        const [salesRes, purchasesRes, expensesRes, contributionsRes, costsRes] = await Promise.all([
             salesQuery,
             purchasesQuery,
             expensesQuery,
-            contributionsQuery
+            contributionsQuery,
+            costsQuery
         ]);
 
         // Handle errors
@@ -48,6 +52,8 @@ export const SettlementService = {
         if (purchasesRes.error) throw purchasesRes.error;
         if (expensesRes.error) throw expensesRes.error;
         if (contributionsRes.error) throw contributionsRes.error;
+        // costsRes might fail if view doesn't exist, handle gracefully
+        const productCosts = (costsRes.data || []);
 
         // Extract data
         const sales = salesRes.data || [];
@@ -57,14 +63,29 @@ export const SettlementService = {
 
         // --- CÁLCULOS ---
 
-        // A. Entradas
+        // A. Entradas & Costos Teóricos
+        let totalTheoreticalCost = 0;
+
         const processedSales = sales.map(s => {
             let amount = parseFloat(s.amount_paid_usd) || 0;
             // Fallback: Si el monto pagado es 0 pero está marcado como Pagado, usamos el total
             if (amount === 0 && ['Pagado', 'paid', 'Paid', 'COMPLETED'].includes(s.payment_status)) {
                 amount = parseFloat(s.total_amount) || 0;
             }
-            return { ...s, effective_amount: amount };
+
+            // Calculate Theoretical Cost for this sale
+            const costItem = productCosts.find(c => c.product_id === s.product_id);
+            const unitCost = costItem ? parseFloat(costItem.cost_usd || 0) : 0;
+            const saleCost = unitCost * (parseFloat(s.quantity) || 0);
+
+            totalTheoreticalCost += saleCost;
+
+            return {
+                ...s,
+                effective_amount: amount,
+                theoretical_cost: saleCost,
+                unit_cost: unitCost
+            };
         });
 
         const totalIn = processedSales.reduce((sum, s) => sum + s.effective_amount, 0);
@@ -118,6 +139,13 @@ export const SettlementService = {
                 fund,
                 partnerA,
                 partnerB
+            },
+            profitability: {
+                totalSales: totalIn,
+                theoreticalCost: totalTheoreticalCost,
+                theoreticalProfit: totalIn - totalTheoreticalCost,
+                actualCost: totalOut, // Purchases + Expenses
+                gap: totalOut - totalTheoreticalCost // Positive = Spent more than theoretical (Stocking/Waste). Negative = Spent less.
             },
             details: {
                 expensesBreakdown: expenses,
