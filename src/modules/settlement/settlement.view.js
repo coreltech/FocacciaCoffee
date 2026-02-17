@@ -152,6 +152,28 @@ export const SettlementView = {
                         </div>
                     </div>
 
+                    <!-- DETALLE DE COSTOS (Nuevo Requerimiento) -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <h3 style="margin-top: 0; color: #334155; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; font-size: 1.1rem;">
+                            🧾 Desglose de Costos de Receta (Teórico)
+                        </h3>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background-color: #f8fafc; color: #64748b; font-size: 0.85rem; text-align: left;">
+                                        <th style="padding: 10px;">Producto Vendido</th>
+                                        <th style="padding: 10px; text-align: center;">Cantidad</th>
+                                        <th style="padding: 10px; text-align: right;">Costo Unit.</th>
+                                        <th style="padding: 10px; text-align: right;">Costo Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prof-breakdown-body">
+                                    <tr><td colspan="4" style="padding:20px; text-align:center; color:#94a3b8;">Calcula una vista previa para ver el detalle.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- ANALISIS DE RENTABILIDAD -->
                     <h3 style="margin-bottom:15px; color:#334155; border-left:4px solid #8b5cf6; padding-left:10px;">📊 Análisis Comp: Receta vs Caja</h3>
                     
