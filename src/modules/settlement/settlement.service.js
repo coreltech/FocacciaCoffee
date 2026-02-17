@@ -16,7 +16,7 @@ export const SettlementService = {
 
         const { data: sales, error: errSales } = await supabase
             .from('sales_orders')
-            .select('id, sale_date, customer_name, product_name, amount_paid_usd, payment_status')
+            .select('id, sale_date, customer_id, customers(name), product_name, amount_paid_usd, payment_status, client_name')
             .gte('sale_date', `${startDate}T00:00:00`)
             .lte('sale_date', `${endDate}T23:59:59`)
             // Excluir lo ya liquidado si existe la columna (Aun no existe, lo preparamos)
@@ -104,7 +104,10 @@ export const SettlementService = {
             },
             details: {
                 expensesBreakdown: expenses,
-                sales: sales, // For Excel Export
+                sales: sales.map(s => ({
+                    ...s,
+                    customer_name: s.customers?.name || s.client_name || 'Cliente Casual'
+                })),
                 purchases: purchases // For Excel Export
             }
         };
