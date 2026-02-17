@@ -126,7 +126,8 @@ export const SettlementService = {
                     customer_name: s.customers?.name || s.client_name || 'Cliente Casual',
                     amount_paid_usd: s.effective_amount // Override for display consistency
                 })),
-                purchasesBreakdown: purchases // Renamed from 'purchases' to match Controller
+                purchasesBreakdown: purchases,
+                contributions: contributions // Added contributions to details
             }
         };
     },

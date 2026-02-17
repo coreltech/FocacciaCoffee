@@ -147,7 +147,7 @@ function bindEvents(rates) {
         const id = btn.dataset.id;
         try {
             await AdminService.deleteExpense(id);
-            location.reload();
+            await loadLists();
         } catch (err) {
             console.error(err);
             alert("Error al eliminar");
@@ -178,7 +178,11 @@ function bindEvents(rates) {
                     currency: 'USD'
                 });
                 alert("✅ Aporte registrado correctamente");
-                location.reload();
+                // Clear form
+                document.getElementById('contrib-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('contrib-amount').value = '';
+                document.getElementById('contrib-desc').value = '';
+                await loadLists();
             } catch (e) {
                 console.error(e);
                 alert("Error al guardar aporte: " + e.message);
@@ -196,7 +200,7 @@ function bindEvents(rates) {
 
             try {
                 await AdminService.deleteContribution(btn.dataset.id);
-                location.reload();
+                await loadLists();
             } catch (e) {
                 alert("Error al eliminar: " + e.message);
             }

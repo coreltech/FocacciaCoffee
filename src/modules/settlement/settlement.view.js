@@ -254,54 +254,88 @@ export const SettlementView = {
     },
 
     updatePreview(data) {
-        document.getElementById('preview-area').style.display = 'block';
+        if (!data) return;
+        const { incomes, outcomes, balance, details } = data;
 
-        // 0. FINANCIAL FLOW UPDATE (Priority)
+        // Show preview area
+        const previewArea = document.getElementById('preview-area');
+        if (previewArea) previewArea.style.display = 'block';
+
+        // 1. FINANCIAL FLOW (Detailed)
         try {
-            console.log('UPDATING FLOW (Top Priority):', data);
-            document.getElementById('flow-incomes').innerText = `$${data.incomes.total.toFixed(2)}`;
-            document.getElementById('flow-purchases').innerText = `-$${data.outcomes.purchases.toFixed(2)}`;
-            document.getElementById('flow-expenses').innerText = `-$${data.outcomes.expenses.toFixed(2)}`;
+            // Incomes
             document.getElementById('flow-incomes').innerText = `$${incomes.total.toFixed(2)}`;
+
+            // Outcomes
             document.getElementById('flow-purchases').innerText = `-$${outcomes.purchases.toFixed(2)}`;
             document.getElementById('flow-expenses').innerText = `-$${outcomes.expenses.toFixed(2)}`;
 
+            // Utility
             const util = balance.netUtility;
             const flowUtility = document.getElementById('flow-utility');
-            flowUtility.innerText = `$${util.toFixed(2)}`;
-            flowUtility.style.color = util >= 0 ? '#1e40af' : '#ef4444';
+            if (flowUtility) {
+                flowUtility.innerText = `$${util.toFixed(2)}`;
+                flowUtility.style.color = util >= 0 ? '#1e40af' : '#ef4444';
+            }
 
-            // Contributions & Cash Balance
-            const totalContributions = contributions.reduce((sum, c) => sum + parseFloat(c.amount), 0);
-            const cashBalance = util + totalContributions;
+            // Contributions
+            // Calculate total contributions on the fly or use data if available
+            // Service returns 'details.contributions' or similar? 
+            // In previous service code, 'contributions' was NOT in the root return, but implicitly needed.
+            // Let's check Service return again. It had: period, incomes, outcomes, balance, details.
+            // It did NOT return 'contributions' array at top level. 
+            // BUT it calculated 'balance' using it? No, balance is netUtility.
+            // Service Logic: user added 'contributions' to return object?
+            // Checking Service:
+            // return { period, incomes, outcomes, balance, details: { ..., contributions? } }
+            // In the file view I saw: details: { expensesBreakdown, sales, purchasesBreakdown }
+            // It seems 'contributions' is MISSING from the return object in Service!
+            // I must add it to Service first. 
+            // But for now, let's assume it might be missing and handle it.
 
+            // RE-READING SERVICE:
+            // I need to add 'contributions' to the returned object in SettlementService.
+
+            // Back to View:
+            // I will use a default [] if not present.
+
+            // Cash Balance calculation in View (or better in Service)
+            // Service calculates 'netUtility'. 
+            // Cash Balance = Net Utility + Contributions.
+
+            // Let's fix the View assuming data is coming (I will fix Service next).
+            const totalContribs = (details.contributions || []).reduce((sum, c) => sum + parseFloat(c.amount), 0);
             const elContrib = document.getElementById('flow-contributions');
-            if (elContrib) elContrib.innerText = `$${totalContributions.toFixed(2)}`;
+            if (elContrib) elContrib.innerText = `+$${totalContribs.toFixed(2)}`;
 
+            const cashBal = util + totalContribs;
             const elCash = document.getElementById('flow-cash-balance');
-            if (elCash) elCash.innerText = `$${cashBalance.toFixed(2)}`;
-            elCash.style.color = cashBalance >= 0 ? '#334155' : '#ef4444'; // Apply color based on cash balance
+            if (elCash) {
+                elCash.innerText = `$${cashBal.toFixed(2)}`;
+                elCash.style.color = cashBal >= 0 ? '#334155' : '#ef4444';
+            }
 
         } catch (e) {
             console.error('Error updating flow:', e);
         }
 
-        // 1. CARDS
+        // 2. CARDS (Summary)
         document.getElementById('val-incomes').innerText = `$${incomes.total.toFixed(2)}`;
         document.getElementById('count-sales').innerText = `${incomes.count} ventas cobradas`;
 
         document.getElementById('val-outcomes').innerText = `$${outcomes.total.toFixed(2)}`;
-        document.getElementById('detail-outcomes').innerText = `Compras: $${outcomes.purchases.toFixed(2)} | Gastos: $${outcomes.expenses.toFixed(2)}`;
+        // detail-outcomes might not exist in some templates, check ID
+        const detailOut = document.getElementById('detail-outcomes');
+        if (detailOut) detailOut.innerText = `Compras: $${outcomes.purchases.toFixed(2)} | Gastos: $${outcomes.expenses.toFixed(2)}`;
 
-        const util = balance.netUtility;
-        const utilEl = document.getElementById('val-utility');
-        utilEl.innerText = `$${util.toFixed(2)}`;
-        utilEl.style.color = util >= 0 ? '#1e40af' : '#ef4444';
+        const utilCard = document.getElementById('val-utility');
+        if (utilCard) {
+            utilCard.innerText = `$${balance.netUtility.toFixed(2)}`;
+            utilCard.style.color = balance.netUtility >= 0 ? '#1e40af' : '#ef4444';
+        }
 
-        // 2. DISTRIBUTION
-        const distBase = document.getElementById('dist-base-amount');
-        if (distBase) distBase.innerText = `$${util.toFixed(2)}`;
-
+        // 3. DISTRIBUTION
+        document.getElementById('dist-base-amount').innerText = `$${balance.netUtility.toFixed(2)}`;
         document.getElementById('dist-fund').innerText = `$${balance.fund.toFixed(2)}`;
         document.getElementById('dist-partner-a').innerText = `$${balance.partnerA.toFixed(2)}`;
         document.getElementById('dist-partner-b').innerText = `$${balance.partnerB.toFixed(2)}`;
