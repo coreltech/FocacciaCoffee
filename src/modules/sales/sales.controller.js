@@ -571,9 +571,6 @@ function bindEvents(rates) {
         } finally {
             btnSubmitSale.disabled = false;
             btnSubmitSale.innerText = "Registrar Venta";
-        } finally {
-            btnSubmitSale.disabled = false;
-            btnSubmitSale.innerText = "Registrar Venta";
         }
     };
 
