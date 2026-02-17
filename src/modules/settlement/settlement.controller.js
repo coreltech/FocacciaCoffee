@@ -1,6 +1,6 @@
 
 import { SettlementView } from './settlement.view.js';
-import { SettlementService } from './settlement.service.js';
+import { SettlementService } from './settlement.service.js?v=fixed_2';
 import { SettlementPDF } from './settlement-pdf.js';
 import { SettlementExcel } from './settlement-excel.js';
 import { Toast } from '../../ui/toast.js';
