@@ -37,10 +37,10 @@ export const SettlementService = {
 
         // 5. COSTOS DE PRODUCTOS (Para Rentabilidad Teórica vs Real)
         // Usamos 'sales_prices' directamente, ya que el costo se guarda ahí (costo_unitario_referencia)
+        // Eliminamos el filtro de activo para incluir productos históricos/desactivados
         const costsQuery = supabase
             .from('sales_prices')
-            .select('id, costo_unitario_referencia')
-            .eq('esta_activo', true);
+            .select('id, costo_unitario_referencia');
 
         // Execute all queries concurrently
         const [salesRes, purchasesRes, expensesRes, contributionsRes, costsRes] = await Promise.all([
