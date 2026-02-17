@@ -40,7 +40,7 @@ export const SettlementService = {
         // Eliminamos el filtro de activo para incluir productos históricos/desactivados
         const costsQuery = supabase
             .from('sales_prices')
-            .select('id, costo_unitario_referencia');
+            .select('id, product_name, costo_unitario_referencia');
 
         // Execute all queries concurrently
         const [salesRes, purchasesRes, expensesRes, contributionsRes, costsRes] = await Promise.all([
@@ -58,6 +58,7 @@ export const SettlementService = {
         if (contributionsRes.error) throw contributionsRes.error;
         // costsRes might fail if view doesn't exist, handle gracefully
         const productCosts = (costsRes.data || []);
+        console.log("📊 [DEBUG] Costos cargados:", productCosts.length, productCosts);
 
         // Extract data
         const sales = salesRes.data || [];
@@ -81,6 +82,13 @@ export const SettlementService = {
             // Find cost by matching product_id (sales_orders) to id (sales_prices)
             const costItem = productCosts.find(c => c.id === s.product_id);
             const unitCost = costItem ? parseFloat(costItem.costo_unitario_referencia || 0) : 0;
+
+            if (!costItem) {
+                console.warn(`⚠️ [DEBUG] No cost found for product_id: ${s.product_id} (${s.product_name || 'Unk'})`);
+            } else if (unitCost === 0) {
+                console.warn(`⚠️ [DEBUG] Cost is 0 for product: ${costItem.product_name} (ID: ${costItem.id})`);
+            }
+
             const saleCost = unitCost * (parseFloat(s.quantity) || 0);
 
             totalTheoreticalCost += saleCost;
