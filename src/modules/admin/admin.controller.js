@@ -86,6 +86,17 @@ function bindEvents(rates) {
         } catch (e) { alert(e.message); }
     };
 
+    // Delete Asset
+    document.getElementById('assets-list').addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-delete-asset');
+        if (!btn) return;
+        if (!confirm("¿Eliminar este equipo?")) return;
+        try {
+            await AdminService.deleteAsset(btn.dataset.id);
+            loadLists();
+        } catch (e) { alert("Error al eliminar: " + e.message); }
+    });
+
     // Save Expense
     document.getElementById('btn-save-expense').onclick = async () => {
         const desc = document.getElementById('e-desc').value;

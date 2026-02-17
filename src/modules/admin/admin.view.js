@@ -87,11 +87,18 @@ export const AdminView = {
                             style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:18px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px; margin-bottom:18px;">
                         <div>
                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Monto</label>
                             <input id="e-amount" type="number" class="input-field" placeholder="0.00"
                                 style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Moneda</label>
+                            <select id="e-currency" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="USD">USD</option>
+                                <option value="VES">Bs</option>
+                            </select>
                         </div>
                         <div>
                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Categoría</label>
@@ -288,9 +295,14 @@ export const AdminView = {
 
     renderAssets(assets) {
         document.getElementById('assets-list').innerHTML = assets.map(a => `
-            <div class="flex-between p-2 border-b">
-                <div><b>${a.name}</b> <small>${a.brand || ''}</small></div>
-                <div class="font-bold">$${a.cost_usd.toFixed(2)}</div>
+            <div class="flex-between" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
+                <div>
+                    <b>${a.name}</b> <small style="color:#64748b;">${a.brand || ''}</small>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="font-bold">$${a.cost_usd.toFixed(2)}</span>
+                    <button class="btn-delete-asset" data-id="${a.id}" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
+                </div>
             </div>
         `).join('');
     },
