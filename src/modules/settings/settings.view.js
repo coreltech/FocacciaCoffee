@@ -150,5 +150,58 @@ export const SettingsView = {
                 </tbody>
             </table>
         `;
+    },
+
+    renderCleanupList(orders, onDelete) {
+        const container = document.getElementById('cleanup-results');
+        if (!container) return;
+
+        container.style.display = 'block';
+
+        if (!orders || orders.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; text-align: center;">
+                    ✅ ¡Sistema limpio! No se encontraron pedidos pendientes antiguos.
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div style="background: white; border: 1px solid #fecaca; border-radius: 8px; overflow: hidden;">
+                <div style="padding: 10px 15px; background: #fef2f2; border-bottom: 1px solid #fecaca; font-weight: bold; color: #991b1b; font-size: 0.9rem;">
+                    ⚠️ Se encontraron ${orders.length} pedidos sin completar
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="text-align: left; background: #fff7ed;">
+                            <th style="padding: 8px;">Fecha</th>
+                            <th style="padding: 8px;">Monto</th>
+                            <th style="padding: 8px;">ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map(o => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 8px;">${new Date(o.sale_date).toLocaleDateString()}</td>
+                                <td style="padding: 8px;">$${parseFloat(o.total_amount).toFixed(2)}</td>
+                                <td style="padding: 8px; font-family: monospace; color: #64748b;">${o.id.substring(0, 6)}...</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="padding: 15px; text-align: right; background: #fff;">
+                    <button id="btn-confirm-cleanup" style="background: #b91c1c; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        🗑️ Eliminar Definitivamente
+                    </button>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">Esta acción no se puede deshacer.</p>
+                </div>
+            </div>
+        `;
+
+        const btnConfirm = document.getElementById('btn-confirm-cleanup');
+        if (btnConfirm) {
+            btnConfirm.onclick = () => onDelete(orders.map(o => o.id));
+        }
     }
 };
