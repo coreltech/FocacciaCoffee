@@ -171,8 +171,10 @@ export const AdminView = {
                         <div>
                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Socio</label>
                             <select id="contrib-partner" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                                <option value="Agustin Lugo">Agustín Lugo</option>
-                                <option value="Juan Marquez">Juan Márquez</option>
+                                <option value="Agustín">Agustín Lugo</option>
+                                <option value="Juan Manuel">Juan Manuel Márquez</option>
+                                <option value="Fondo">Fondo de Inversión</option>
+                                <option value="Otro">Otro</option>
                             </select>
                         </div>
                         <div>
