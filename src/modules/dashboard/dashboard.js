@@ -78,20 +78,66 @@ export async function loadDashboard() {
     }
 
     // ... [Nav function remains same] ...
-
     window.navTo = (tabName) => {
         const targetBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
         if (targetBtn) targetBtn.click();
     };
 
-    // ... [Workflow Banner logic remains same] ... 
+    // --- WORKFLOW LOGIC ---
+    const dayOfWeek = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+    let workflowPhase = {
+        title: "Modo: Tomar Pedidos",
+        desc: "Fase de recolección de reservas para la semana.",
+        icon: "📝",
+        color: "#3b82f6", // Blue
+        action: "ventas",
+        btnText: "Ir a Reservas"
+    };
 
-    // INSERT BANNER LOGIC HERE (It will be preserved by search/replace matching the context correctly)
+    if (dayOfWeek >= 0 && dayOfWeek <= 3) {
+        // Domingo (0) a Miércoles (3)
+        workflowPhase = {
+            title: "Fase: Tomar Reservas",
+            desc: "Abierto para recibir pedidos hasta el miércoles.",
+            icon: "📝",
+            color: "#3b82f6", // Blue
+            action: "ventas",
+            btnText: "Gestionar Pedidos"
+        };
+    } else if (dayOfWeek === 4) {
+        // Jueves (4)
+        workflowPhase = {
+            title: "Fase: Producción",
+            desc: "Día de preparación de masa y mise en place.",
+            icon: "🥣",
+            color: "#eab308", // Yellow
+            action: "produccion",
+            btnText: "Ir a Producción"
+        };
+    } else if (dayOfWeek === 5) {
+        // Viernes (5)
+        workflowPhase = {
+            title: "Fase: Horneado y Despacho",
+            desc: "Hornear focaccias frescas y coordinar entregas.",
+            icon: "🔥",
+            color: "#f97316", // Orange
+            action: "produccion",
+            btnText: "Ver Producción"
+        };
+    } else if (dayOfWeek === 6) {
+        // Sábado (6)
+        workflowPhase = {
+            title: "Fase: Despacho y Entregas",
+            desc: "Entrega final a clientes y cierre de semana.",
+            icon: "🚚",
+            color: "#10b981", // Green
+            action: "ventas", // Or dispatch module if exists (sales for now)
+            btnText: "Ver Entregas"
+        };
+    }
 
     container.innerHTML = `
         <style>
-             /* Styles preserved */
-             ${/* Original styles omitted for brevity in instruction, but should be kept */ ''}
             .dashboard-gourmet {
                 color: var(--coffee);
                 background-color: var(--warm-white);
@@ -99,9 +145,9 @@ export async function loadDashboard() {
                 padding: 10px;
                 animation: fadeIn 0.5s ease-out;
             }
-            /* ... rest of styles ... */
-            
-            /* Add Workflow Banner Style if missing in context match */
+
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
             .workflow-banner {
                 background: linear-gradient(135deg, ${workflowPhase.color} 0%, #ffffff 100%);
                 border-left: 8px solid ${workflowPhase.color};
