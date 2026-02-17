@@ -202,6 +202,22 @@ export const AdminView = {
         `;
     },
 
+    renderContributionsTable(list) {
+        const tbody = document.getElementById('contrib-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = list.map(c => `
+            <tr>
+                <td>${c.contribution_date}</td>
+                <td><b>${c.partner_name}</b></td>
+                <td>${c.description || '-'}</td>
+                <td style="color:#059669; font-weight:bold;">+$${parseFloat(c.amount).toFixed(2)}</td>
+                <td>
+                    <button class="btn-delete-contrib" data-id="${c.id}" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
     renderAssets(assets) {
         document.getElementById('assets-list').innerHTML = assets.map(a => `
             <div class="flex-between p-2 border-b">

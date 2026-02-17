@@ -96,13 +96,35 @@ export const SettlementView = {
 
                         <div style="border-top:2px dashed #cbd5e1; margin:10px 0;"></div>
 
-                        <!-- = UTILIDAD -->
+                        <!-- = UTILIDAD OPERATIVA -->
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe;">
                             <div>
-                                <strong style="color:#1e40af; font-size:1.1rem;">(=) Utilidad Neta del Periodo</strong>
-                                <div style="font-size:0.85rem; color:#3b82f6;">Disponible para Fondo y Repartición</div>
+                                <strong style="color:#1e40af; font-size:1.1rem;">(=) Utilidad Operativa</strong>
+                                <div style="font-size:0.85rem; color:#3b82f6;">Resultado del Negocio (Antes de Aportes)</div>
                             </div>
                             <strong style="color:#1e40af; font-size:1.4rem;" id="flow-utility">$0.00</strong>
+                        </div>
+                        
+                        <!-- FINANCIAMIENTO (APORTES) -->
+                        <div style="text-align:center; color:#94a3b8; font-size:1.2rem; line-height:0.5; margin:10px 0;">⬇️</div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f0fdf4; border-radius:6px; border-left:4px solid #16a34a;">
+                            <div>
+                                <strong style="color:#15803d;">(+) Aportes de Capital (Socios)</strong>
+                                <div style="font-size:0.8rem; color:#166534;">Ingresos por financiamiento (No es venta)</div>
+                            </div>
+                            <strong style="color:#15803d; font-size:1.1rem;" id="flow-contributions">$0.00</strong>
+                        </div>
+
+                        <div style="border-top:2px dashed #cbd5e1; margin:10px 0;"></div>
+
+                         <!-- = SALDO DE CAJA FINAL -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#f8fafc; border-radius:8px; border:2px solid #64748b;">
+                            <div>
+                                <strong style="color:#334155; font-size:1.1rem;">(=) Saldo Final en Caja</strong>
+                                <div style="font-size:0.85rem; color:#64748b;">Dinero real disponible</div>
+                            </div>
+                            <strong style="color:#334155; font-size:1.4rem;" id="flow-cash-balance">$0.00</strong>
                         </div>
 
                     </div>
@@ -240,23 +262,38 @@ export const SettlementView = {
             document.getElementById('flow-incomes').innerText = `$${data.incomes.total.toFixed(2)}`;
             document.getElementById('flow-purchases').innerText = `-$${data.outcomes.purchases.toFixed(2)}`;
             document.getElementById('flow-expenses').innerText = `-$${data.outcomes.expenses.toFixed(2)}`;
+            document.getElementById('flow-incomes').innerText = `$${incomes.total.toFixed(2)}`;
+            document.getElementById('flow-purchases').innerText = `-$${outcomes.purchases.toFixed(2)}`;
+            document.getElementById('flow-expenses').innerText = `-$${outcomes.expenses.toFixed(2)}`;
 
-            const util = data.balance.netUtility;
+            const util = balance.netUtility;
             const flowUtility = document.getElementById('flow-utility');
             flowUtility.innerText = `$${util.toFixed(2)}`;
             flowUtility.style.color = util >= 0 ? '#1e40af' : '#ef4444';
+
+            // Contributions & Cash Balance
+            const totalContributions = contributions.reduce((sum, c) => sum + parseFloat(c.amount), 0);
+            const cashBalance = util + totalContributions;
+
+            const elContrib = document.getElementById('flow-contributions');
+            if (elContrib) elContrib.innerText = `$${totalContributions.toFixed(2)}`;
+
+            const elCash = document.getElementById('flow-cash-balance');
+            if (elCash) elCash.innerText = `$${cashBalance.toFixed(2)}`;
+            elCash.style.color = cashBalance >= 0 ? '#334155' : '#ef4444'; // Apply color based on cash balance
+
         } catch (e) {
             console.error('Error updating flow:', e);
         }
 
         // 1. CARDS
-        document.getElementById('val-incomes').innerText = `$${data.incomes.total.toFixed(2)}`;
-        document.getElementById('count-sales').innerText = `${data.incomes.count} ventas cobradas`;
+        document.getElementById('val-incomes').innerText = `$${incomes.total.toFixed(2)}`;
+        document.getElementById('count-sales').innerText = `${incomes.count} ventas cobradas`;
 
-        document.getElementById('val-outcomes').innerText = `$${data.outcomes.total.toFixed(2)}`;
-        document.getElementById('detail-outcomes').innerText = `Compras: $${data.outcomes.purchases.toFixed(2)} | Gastos: $${data.outcomes.expenses.toFixed(2)}`;
+        document.getElementById('val-outcomes').innerText = `$${outcomes.total.toFixed(2)}`;
+        document.getElementById('detail-outcomes').innerText = `Compras: $${outcomes.purchases.toFixed(2)} | Gastos: $${outcomes.expenses.toFixed(2)}`;
 
-        const util = data.balance.netUtility;
+        const util = balance.netUtility;
         const utilEl = document.getElementById('val-utility');
         utilEl.innerText = `$${util.toFixed(2)}`;
         utilEl.style.color = util >= 0 ? '#1e40af' : '#ef4444';
@@ -265,9 +302,9 @@ export const SettlementView = {
         const distBase = document.getElementById('dist-base-amount');
         if (distBase) distBase.innerText = `$${util.toFixed(2)}`;
 
-        document.getElementById('dist-fund').innerText = `$${data.balance.fund.toFixed(2)}`;
-        document.getElementById('dist-partner-a').innerText = `$${data.balance.partnerA.toFixed(2)}`;
-        document.getElementById('dist-partner-b').innerText = `$${data.balance.partnerB.toFixed(2)}`;
+        document.getElementById('dist-fund').innerText = `$${balance.fund.toFixed(2)}`;
+        document.getElementById('dist-partner-a').innerText = `$${balance.partnerA.toFixed(2)}`;
+        document.getElementById('dist-partner-b').innerText = `$${balance.partnerB.toFixed(2)}`;
 
         // 3. RECOMMENDATION
         const recEl = document.getElementById('sys-recommendation');

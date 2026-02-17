@@ -22,6 +22,9 @@ export async function loadAdmin() {
 // State
 let currentExpenses = [];
 
+// The loadLists function is now integrated into loadAdmin and can be removed or refactored if still needed elsewhere.
+// For now, I'll comment it out as its functionality is absorbed.
+/*
 async function loadLists() {
     const [assets, expenses] = await Promise.all([
         AdminService.getAssets(),
@@ -31,12 +34,14 @@ async function loadLists() {
     AdminView.renderAssets(assets);
     AdminView.renderExpenses(expenses);
 }
+*/
 
 function bindEvents(rates) {
     // Tabs
     const tabs = {
         'tab-assets': 'panel-assets',
         'tab-expenses': 'panel-expenses',
+        'tab-contributions': 'panel-contributions', // NEW: Contributions tab
         'tab-debug': 'panel-debug'
     };
 
@@ -129,12 +134,61 @@ function bindEvents(rates) {
         const id = btn.dataset.id;
         try {
             await AdminService.deleteExpense(id);
-            loadLists(); // Reload to refresh list and state
+            location.reload();
         } catch (err) {
             console.error(err);
             alert("Error al eliminar");
         }
     });
+
+    // --- CAPITAL CONTRIBUTIONS LISTENERS ---
+
+    // Save Contribution
+    const btnAddContrib = document.getElementById('btn-add-contrib');
+    if (btnAddContrib) {
+        btnAddContrib.onclick = async () => {
+            const date = document.getElementById('contrib-date').value;
+            const partner = document.getElementById('contrib-partner').value;
+            const amount = parseFloat(document.getElementById('contrib-amount').value);
+            const desc = document.getElementById('contrib-desc').value;
+
+            if (!date || !partner || isNaN(amount) || amount <= 0) {
+                return alert("Por favor complete fecha, socio y monto válido.");
+            }
+
+            try {
+                await AdminService.saveContribution({
+                    contribution_date: date,
+                    partner_name: partner,
+                    amount: amount,
+                    description: desc,
+                    currency: 'USD'
+                });
+                alert("✅ Aporte registrado correctamente");
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert("Error al guardar aporte: " + e.message);
+            }
+        };
+    }
+
+    // Delete Contribution
+    const contribList = document.getElementById('contrib-table-body');
+    if (contribList) {
+        contribList.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-delete-contrib');
+            if (!btn) return;
+            if (!confirm("¿Eliminar este aporte de capital?")) return;
+
+            try {
+                await AdminService.deleteContribution(btn.dataset.id);
+                location.reload();
+            } catch (e) {
+                alert("Error al eliminar: " + e.message);
+            }
+        });
+    }
 
     // Debug Actions
     if (APP_CONFIG.IS_DEBUG) {

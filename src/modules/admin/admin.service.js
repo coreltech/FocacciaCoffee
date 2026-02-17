@@ -29,5 +29,21 @@ export const AdminService = {
     async deleteExpense(id) {
         const { error } = await supabase.from('operational_expenses').delete().eq('id', id);
         if (error) throw error;
+    },
+
+    // --- CAPITAL CONTRIBUTIONS ---
+    async getContributions() {
+        const { data } = await supabase.from('capital_contributions').select('*').order('contribution_date', { ascending: false }).limit(50);
+        return data || [];
+    },
+
+    async saveContribution(contribution) {
+        const { error } = await supabase.from('capital_contributions').insert([contribution]);
+        if (error) throw error;
+    },
+
+    async deleteContribution(id) {
+        const { error } = await supabase.from('capital_contributions').delete().eq('id', id);
+        if (error) throw error;
     }
 };

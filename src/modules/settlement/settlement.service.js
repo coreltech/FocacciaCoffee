@@ -7,35 +7,53 @@ export const SettlementService = {
      */
     async getPreview(startDate, endDate) {
         // 1. VENTAS (Entradas Reales - Cobrado - Criterio CAJA)
-        const { data: sales, error: errSales } = await supabase
+        const salesQuery = supabase
             .from('sales_orders')
             .select('id, sale_date, payment_date, customer_id, customers(name), product_name, amount_paid_usd, total_amount, payment_status, client_name')
             .gte('payment_date', `${startDate}T00:00:00`)
             .lte('payment_date', `${endDate}T23:59:59`);
 
-        if (errSales) throw errSales;
-
         // 2. COMPRAS (Salidas Reales - Insumos)
-        const { data: purchases, error: errPurchases } = await supabase
+        const purchasesQuery = supabase
             .from('purchases')
             .select('purchase_date, supplier_id, total_usd, document_number, supplier:suppliers(name)')
             .gte('purchase_date', `${startDate}T00:00:00`)
-            .lte('purchase_date', `${endDate}T23:59:59`)
-            // .is('settlement_id', null)
-            ;
-
-        if (errPurchases) throw errPurchases;
+            .lte('purchase_date', `${endDate}T23:59:59`);
 
         // 3. GASTOS OPERATIVOS (Salidas Reales - Admin Module)
-        const { data: expenses, error: errExp } = await supabase
+        const expensesQuery = supabase
             .from('operational_expenses')
             .select('id, amount_usd, category, description, expense_date')
             .gte('expense_date', `${startDate}T00:00:00`)
-            .lte('expense_date', `${endDate}T23:59:59`)
-            // .is('settlement_id', null) // Unlock in future when column exists
-            ;
+            .lte('expense_date', `${endDate}T23:59:59`);
 
-        if (errExp) throw errExp;
+        // 4. APORTES DE CAPITAL (Socios)
+        const contributionsQuery = supabase
+            .from('capital_contributions')
+            .select('*')
+            .gte('contribution_date', `${startDate}T00:00:00`)
+            .lte('contribution_date', `${endDate}T23:59:59`)
+            .order('contribution_date', { ascending: false });
+
+        // Execute all queries concurrently
+        const [salesRes, purchasesRes, expensesRes, contributionsRes] = await Promise.all([
+            salesQuery,
+            purchasesQuery,
+            expensesQuery,
+            contributionsQuery
+        ]);
+
+        // Handle errors
+        if (salesRes.error) throw salesRes.error;
+        if (purchasesRes.error) throw purchasesRes.error;
+        if (expensesRes.error) throw expensesRes.error;
+        if (contributionsRes.error) throw contributionsRes.error;
+
+        // Extract data
+        const sales = salesRes.data || [];
+        const purchases = purchasesRes.data || [];
+        const expenses = expensesRes.data || [];
+        const contributions = contributionsRes.data || [];
 
         // --- CÁLCULOS ---
 
