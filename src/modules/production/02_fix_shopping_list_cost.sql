@@ -4,10 +4,11 @@
 CREATE OR REPLACE VIEW public.v_shopping_list AS
 WITH RECURSIVE
 orders AS (
-    -- Base: Total items ordered that are pending production
+    -- Base: Total items ordered that are pending production (THIS WEEK ONLY)
     SELECT product_id, SUM(quantity) as total_qty
     FROM sales_orders
     WHERE fulfillment_status = 'pendiente'
+      AND sale_date >= date_trunc('week', CURRENT_DATE) -- Filter out old backlog (Accounts Receivable)
     GROUP BY product_id
 ),
 composition_breakdown AS (

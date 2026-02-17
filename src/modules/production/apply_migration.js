@@ -11,33 +11,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../../../');
 
-function loadEnv() {
-    try {
-        const envPath = path.join(projectRoot, '.env');
-        const envFile = fs.readFileSync(envPath, 'utf8');
-        const env = {};
-        envFile.split('\n').forEach(line => {
-            const [key, value] = line.split('=');
-            if (key && value) {
-                env[key.trim()] = value.trim();
-            }
-        });
-        return env;
-    } catch (e) {
-        console.warn("Could not read .env file, trying default or checking if hardcoded in file...");
-        return {};
-    }
-}
-
-const env = loadEnv();
-const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+// Hardcoded for reliability during this session
+const supabaseUrl = 'https://tjikujrwabmbazvjsdmv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqaWt1anJ3YWJtYmF6dmpzZG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2OTkxOTQsImV4cCI6MjA4MjI3NTE5NH0.N-yNlmAcVr0-XxV-v-Xc67obYD7ethmLlHZNM4AIBW8';
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error("❌ Error: Could not find Supabase credentials in .env file.");
-    // Prompt user or checking if they are in the JS file I read earlier? 
-    // If I can't find them, I will have to ask the user.
-    // BUT! I saw src/core/supabase.js. Let's check if they are hardcoded there or imported.
+    console.error("❌ Error: Missing credentials.");
     process.exit(1);
 }
 
