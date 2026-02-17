@@ -36,7 +36,11 @@ export const SettlementService = {
             .order('contribution_date', { ascending: false });
 
         // 5. COSTOS DE PRODUCTOS (Para Rentabilidad Teórica vs Real)
-        const costsQuery = supabase.from('v_catalog_costs').select('product_id, cost_usd');
+        // Usamos 'sales_prices' directamente, ya que el costo se guarda ahí (costo_unitario_referencia)
+        const costsQuery = supabase
+            .from('sales_prices')
+            .select('id, costo_unitario_referencia')
+            .eq('esta_activo', true);
 
         // Execute all queries concurrently
         const [salesRes, purchasesRes, expensesRes, contributionsRes, costsRes] = await Promise.all([
@@ -74,8 +78,9 @@ export const SettlementService = {
             }
 
             // Calculate Theoretical Cost for this sale
-            const costItem = productCosts.find(c => c.product_id === s.product_id);
-            const unitCost = costItem ? parseFloat(costItem.cost_usd || 0) : 0;
+            // Find cost by matching product_id (sales_orders) to id (sales_prices)
+            const costItem = productCosts.find(c => c.id === s.product_id);
+            const unitCost = costItem ? parseFloat(costItem.costo_unitario_referencia || 0) : 0;
             const saleCost = unitCost * (parseFloat(s.quantity) || 0);
 
             totalTheoreticalCost += saleCost;
