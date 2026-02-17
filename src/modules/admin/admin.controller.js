@@ -19,11 +19,15 @@ export async function loadAdmin() {
     }
 }
 
+// State
+let currentExpenses = [];
+
 async function loadLists() {
     const [assets, expenses] = await Promise.all([
         AdminService.getAssets(),
         AdminService.getExpenses()
     ]);
+    currentExpenses = expenses;
     AdminView.renderAssets(assets);
     AdminView.renderExpenses(expenses);
 }
@@ -80,19 +84,57 @@ function bindEvents(rates) {
         const desc = document.getElementById('e-desc').value;
         const amount = parseFloat(document.getElementById('e-amount').value);
         const curr = document.getElementById('e-currency').value;
+        const date = document.getElementById('e-date').value;
 
-        if (!desc || isNaN(amount)) return alert("Datos incompletos");
+        if (!desc || isNaN(amount) || !date) return alert("Datos incompletos");
 
         try {
             await AdminService.saveExpense({
                 description: desc,
                 category: document.getElementById('e-cat').value,
-                amount_usd: toUSD(amount, curr)
+                amount_usd: toUSD(amount, curr),
+                expense_date: date
             });
             alert("✅ Gasto guardado");
+            // Clear form
+            document.getElementById('e-desc').value = '';
+            document.getElementById('e-amount').value = '';
             loadLists();
         } catch (e) { alert(e.message); }
     };
+
+    // Filter & Search Logic
+    const filterExpenses = () => {
+        const term = document.getElementById('search-expenses').value.toLowerCase();
+        const cat = document.getElementById('filter-category').value;
+
+        const filtered = currentExpenses.filter(e => {
+            const matchesTerm = (e.description || '').toLowerCase().includes(term);
+            const matchesCat = cat === 'all' || e.category === cat;
+            return matchesTerm && matchesCat;
+        });
+        AdminView.renderExpenses(filtered);
+    };
+
+    document.getElementById('search-expenses').oninput = filterExpenses;
+    document.getElementById('filter-category').onchange = filterExpenses;
+
+    // Delete Expense (Delegation)
+    document.getElementById('expenses-list').addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-delete-expense');
+        if (!btn) return;
+
+        if (!confirm("¿Eliminar este gasto?")) return;
+
+        const id = btn.dataset.id;
+        try {
+            await AdminService.deleteExpense(id);
+            loadLists(); // Reload to refresh list and state
+        } catch (err) {
+            console.error(err);
+            alert("Error al eliminar");
+        }
+    });
 
     // Debug Actions
     if (APP_CONFIG.IS_DEBUG) {

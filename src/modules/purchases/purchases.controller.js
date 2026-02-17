@@ -116,6 +116,8 @@ function setupEventListeners() {
 // ============================================
 
 async function openNewSupplierModal() {
+    document.getElementById('supplier-modal')?.remove();
+
     const modalHtml = PurchasesView.renderSupplierForm();
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -125,6 +127,8 @@ async function openNewSupplierModal() {
 }
 
 async function editSupplier(id) {
+    document.getElementById('supplier-modal')?.remove();
+
     const supplier = await SuppliersService.getById(id);
     const modalHtml = PurchasesView.renderSupplierForm(supplier);
     document.body.insertAdjacentHTML('beforeend', modalHtml);
@@ -269,17 +273,67 @@ function setupPurchaseFormListeners() {
     document.getElementById('cancel-purchase').addEventListener('click', closePurchaseModal);
     document.getElementById('purchase-form').addEventListener('submit', handlePurchaseSubmit);
 
-    // Cargar locations cuando se selecciona un proveedor
-    document.getElementById('purchase-supplier').addEventListener('change', loadSupplierLocations);
+    document.getElementById('purchase-supplier').addEventListener('change', (e) => {
+        loadSupplierLocations(e);
+        checkLastPurchaseAvailability(e.target.value);
+    });
 
     // Agregar item
     document.getElementById('btn-add-item').addEventListener('click', addPurchaseItem);
+
+    // Cargar última compra
+    document.getElementById('btn-load-last-purchase').addEventListener('click', loadLastPurchaseItems);
 
     // Actualizar totales cuando cambia la tasa BCV
     document.getElementById('purchase-bcv-rate').addEventListener('input', updateTotals);
 
     // Configurar lógica de cálculo de items
     setupItemCalculationListeners();
+}
+
+async function checkLastPurchaseAvailability(supplierId) {
+    const btn = document.getElementById('btn-load-last-purchase');
+    if (!supplierId) {
+        btn.style.display = 'none';
+        return;
+    }
+    // We show it optimistically or could check if one exists. 
+    // for simplicity, always show if supplier selected, handle "no data" on click.
+    btn.style.display = 'block';
+}
+
+async function loadLastPurchaseItems() {
+    const supplierId = document.getElementById('purchase-supplier').value;
+    if (!supplierId) return;
+
+    if (!confirm("⚠️ Esto reemplazará los items actuales. ¿Desea continuar?")) return;
+
+    try {
+        const lastPurchase = await PurchasesService.getLastPurchaseBySupplier(supplierId);
+
+        if (!lastPurchase || !lastPurchase.items || lastPurchase.items.length === 0) {
+            alert("No se encontró una compra anterior para este proveedor.");
+            return;
+        }
+
+        // Map items
+        currentPurchaseItems = lastPurchase.items.map(item => ({
+            supply_id: item.supply_id,
+            supply_name: item.supply?.name || 'Desconocido',
+            supply_unit: item.supply?.unit || 'Unid',
+            brand_description: item.brand_description,
+            quantity: item.quantity,
+            unit_price_usd: item.unit_price_usd,
+            subtotal: item.quantity * item.unit_price_usd
+        }));
+
+        renderPurchaseItems();
+        showNotification(`✅ Se cargaron ${currentPurchaseItems.length} items.`, 'success');
+
+    } catch (err) {
+        console.error(err);
+        showNotification("Error cargando última compra", "error");
+    }
 }
 
 function setupItemCalculationListeners() {
@@ -511,13 +565,16 @@ function renderPurchaseItems() {
 
     tbody.innerHTML = currentPurchaseItems.map((item, index) => `
         <tr>
-            <td>${item.supply_name} (${item.supply_unit})</td>
-            <td>${item.brand_description}</td>
-            <td class="text-right">${item.quantity.toFixed(2)}</td>
-            <td class="text-right">$${item.unit_price_usd.toFixed(2)}</td>
-            <td class="text-right">$${item.subtotal.toFixed(2)}</td>
+            <td>
+                <strong>${item.supply_name}</strong><br>
+                <span style="font-size:0.85rem; color:#64748b;">${item.supply_unit}</span>
+            </td>
+            <td>${item.brand_description || '-'}</td>
+            <td class="text-right">${parseFloat(item.quantity).toFixed(2)}</td>
+            <td class="text-right">$${parseFloat(item.unit_price_usd).toFixed(2)}</td>
+            <td class="text-right" style="font-weight:bold;">$${parseFloat(item.subtotal).toFixed(2)}</td>
             <td class="text-center">
-                <button type="button" class="btn-icon" data-index="${index}" onclick="window.removePurchaseItem(${index})">
+                <button type="button" class="btn-icon-sm" data-index="${index}" onclick="window.removePurchaseItem(${index})" title="Eliminar Item">
                     🗑️
                 </button>
             </td>

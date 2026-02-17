@@ -73,44 +73,80 @@ export const AdminView = {
             <!-- EXPENSES PANEL -->
             <div id="panel-expenses" class="stat-card" style="display:none; padding:25px;">
                 <h3 style="margin:0 0 20px 0; border-bottom:2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">💸 Gastos Operativos</h3>
-                <div style="margin-bottom:18px;">
-                    <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Descripción</label>
-                    <input id="e-desc" class="input-field" placeholder="Pago de luz..." 
-                        style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:18px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Monto</label>
-                        <input id="e-amount" type="number" class="input-field" 
+                
+                <!-- New Expense Form -->
+                <div style="background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:30px;">
+                    <h4 style="margin:0 0 15px 0; color:#475569;">➕ Registrar Nuevo Gasto</h4>
+                    <div style="margin-bottom:18px;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Descripción</label>
+                        <input id="e-desc" class="input-field" placeholder="Ej: Pago de luz, Artículos de limpieza..." 
                             style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Categoría</label>
-                        <select id="e-cat" class="input-field" 
-                            style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                            <option value="Servicios">Servicios</option>
-                            <option value="Consumibles">Consumibles</option>
-                            <option value="Mantenimiento">Mantenimiento</option>
-                            <option value="Logistica">Logística</option>
-                        </select>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:18px;">
+                        <div>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Monto</label>
+                            <input id="e-amount" type="number" class="input-field" placeholder="0.00"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div>
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Categoría</label>
+                            <select id="e-cat" class="input-field" style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="Servicios">Servicios</option>
+                                <option value="Consumibles">Consumibles</option>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Logistica">Logística</option>
+                                <option value="Nomina">Nómina</option>
+                                <option value="Alquiler">Alquiler</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Fecha</label>
+                             <input id="e-date" type="date" class="input-field" value="${new Date().toISOString().split('T')[0]}"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
                     </div>
+                    
+                    <button id="btn-save-expense" class="btn-primary" 
+                        style="width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                        💾 Guardar Gasto
+                    </button>
                 </div>
-                <div style="margin-bottom:18px;">
-                     <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">Moneda</label>
-                     <select id="e-currency" class="input-field" 
-                        style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
-                        <option value="USD">USD</option>
-                        <option value="VES">Bs</option>
-                     </select>
-                </div>
-                <button id="btn-save-expense" class="btn-primary" 
-                    style="width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
-                    💸 Registrar Gasto
-                </button>
 
-                <div style="margin-top:25px;">
-                    <h4 style="margin:0 0 15px 0; font-size:1rem;">Últimos Gastos</h4>
-                    <div id="expenses-list"></div>
+                <!-- Expenses List & Filters -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                        <h4 style="margin:0; font-size:1.1rem; color:#334155;">Historial de Gastos</h4>
+                        <div style="display:flex; gap:10px;">
+                            <input id="search-expenses" type="text" placeholder="🔍 Buscar..." 
+                                style="padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem;">
+                            <select id="filter-category" style="padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem;">
+                                <option value="all">Todas las Categorías</option>
+                                <option value="Servicios">Servicios</option>
+                                <option value="Consumibles">Consumibles</option>
+                                <option value="Logistica">Logística</option>
+                                <option value="Nomina">Nómina</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0;">
+                         <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                            <thead style="background:#f8fafc; color:#64748b; font-weight:bold; text-align:left;">
+                                <tr>
+                                    <th style="padding:12px;">Fecha</th>
+                                    <th style="padding:12px;">Descripción</th>
+                                    <th style="padding:12px;">Categoría</th>
+                                    <th style="padding:12px; text-align:right;">Monto (USD)</th>
+                                    <th style="padding:12px; text-align:center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-list">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
 
@@ -176,11 +212,25 @@ export const AdminView = {
     },
 
     renderExpenses(expenses) {
-        document.getElementById('expenses-list').innerHTML = expenses.map(e => `
-            <div class="flex-between p-2 border-b">
-                <div><b>${e.description}</b> <span class="text-sm bg-blue-100 px-2 rounded">${e.category}</span></div>
-                <div class="text-red-500 font-bold">-$${e.amount_usd.toFixed(2)}</div>
-            </div>
+        const tbody = document.getElementById('expenses-list');
+        if (!expenses || expenses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">No hay gastos registrados</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = expenses.map(e => `
+            <tr style="border-bottom:1px solid #e2e8f0; transition:background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <td style="padding:12px;">${e.expense_date || 'N/A'}</td>
+                <td style="padding:12px; font-weight:500;">${e.description}</td>
+                <td style="padding:12px;"><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.8rem;">${e.category}</span></td>
+                <td style="padding:12px; text-align:right; font-weight:bold; color:#ef4444;">-$${e.amount_usd.toFixed(2)}</td>
+                <td style="padding:12px; text-align:center;">
+                    <button class="btn-delete-expense" data-id="${e.id}" title="Eliminar"
+                        style="background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.7; transition:opacity 0.2s;">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
         `).join('');
     }
 };

@@ -195,7 +195,13 @@ export const SalesService = {
         // Or we keep it for "Mark as Paid" quick actions.
         // Let's update it to set full payment.
         return await supabase.from('sales_orders')
-            .update({ payment_status: 'Pagado', amount_paid: amount, amount_paid_usd: amount, balance_due: 0 })
+            .update({
+                payment_status: 'Pagado',
+                amount_paid: amount,
+                amount_paid_usd: amount,
+                balance_due: 0,
+                payment_date: new Date().toISOString() // Set Cash Flow Date
+            })
             .eq('id', saleId);
     },
 
@@ -215,15 +221,18 @@ export const SalesService = {
         const status = balance === 0 ? 'Pagado' : 'Pendiente';
 
         // 3. Update
+        const updatePayload = {
+            amount_paid_usd: newPaid,
+            balance_due: balance,
+            payment_status: status
+        };
+
+        if (status === 'Pagado') {
+            updatePayload.payment_date = new Date().toISOString();
+        }
+
         const { data, error: updateError } = await supabase.from('sales_orders')
-            .update({
-                amount_paid_usd: newPaid,
-                balance_due: balance,
-                payment_status: status,
-                // We also update the legacy amount_paid (mixed currency) for compatibility, assuming USD for now or just tracking USD
-                // Let's keep amount_paid roughly synced or just leave it. 
-                // The requirement says "balance calculated from total - amount_paid_usd".
-            })
+            .update(updatePayload)
             .eq('id', saleId)
             .select()
             .single();

@@ -19,7 +19,7 @@ export const SettlementView = {
                 </div>
                 <div>
                     <label style="font-size:0.8rem; font-weight:bold; color:#64748b;">Hasta</label>
-                    <input type="date" id="settlement-end" class="input-field" value="${new Date().toISOString().split('T')[0]}">
+                    <input type="date" id="settlement-end" class="input-field" value="${(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })()}">
                 </div>
                 <button id="btn-calc-preview" class="btn-primary" style="height:42px;">📊 Calcular Vista Previa</button>
                 <button id="btn-download-pdf" class="btn-secondary" style="height:42px; background:white; color:#0f172a; border:1px solid #cbd5e1; margin-left:10px; display:none;">📄 PDF</button>
@@ -37,7 +37,7 @@ export const SettlementView = {
                         <h3>💰 Entradas (Cobradas)</h3>
                         <div class="value" id="val-incomes" style="color:#166534;">$0.00</div>
                         <small id="count-sales" style="color:#15803d;">0 ventas cobradas</small>
-                        <button class="btn-xs nav-link" data-tab="ventas" style="display:block; margin:5px auto; font-size:0.7rem; background:none; border:1px solid #166534; color:#166534; padding:2px 8px; border-radius:4px; cursor:pointer;">✏️ Ver Ventas</button>
+                        <button id="btn-view-sales" class="btn-xs" style="display:block; margin:5px auto; font-size:0.7rem; background:none; border:1px solid #166534; color:#166534; padding:2px 8px; border-radius:4px; cursor:pointer;">👁️ Ver Ventas</button>
                     </div>
 
                     <!-- EGRESOS -->
@@ -46,8 +46,8 @@ export const SettlementView = {
                         <div class="value" id="val-outcomes" style="color:#991b1b;">$0.00</div>
                         <small id="detail-outcomes" style="color:#b91c1c;">Compras: $0 | Gastos: $0</small>
                         <div style="display:flex; justify-content:center; gap:5px; margin-top:5px;">
-                            <button class="btn-xs nav-link" data-tab="compras" style="font-size:0.7rem; background:none; border:1px solid #991b1b; color:#991b1b; padding:2px 8px; border-radius:4px; cursor:pointer;">✏️ Compras</button>
-                            <button class="btn-xs nav-link" data-tab="finanzas" style="font-size:0.7rem; background:none; border:1px solid #991b1b; color:#991b1b; padding:2px 8px; border-radius:4px; cursor:pointer;">✏️ Gastos</button>
+                            <button id="btn-view-purchases" class="btn-xs" style="font-size:0.7rem; background:none; border:1px solid #991b1b; color:#991b1b; padding:2px 8px; border-radius:4px; cursor:pointer;">👁️ Ver Compras</button>
+                            <button id="btn-view-expenses" class="btn-xs" style="font-size:0.7rem; background:none; border:1px solid #991b1b; color:#991b1b; padding:2px 8px; border-radius:4px; cursor:pointer;">👁️ Ver Gastos</button>
                         </div>
                     </div>
 
@@ -56,6 +56,55 @@ export const SettlementView = {
                         <h3>⚖️ Utilidad Neta</h3>
                         <div class="value" id="val-utility" style="color:#1e40af;">$0.00</div>
                         <small>Flujo de Caja Real</small>
+                    </div>
+                </div>
+                
+                <!-- ESTADO DE RESULTADOS DETALLADO (TRANSPARENCIA) -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:25px; margin-bottom:30px; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05);">
+                    <h3 style="margin:0 0 20px 0; color:#334155; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">📉 Desglose de Operación (Flujo de Caja)</h3>
+                    
+                    <div style="display:flex; flex-direction:column; gap:10px; font-size:1rem;">
+                        
+                        <!-- + INGRESOS -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f0fdf4; border-radius:6px; border-left:4px solid #166534;">
+                            <div>
+                                <strong style="color:#166534;">(+) Ventas Totales Cobradas</strong>
+                                <div style="font-size:0.8rem; color:#15803d;">Ingresos reales por ventas</div>
+                            </div>
+                            <strong style="color:#166534; font-size:1.1rem;" id="flow-incomes">$0.00</strong>
+                        </div>
+
+                        <div style="text-align:center; color:#94a3b8; font-size:1.2rem; line-height:0.5;">⬇️</div>
+
+                        <!-- - COMPRAS -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#fff1f2; border-radius:6px; border-left:4px solid #be123c;">
+                            <div>
+                                <strong style="color:#9f1239;">(-) Compras de Insumos</strong>
+                                <div style="font-size:0.8rem; color:#be123c;">Reposición de inventario y materia prima</div>
+                            </div>
+                            <strong style="color:#9f1239; font-size:1.1rem;" id="flow-purchases">$0.00</strong>
+                        </div>
+
+                        <!-- - GASTOS -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#fff1f2; border-radius:6px; border-left:4px solid #be123c;">
+                            <div>
+                                <strong style="color:#9f1239;">(-) Gastos Operativos</strong>
+                                <div style="font-size:0.8rem; color:#be123c;">Nómina, servicios, mantenimiento, etc.</div>
+                            </div>
+                            <strong style="color:#9f1239; font-size:1.1rem;" id="flow-expenses">$0.00</strong>
+                        </div>
+
+                        <div style="border-top:2px dashed #cbd5e1; margin:10px 0;"></div>
+
+                        <!-- = UTILIDAD -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe;">
+                            <div>
+                                <strong style="color:#1e40af; font-size:1.1rem;">(=) Utilidad Neta del Periodo</strong>
+                                <div style="font-size:0.85rem; color:#3b82f6;">Disponible para Fondo y Repartición</div>
+                            </div>
+                            <strong style="color:#1e40af; font-size:1.4rem;" id="flow-utility">$0.00</strong>
+                        </div>
+
                     </div>
                 </div>
 
@@ -83,35 +132,42 @@ export const SettlementView = {
                     <!-- RESUMEN REPARTICION -->
                     <h3 style="margin-bottom:15px; color:#334155; border-left:4px solid #2563eb; padding-left:10px;">🗠 Resumen de Repartición (Algoritmo de Socios)</h3>
                     
+                    <div style="background:#f8fafc; padding:10px 15px; border-radius:6px; margin-bottom:15px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:#64748b; text-transform:uppercase; font-size:0.85rem;">Monto Total a Repartir (Utilidad Neta):</span>
+                        <span style="font-weight:bold; color:#1e40af; font-size:1.1rem;" id="dist-base-amount">$0.00</span>
+                    </div>
+
                     <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                         <thead>
                             <tr style="background:#0f172a; color:white; text-align:left;">
-                                <th style="padding:12px; border-radius:6px 0 0 6px;">Socio</th>
+                                <th style="padding:12px; border-radius:6px 0 0 6px;">Entidad / Socio</th>
                                 <th style="padding:12px;">Rol</th>
                                 <th style="padding:12px;">Participación</th>
                                 <th style="padding:12px; text-align:right; border-radius:0 6px 6px 0;">Monto a Liquidar</th>
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- FONDO -->
+                            <tr style="border-bottom:1px solid #e2e8f0; background:#f0fdf4;">
+                                <td style="padding:12px; font-weight:bold; color:#166534;">Fondo de Inversión</td>
+                                <td style="padding:12px; color:#15803d;">Fondo de Capitalización</td>
+                                <td style="padding:12px; font-weight:bold;">20%</td>
+                                <td style="padding:12px; text-align:right; font-weight:bold; color:#166534; font-size:1.1rem;" id="dist-fund">$0.00</td>
+                            </tr>
+                            <!-- SOCIOS -->
                             <tr style="border-bottom:1px solid #e2e8f0;">
                                 <td style="padding:12px;">Agustín Lugo Arias</td>
                                 <td style="padding:12px; color:#64748b;">Gestión y Operación</td>
-                                <td style="padding:12px; font-weight:bold;">50%</td>
+                                <td style="padding:12px; font-weight:bold;">40%</td>
                                 <td style="padding:12px; text-align:right; font-weight:bold; color:#1e40af; font-size:1.1rem;" id="dist-partner-a">$0.00</td>
                             </tr>
                             <tr>
                                 <td style="padding:12px;">Juan Manuel Márquez</td>
                                 <td style="padding:12px; color:#64748b;">Socio</td>
-                                <td style="padding:12px; font-weight:bold;">50%</td>
+                                <td style="padding:12px; font-weight:bold;">40%</td>
                                 <td style="padding:12px; text-align:right; font-weight:bold; color:#1e40af; font-size:1.1rem;" id="dist-partner-b">$0.00</td>
                             </tr>
                         </tbody>
-                        <tfoot style="background:#f1f5f9;">
-                            <tr>
-                                <td colspan="3" style="padding:12px; text-align:right; font-weight:bold;">Fondo de Inversión (20%)</td>
-                                <td style="padding:12px; text-align:right; font-weight:bold; color:#475569;" id="dist-fund">$0.00</td>
-                            </tr>
-                        </tfoot>
                     </table>
 
                     <div style="background:#fff7ed; border:1px solid #fdba74; padding:15px; border-radius:8px; display:flex; gap:10px; align-items:center;">
@@ -170,11 +226,28 @@ export const SettlementView = {
 
     getFirstDayOfMonth() {
         const date = new Date();
-        return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}-01`;
     },
 
     updatePreview(data) {
         document.getElementById('preview-area').style.display = 'block';
+
+        // 0. FINANCIAL FLOW UPDATE (Priority)
+        try {
+            console.log('UPDATING FLOW (Top Priority):', data);
+            document.getElementById('flow-incomes').innerText = `$${data.incomes.total.toFixed(2)}`;
+            document.getElementById('flow-purchases').innerText = `-$${data.outcomes.purchases.toFixed(2)}`;
+            document.getElementById('flow-expenses').innerText = `-$${data.outcomes.expenses.toFixed(2)}`;
+
+            const util = data.balance.netUtility;
+            const flowUtility = document.getElementById('flow-utility');
+            flowUtility.innerText = `$${util.toFixed(2)}`;
+            flowUtility.style.color = util >= 0 ? '#1e40af' : '#ef4444';
+        } catch (e) {
+            console.error('Error updating flow:', e);
+        }
 
         // 1. CARDS
         document.getElementById('val-incomes').innerText = `$${data.incomes.total.toFixed(2)}`;
@@ -189,38 +262,129 @@ export const SettlementView = {
         utilEl.style.color = util >= 0 ? '#1e40af' : '#ef4444';
 
         // 2. DISTRIBUTION
+        const distBase = document.getElementById('dist-base-amount');
+        if (distBase) distBase.innerText = `$${util.toFixed(2)}`;
+
         document.getElementById('dist-fund').innerText = `$${data.balance.fund.toFixed(2)}`;
         document.getElementById('dist-partner-a').innerText = `$${data.balance.partnerA.toFixed(2)}`;
         document.getElementById('dist-partner-b').innerText = `$${data.balance.partnerB.toFixed(2)}`;
 
         // 3. RECOMMENDATION
         const recEl = document.getElementById('sys-recommendation');
-        if (util > 0) {
-            if (data.balance.partnerA === 0 && data.balance.fund > 0 && util > 0) {
-                // Caso Umbral Minimo
-                recEl.innerText = `Utilidad del periodo ($${util.toFixed(2)}) genera un remanente inferior al mínimo de $20.00. El monto total se ha acreditado al Fondo de Reserva para el próximo periodo.`;
-                recEl.parentElement.style.background = '#fefce8'; // Yellow background
-                recEl.parentElement.style.borderColor = '#fde047';
-                recEl.parentElement.querySelector('p').style.color = '#854d0e';
+        if (recEl) {
+            const card = recEl.closest('div'); // The container div
+            const text = recEl.closest('p');   // The paragraph containing text
+
+            if (util > 0) {
+                if (data.balance.partnerA === 0 && data.balance.fund > 0 && util > 0) {
+                    // Caso Umbral Minimo
+                    recEl.innerText = "La utilidad es baja (<$20). Se destina todo al Fondo de Inversión.";
+                    if (card) {
+                        card.style.background = '#fefce8'; // Yellow background
+                        card.style.borderColor = '#fde047';
+                    }
+                    if (text) text.style.color = '#854d0e';
+                } else {
+                    recEl.innerText = "El flujo es positivo. Se aplica 20% al Fondo y 80% a Socios.";
+                    if (card) {
+                        card.style.background = '#fff7ed';
+                        card.style.borderColor = '#fdba74';
+                    }
+                    if (text) text.style.color = '#9a3412';
+                }
             } else {
-                recEl.innerText = "El flujo de caja es positivo y suficiente para repartición. Se recomienda mantener el fondo de inversión acumulado.";
-                recEl.parentElement.style.background = '#fff7ed';
-                recEl.parentElement.style.borderColor = '#fdba74';
-                recEl.parentElement.querySelector('p').style.color = '#9a3412';
+                recEl.innerText = "El flujo de caja es negativo o neutro. No hay utilidades para repartir en este periodo. Se recomienda revisar gastos operativos.";
+                if (card) {
+                    card.style.background = '#fef2f2';
+                    card.style.borderColor = '#fecaca';
+                }
+                if (text) text.style.color = '#991b1b';
             }
-        } else {
-            recEl.innerText = "El flujo de caja es negativo o neutro. No hay utilidades para repartir en este periodo. Se recomienda revisar gastos operativos.";
-            recEl.parentElement.style.background = '#fef2f2';
-            recEl.parentElement.style.borderColor = '#fecaca';
-            recEl.parentElement.querySelector('p').style.color = '#991b1b';
         }
+
     },
 
     toggleQuickExpenseModal(show) {
         document.getElementById('modal-quick-expense').style.display = show ? 'flex' : 'none';
-        if (!show) {
+        if (show) {
+            document.getElementById('qe-desc').focus();
+        } else {
             document.getElementById('qe-desc').value = '';
             document.getElementById('qe-amount').value = '';
         }
+    },
+
+    renderDetailsModal(title, items, type) {
+        // type: 'purchase' | 'expense' | 'sale'
+
+        const headers = type === 'purchase'
+            ? ['Fecha', 'Proveedor', 'Documento', 'Monto ($)']
+            : type === 'expense'
+                ? ['Fecha', 'Descripción', 'Categoría', 'Monto ($)']
+                : ['Fecha', 'Cliente', 'Estado', 'Monto ($)']; // Updated Sales Headers
+
+        const rows = items.map(item => {
+            if (type === 'purchase') {
+                return `
+                    <tr>
+                        <td>${new Date(item.purchase_date).toLocaleDateString()}</td>
+                        <td>${item.supplier?.name || '-'}</td>
+                        <td>${item.document_number || '-'}</td>
+                        <td class="text-right">$${parseFloat(item.total_usd || 0).toFixed(2)}</td>
+                    </tr>`;
+            } else if (type === 'expense') {
+                return `
+                    <tr>
+                        <td>${new Date(item.expense_date).toLocaleDateString()}</td>
+                        <td>${item.description}</td>
+                        <td>${item.category}</td>
+                        <td class="text-right">$${parseFloat(item.amount_usd || 0).toFixed(2)}</td>
+                    </tr>`;
+            } else { // Sales
+                return `
+                    <tr>
+                        <td>${new Date(item.sale_date).toLocaleDateString()}</td>
+                        <td>${item.customer_name || 'Cliente Casual'}</td>
+                        <td>${item.payment_status}</td>
+                        <td class="text-right">$${parseFloat(item.amount_paid_usd || 0).toFixed(2)}</td>
+                    </tr>`;
+            }
+        }).join('');
+
+        const modalHtml = `
+            <div id="modal-details" class="modal-overlay" style="display:flex; align-items:center; justify-content:center;">
+                <div class="purchase-modal-content" style="max-height:80vh; max-width:800px;">
+                    <div class="purchase-header-bar">
+                        <h3>${title}</h3>
+                        <button class="btn-close" id="close-details-modal" style="color:white;">✕</button>
+                    </div>
+                    <div class="purchase-body">
+                        <div class="purchase-table-container">
+                            <table class="purchase-table">
+                                <thead>
+                                    <tr>
+                                        ${headers.map(h => `<th>${h}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows.length > 0 ? rows : '<tr><td colspan="4" class="text-center">No hay registros</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div style="padding:15px; text-align:right; border-top:1px solid #e2e8f0;">
+                         <button class="btn-primary" id="close-modal-btn">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing if any
+        document.getElementById('modal-details')?.remove();
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const close = () => document.getElementById('modal-details').remove();
+        document.getElementById('close-details-modal').onclick = close;
+        document.getElementById('close-modal-btn').onclick = close;
     }
 };

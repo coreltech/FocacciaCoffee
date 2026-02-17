@@ -142,83 +142,66 @@ export const PurchasesView = {
 
         return `
             <div class="modal-overlay" id="supplier-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+                <div class="purchase-modal-content" style="max-width: 600px;">
+                    <div class="purchase-header-bar">
                         <h3>${isEdit ? '✏️ Editar Proveedor' : '👤 Nuevo Proveedor'}</h3>
-                        <button class="btn-close" id="close-supplier-modal">✕</button>
+                        <button class="btn-close" id="close-supplier-modal" style="color:white;">✕</button>
                     </div>
-                    <form id="supplier-form" class="form-grid">
-                        <div class="form-group">
-                            <label for="supplier-name">Nombre del Proveedor *</label>
-                            <input 
-                                type="text" 
-                                id="supplier-name" 
-                                name="name" 
-                                required 
-                                value="${supplier?.name || ''}"
-                                placeholder="Ej: Distribuidora La Esperanza"
-                            />
+                    
+                    <form id="supplier-form" class="purchase-body">
+                        
+                        <div class="purchase-section">
+                            <h4 class="purchase-section-title">Información Básica</h4>
+                            <div style="display:grid; grid-template-columns: 1fr; gap:15px;">
+                                <div class="form-control-group">
+                                    <label class="form-label">Nombre del Proveedor *</label>
+                                    <input type="text" id="supplier-name" name="name" class="form-input-sm" 
+                                           required value="${supplier?.name || ''}" placeholder="Ej: Distribuidora La Esperanza" />
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label">RIF / Cédula *</label>
+                                    <input type="text" id="supplier-tax-id" name="tax_id" class="form-input-sm" 
+                                           required value="${supplier?.tax_id || ''}" placeholder="Ej: J-12345678-9" />
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="supplier-tax-id">RIF / Cédula *</label>
-                            <input 
-                                type="text" 
-                                id="supplier-tax-id" 
-                                name="tax_id" 
-                                required 
-                                value="${supplier?.tax_id || ''}"
-                                placeholder="Ej: J-12345678-9"
-                            />
+                        <div class="purchase-section">
+                            <h4 class="purchase-section-title">Datos de Contacto</h4>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <div class="form-control-group">
+                                    <label class="form-label">Nombre de Contacto</label>
+                                    <input type="text" id="supplier-contact-name" name="contact_name" class="form-input-sm" 
+                                           value="${supplier?.contact_name || ''}" placeholder="Ej: Juan Pérez" />
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="tel" id="supplier-contact-phone" name="contact_phone" class="form-input-sm" 
+                                           value="${supplier?.contact_phone || ''}" placeholder="Ej: 0414-1234567" />
+                                </div>
+
+                                <div class="form-control-group" style="grid-column: span 2;">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" id="supplier-contact-email" name="contact_email" class="form-input-sm" 
+                                           value="${supplier?.contact_email || ''}" placeholder="Ej: contacto@proveedor.com" />
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="supplier-contact-name">Nombre de Contacto</label>
-                            <input 
-                                type="text" 
-                                id="supplier-contact-name" 
-                                name="contact_name" 
-                                value="${supplier?.contact_name || ''}"
-                                placeholder="Ej: Juan Pérez"
-                            />
+                        <div class="purchase-section">
+                            <div class="form-control-group">
+                                <label class="form-label">Notas</label>
+                                <textarea id="supplier-notes" name="notes" rows="3" class="form-input-sm" 
+                                          placeholder="Información adicional...">${supplier?.notes || ''}</textarea>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="supplier-contact-phone">Teléfono</label>
-                            <input 
-                                type="tel" 
-                                id="supplier-contact-phone" 
-                                name="contact_phone" 
-                                value="${supplier?.contact_phone || ''}"
-                                placeholder="Ej: 0414-1234567"
-                            />
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="supplier-contact-email">Email</label>
-                            <input 
-                                type="email" 
-                                id="supplier-contact-email" 
-                                name="contact_email" 
-                                value="${supplier?.contact_email || ''}"
-                                placeholder="Ej: contacto@proveedor.com"
-                            />
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="supplier-notes">Notas</label>
-                            <textarea 
-                                id="supplier-notes" 
-                                name="notes" 
-                                rows="3"
-                                placeholder="Información adicional..."
-                            >${supplier?.notes || ''}</textarea>
-                        </div>
-
-                        <div class="form-actions full-width">
-                            <button type="button" class="btn-secondary" id="cancel-supplier">Cancelar</button>
+                        <div style="margin-top:20px; text-align:right; border-top:1px solid var(--border); padding-top:20px;">
+                            <button type="button" class="btn-secondary" id="cancel-supplier" style="margin-right:10px;">Cancelar</button>
                             <button type="submit" class="btn-primary">
-                                ${isEdit ? 'Actualizar' : 'Crear'} Proveedor
+                                ${isEdit ? '💾 Actualizar' : '💾 Guardar'} Proveedor
                             </button>
                         </div>
                     </form>
@@ -228,227 +211,172 @@ export const PurchasesView = {
     },
 
     /**
-     * Renderiza el formulario de nueva compra
+     * Renderiza el formulario de nueva compra con Diseño Profesional
      */
     renderPurchaseForm(suppliers, supplies, bcvRate) {
         return `
             <div class="modal-overlay" id="purchase-modal">
-                <div class="modal-content modal-large" style="max-width: 900px;">
-                    <div class="modal-header">
-                        <h3 id="modal-title">📦 Nueva Compra</h3>
-                        <button class="btn-close" id="close-purchase-modal">✕</button>
+                <div class="purchase-modal-content">
+                    <div class="purchase-header-bar">
+                        <h3>📦 Nueva Compra</h3>
+                        <button class="btn-close" id="close-purchase-modal" style="color:white;">✕</button>
                     </div>
-                    <form id="purchase-form">
-                        <!-- Información del Proveedor -->
-                        <div class="form-section">
-                            <h4>Información del Proveedor</h4>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="purchase-supplier">Proveedor *</label>
-                                    <select id="purchase-supplier" name="supplier_id" required>
-                                        <option value="">Seleccione un proveedor</option>
+                    
+                    <form id="purchase-form" class="purchase-body">
+                        
+                        <!-- HEADER: DATOS GENERALES -->
+                        <div class="purchase-section">
+                            <h4 class="purchase-section-title">Datos del Documento</h4>
+                            <div class="grid-header">
+                                <div class="form-control-group">
+                                    <label class="form-label">Proveedor</label>
+                                    <select id="purchase-supplier" name="supplier_id" class="form-input-sm" required>
+                                        <option value="">Seleccione...</option>
                                         ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                                     </select>
+                                    <button type="button" id="btn-load-last-purchase" style="display:none; margin-top:5px; font-size:0.75rem; padding:4px 8px; border:1px solid #cbd5e1; background:#f8fafc; border-radius:4px; cursor:pointer; color:#475569;">
+                                        🔄 Cargar items anteriores
+                                    </button>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="purchase-location">Ubicación *</label>
-                                    <select id="purchase-location" name="location_id" required disabled>
-                                        <option value="">Primero seleccione un proveedor</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Información del Documento -->
-                        <div class="form-section">
-                            <h4>Información del Documento</h4>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="purchase-doc-type">Tipo de Documento *</label>
-                                    <select id="purchase-doc-type" name="document_type" required>
-                                        <option value="Factura" selected>📄 Factura (Legal)</option>
-                                        <option value="Nota de Entrega">📋 Nota de Entrega (Informal)</option>
+                                <div class="form-control-group">
+                                    <label class="form-label">Ubicación de Recepción</label>
+                                    <select id="purchase-location" name="location_id" class="form-input-sm" required disabled>
+                                        <option value="">Seleccione proveedor...</option>
                                     </select>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="purchase-doc-number">Nº de Documento</label>
-                                    <input 
-                                        type="text" 
-                                        id="purchase-doc-number" 
-                                        name="document_number"
-                                        placeholder="Ej: 001-00123"
-                                    />
+                                <div class="form-control-group">
+                                    <label class="form-label">Fecha de Emisión</label>
+                                    <input type="date" id="purchase-date" name="purchase_date" class="form-input-sm" 
+                                           value="${new Date().toISOString().split('T')[0]}" required />
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="purchase-date">Fecha de Compra *</label>
-                                    <input 
-                                        type="date" 
-                                        id="purchase-date" 
-                                        name="purchase_date" 
-                                        value="${new Date().toISOString().split('T')[0]}"
-                                        required
-                                    />
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="purchase-bcv-rate">Tasa BCV (Bs/$) *</label>
-                                    <input 
-                                        type="number" 
-                                        id="purchase-bcv-rate" 
-                                        name="bcv_rate" 
-                                        step="0.01"
-                                        value="${bcvRate}"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Items de la Compra -->
-                        <div class="form-section">
-                            <h4>Items de la Compra</h4>
-                            
-                            <div class="items-controls">
-                                <div class="form-grid">
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label for="item-supply">Suministro</label>
-                                        <select id="item-supply" style="width: 100%;">
-                                            <option value="">Seleccione un suministro</option>
-                                            ${supplies.map(s => `
-                                                <option value="${s.id}" 
-                                                    data-unit="${s.unit}" 
-                                                    data-equivalence="${s.equivalence || 0}" 
-                                                    data-purchase-unit="${s.purchase_unit || ''}">
-                                                    ${s.name} (${s.unit})
-                                                </option>
-                                            `).join('')}
+                                <div class="form-control-group">
+                                    <label class="form-label">Nº Documento</label>
+                                    <div style="display:flex; gap:5px;">
+                                        <select id="purchase-doc-type" name="document_type" class="form-input-sm" style="width:80px;">
+                                            <option value="Factura">Fact</option>
+                                            <option value="Nota de Entrega">NE</option>
                                         </select>
-                                        <div style="margin-top: 5px;">
-                                            <label style="font-size: 0.85rem; cursor: pointer; color: #2563eb; display: none;" id="lbl-use-presentation">
-                                                <input type="checkbox" id="item-use-presentation"> 
-                                                Comprar por Presentación (<span></span>)
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label for="item-brand">Marca / Descripción</label>
-                                        <input 
-                                            type="text" 
-                                            id="item-brand" 
-                                            placeholder="Ej: Robin Hood"
-                                        />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="item-quantity" id="lbl-item-quantity">Cantidad</label>
-                                        <input 
-                                            type="number" 
-                                            id="item-quantity" 
-                                            step="0.01"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="item-total">Total ($)</label>
-                                        <input 
-                                            type="number" 
-                                            id="item-total" 
-                                            step="0.01"
-                                            placeholder="0.00" 
-                                            style="font-weight: bold; color: #166534;"
-                                        />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="item-total-bs">Total (Bs)</label>
-                                        <input 
-                                            type="number" 
-                                            id="item-total-bs" 
-                                            step="0.01"
-                                            placeholder="0.00" 
-                                            style="color: #ea580c;"
-                                        />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="item-price">Costo Unit. Calc.</label>
-                                        <input 
-                                            type="number" 
-                                            id="item-price" 
-                                            step="0.0001"
-                                            placeholder="0.00"
-                                            readonly
-                                            style="background: #f1f5f9; color: #64748b;"
-                                        />
-                                    </div>
-
-                                    <div class="form-group" style="display: flex; align-items: flex-end;">
-                                        <button type="button" class="btn-primary" id="btn-add-item" style="width: 100%;">
-                                            ➕ Agregar
-                                        </button>
+                                        <input type="text" id="purchase-doc-number" name="document_number" class="form-input-sm" placeholder="CONTROL-001" style="flex:1;" />
                                     </div>
                                 </div>
                             </div>
+                            <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
+                                <label class="form-label">Tasa BCV:</label>
+                                <input type="number" id="purchase-bcv-rate" name="bcv_rate" class="form-input-sm" step="0.01" value="${bcvRate}" style="width:100px; font-weight:bold; color:var(--olive);" required />
+                                <span style="font-size:0.8rem; color:#64748b;">Bs/USD</span>
+                            </div>
+                        </div>
 
-                            <div id="items-table-container">
-                                <table class="data-table" id="items-table">
+                        <!-- BODY: ITEMS -->
+                        <div class="purchase-section">
+                            <h4 class="purchase-section-title">Detalle de Productos</h4>
+                            
+                            <!-- Input Row -->
+                            <div class="grid-items-input">
+                                <div class="form-control-group">
+                                    <label class="form-label">Producto / Insumo</label>
+                                    <select id="item-supply" class="form-input-sm">
+                                        <option value="">Seleccione...</option>
+                                        ${supplies.map(s => `
+                                            <option value="${s.id}" 
+                                                data-unit="${s.unit}" 
+                                                data-equivalence="${s.equivalence || 0}" 
+                                                data-purchase-unit="${s.purchase_unit || ''}">
+                                                ${s.name} (${s.unit})
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                    <label style="font-size: 0.75rem; cursor: pointer; color: #2563eb; display: none; margin-top:2px;" id="lbl-use-presentation">
+                                        <input type="checkbox" id="item-use-presentation"> 
+                                        <span>Usar Presentación</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label">Marca / Detalle</label>
+                                    <input type="text" id="item-brand" class="form-input-sm" placeholder="Ej: Primor" />
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label" id="lbl-item-quantity">Cantidad</label>
+                                    <input type="number" id="item-quantity" step="0.01" class="form-input-sm" placeholder="0.00" />
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label">Total USD ($)</label>
+                                    <input type="number" id="item-total" step="0.01" class="form-input-sm" placeholder="0.00" style="font-weight:bold; color:#15803d;" />
+                                </div>
+
+                                <div class="form-control-group">
+                                    <label class="form-label">Total Bs</label>
+                                    <input type="number" id="item-total-bs" step="0.01" class="form-input-sm" placeholder="0.00" style="color:#ea580c;" />
+                                </div>
+
+                                <button type="button" id="btn-add-item" class="btn-add-item" title="Agregar Item">
+                                    +
+                                </button>
+                                
+                                <!-- Hidden Unit Price Calc -->
+                                <input type="hidden" id="item-price" />
+                            </div>
+
+                            <!-- Table -->
+                            <div class="purchase-table-container">
+                                <table class="purchase-table">
                                     <thead>
                                         <tr>
-                                            <th>Suministro</th>
-                                            <th>Marca</th>
-                                            <th class="text-right">Cantidad</th>
-                                            <th class="text-right">Precio Unit.</th>
-                                            <th class="text-right">Subtotal</th>
-                                            <th class="text-center">Acción</th>
+                                            <th style="width:30%;">Descripción</th>
+                                            <th style="width:20%;">Marca</th>
+                                            <th class="text-right" style="width:10%;">Cant.</th>
+                                            <th class="text-right" style="width:15%;">Precio Unit.</th>
+                                            <th class="text-right" style="width:15%;">Total ($)</th>
+                                            <th class="text-center" style="width:10%;">...</th>
                                         </tr>
                                     </thead>
                                     <tbody id="items-tbody">
                                         <tr class="empty-row">
-                                            <td colspan="6" class="text-center">
-                                                No hay items agregados
+                                            <td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">
+                                                Agregue items a la lista
                                             </td>
                                         </tr>
                                     </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="4" class="text-right"><strong>Total USD:</strong></td>
-                                            <td class="text-right"><strong id="total-usd">$0.00</strong></td>
-                                            <td></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="4" class="text-right"><strong>Total Bs:</strong></td>
-                                            <td class="text-right"><strong id="total-bs">Bs 0.00</strong></td>
-                                            <td></td>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Notas -->
-                        <div class="form-section">
-                            <div class="form-group full-width">
-                                <label for="purchase-notes">Notas</label>
-                                <textarea 
-                                    id="purchase-notes" 
-                                    name="notes" 
-                                    rows="2"
-                                    placeholder="Información adicional sobre la compra..."
-                                ></textarea>
+                        <!-- FOOTER: TOTALES & ACCIONES -->
+                        <div class="purchase-footer">
+                            <div style="flex:1;">
+                                <label class="form-label">Notas / Observaciones</label>
+                                <textarea id="purchase-notes" name="notes" rows="3" class="form-input-sm" style="width:100%; margin-top:5px;" placeholder="Comentarios adicionales..."></textarea>
+                            </div>
+
+                            <div class="totals-box">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span id="preview-subtotal">$0.00</span>
+                                </div>
+                                <div class="total-row grand-total">
+                                    <span>TOTAL USD:</span>
+                                    <span id="total-usd">$0.00</span>
+                                </div>
+                                <div class="total-row" style="color:var(--text-muted); font-size:0.9rem;">
+                                    <span>Equivalente Bs:</span>
+                                    <span id="total-bs">Bs 0.00</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-actions">
-                            <button type="button" class="btn-secondary" id="cancel-purchase">Cancelar</button>
-                            <button type="submit" class="btn-primary" id="submit-purchase">
-                                💾 Guardar Compra
+                        <div style="margin-top:20px; text-align:right; border-top:1px solid var(--border); padding-top:20px;">
+                            <button type="button" class="btn-secondary" id="cancel-purchase" style="margin-right:10px;">Cancelar</button>
+                            <button type="submit" class="btn-primary" id="submit-purchase" style="min-width:150px;">
+                                💾 Procesar Compra
                             </button>
                         </div>
+
                     </form>
                 </div>
             </div>

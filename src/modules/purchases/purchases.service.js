@@ -28,6 +28,32 @@ class PurchasesServiceImpl {
     }
 
     /**
+     * Obtiene la última compra de un proveedor
+     */
+    async getLastPurchaseBySupplier(supplierId) {
+        const { data, error } = await supabase
+            .from('purchases')
+            .select(`
+                *,
+                items:purchase_items(
+                    *,
+                    supply:supplies(name, unit)
+                )
+            `)
+            .eq('supplier_id', supplierId)
+            .order('purchase_date', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // Ignore "Row not found" error
+            console.error('Error obteniendo última compra:', error);
+            throw error;
+        }
+
+        return data; // Returns null if not found
+    }
+
+    /**
      * Obtiene una compra por ID con sus items
      */
     async getById(id) {

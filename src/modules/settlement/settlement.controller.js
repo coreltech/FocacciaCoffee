@@ -1,5 +1,5 @@
 
-import { SettlementView } from './settlement.view.js';
+import { SettlementView } from './settlement.view.js?v=2';
 import { SettlementService } from './settlement.service.js?v=fixed_2';
 import { SettlementPDF } from './settlement-pdf.js';
 import { SettlementExcel } from './settlement-excel.js';
@@ -29,11 +29,39 @@ function bindEvents() {
             document.getElementById('btn-download-excel').style.display = 'inline-block';
         } catch (err) {
             console.error(err);
-            Toast.show("Error calculando liquidación", "error");
+            Toast.show("Error: " + (err.message || "Calculando liquidación"), "error");
         } finally {
             document.getElementById('btn-calc-preview').innerText = "📊 Calcular Vista Previa";
         }
     };
+
+    // 1.5 View Details (Delegation)
+    document.getElementById('preview-area').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        if (btn.id === 'btn-view-purchases') {
+            if (!currentSummary || !currentSummary.details) {
+                console.warn('No details available');
+                return;
+            }
+            SettlementView.renderDetailsModal("Detalle de Compras (Insumos)", currentSummary.details.purchasesBreakdown || [], 'purchase');
+        }
+        if (btn.id === 'btn-view-expenses') {
+            if (!currentSummary || !currentSummary.details) {
+                console.warn('No details available');
+                return;
+            }
+            SettlementView.renderDetailsModal("Gastos Operativos", currentSummary.details.expensesBreakdown || [], 'expense');
+        }
+        if (btn.id === 'btn-view-sales') {
+            if (!currentSummary || !currentSummary.details) {
+                console.warn('No details available');
+                return;
+            }
+            SettlementView.renderDetailsModal("Detalle de Ventas (Cobrado)", currentSummary.details.sales || [], 'sale');
+        }
+    });
 
     // 2. Execute Liquidation
     document.getElementById('btn-execute-liquidation').onclick = async () => {

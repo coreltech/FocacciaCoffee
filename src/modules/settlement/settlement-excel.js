@@ -55,12 +55,12 @@ export class SettlementExcel {
         XLSX.utils.book_append_sheet(wb, wsSales, "Ventas Detalladas");
 
 
-        const expHeader = [["Fecha", "Proveedor", "Categoría", "Monto (USD)"]];
+        const expHeader = [["Fecha", "Descripción", "Categoría", "Monto (USD)"]];
         const expRows = (data.details?.expensesBreakdown || []).map(e => [
-            e.date,
-            e.provider,
+            e.expense_date,
+            e.description,
             e.category,
-            e.total_amount
+            e.amount_usd
         ]);
 
         // Agregar Compras también si están separadas

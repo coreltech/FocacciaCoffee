@@ -6,43 +6,33 @@ export const SettlementService = {
      * Basado en Flujo de Caja (Cobrado vs Pagado).
      */
     async getPreview(startDate, endDate) {
-        // 1. VENTAS (Entradas Reales - Cobrado)
-        // Buscamos ventas que tengan pagos en ese rango de FECHA DE VENTA? 
-        // Ojo: Si es Flujo de Caja, deberíamos buscar por fecha de PAGO.
-        // Pero el sistema actual registra 'sale_date'. 
-        // Asumiremos que sale_date es la fecha relevante para el ejercicio, 
-        // o si queremos ser estrictos, solo sumamos lo "Pagado" de las ventas de ese periodo.
-        // El usuario dijo: "Entradas: SUM(amount_paid_usd) de la tabla sales_orders". (Implica filtro por fecha de venta).
-
+        // 1. VENTAS (Entradas Reales - Cobrado - Criterio CAJA)
         const { data: sales, error: errSales } = await supabase
             .from('sales_orders')
-            .select('id, sale_date, customer_id, customers(name), product_name, amount_paid_usd, payment_status, client_name')
-            .gte('sale_date', `${startDate}T00:00:00`)
-            .lte('sale_date', `${endDate}T23:59:59`)
-            // Excluir lo ya liquidado si existe la columna (Aun no existe, lo preparamos)
-            // .is('settlement_id', null)
-            ;
+            .select('id, sale_date, payment_date, customer_id, customers(name), product_name, amount_paid_usd, total_amount, payment_status, client_name')
+            .gte('payment_date', `${startDate}T00:00:00`)
+            .lte('payment_date', `${endDate}T23:59:59`);
 
         if (errSales) throw errSales;
 
         // 2. COMPRAS (Salidas Reales - Insumos)
         const { data: purchases, error: errPurchases } = await supabase
             .from('purchases')
-            .select('purchase_date, supplier_id, total_usd')
-            .gte('purchase_date', startDate)
-            .lte('purchase_date', endDate)
+            .select('purchase_date, supplier_id, total_usd, document_number, supplier:suppliers(name)')
+            .gte('purchase_date', `${startDate}T00:00:00`)
+            .lte('purchase_date', `${endDate}T23:59:59`)
             // .is('settlement_id', null)
             ;
 
         if (errPurchases) throw errPurchases;
 
-        // 3. GASTOS OPERATIVOS (Salidas Reales)
+        // 3. GASTOS OPERATIVOS (Salidas Reales - Admin Module)
         const { data: expenses, error: errExp } = await supabase
-            .from('investment_expenses')
-            .select('total_amount, category') // total_amount is USD
-            .gte('date', startDate)
-            .lte('date', endDate)
-            // .is('settlement_id', null)
+            .from('operational_expenses')
+            .select('id, amount_usd, category, description, expense_date')
+            .gte('expense_date', `${startDate}T00:00:00`)
+            .lte('expense_date', `${endDate}T23:59:59`)
+            // .is('settlement_id', null) // Unlock in future when column exists
             ;
 
         if (errExp) throw errExp;
@@ -50,11 +40,20 @@ export const SettlementService = {
         // --- CÁLCULOS ---
 
         // A. Entradas
-        const totalIn = sales.reduce((sum, s) => sum + (parseFloat(s.amount_paid_usd) || 0), 0);
+        const processedSales = sales.map(s => {
+            let amount = parseFloat(s.amount_paid_usd) || 0;
+            // Fallback: Si el monto pagado es 0 pero está marcado como Pagado, usamos el total
+            if (amount === 0 && ['Pagado', 'paid', 'Paid', 'COMPLETED'].includes(s.payment_status)) {
+                amount = parseFloat(s.total_amount) || 0;
+            }
+            return { ...s, effective_amount: amount };
+        });
+
+        const totalIn = processedSales.reduce((sum, s) => sum + s.effective_amount, 0);
 
         // B. Salidas
         const totalPurchases = purchases.reduce((sum, p) => sum + (parseFloat(p.total_usd) || 0), 0);
-        const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.total_amount) || 0), 0);
+        const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount_usd) || 0), 0);
         const totalOut = totalPurchases + totalExpenses;
 
         // C. Utilidad Neta
@@ -89,7 +88,7 @@ export const SettlementService = {
             period: { startDate, endDate },
             incomes: {
                 total: totalIn,
-                count: sales.length
+                count: processedSales.filter(s => s.effective_amount > 0).length // Count only effective sales
             },
             outcomes: {
                 total: totalOut,
@@ -104,11 +103,12 @@ export const SettlementService = {
             },
             details: {
                 expensesBreakdown: expenses,
-                sales: sales.map(s => ({
+                sales: processedSales.map(s => ({
                     ...s,
-                    customer_name: s.customers?.name || s.client_name || 'Cliente Casual'
+                    customer_name: s.customers?.name || s.client_name || 'Cliente Casual',
+                    amount_paid_usd: s.effective_amount // Override for display consistency
                 })),
-                purchases: purchases // For Excel Export
+                purchasesBreakdown: purchases // Renamed from 'purchases' to match Controller
             }
         };
     },
@@ -118,20 +118,17 @@ export const SettlementService = {
      */
     async registerQuickExpense(expense) {
         // expense: { description, amount, currency, date, category }
-        // Mapeamos a la estructura de 'investment_expenses'
-        // provider -> description
-        // total_amount -> amount (converted if needed)
+        // Mapeamos a la estructura de 'operational_expenses' (Admin Module)
 
         const payload = {
-            date: expense.date,
-            provider: expense.description,
-            total_amount: expense.amount, // Assumes USD for simplicity or converted in frontend
-            category: expense.category || 'General',
-            invoice_number: 'N/A-QUICK'
+            expense_date: expense.date,
+            description: expense.description,
+            amount_usd: expense.amount, // Assumes USD 
+            category: expense.category || 'Gasto Rápido'
         };
 
         const { data, error } = await supabase
-            .from('investment_expenses')
+            .from('operational_expenses')
             .insert([payload])
             .select()
             .single();
@@ -178,12 +175,17 @@ export const SettlementService = {
             .lte('purchase_date', endDate)
             .is('settlement_id', null);
 
-        // Update expenses
-        await supabase.from('investment_expenses')
-            .update({ settlement_id: settlement.id })
-            .gte('date', startDate)
-            .lte('date', endDate)
-            .is('settlement_id', null);
+        // Update expenses (Try to mark as liquidated if column exists)
+        // Note: 'settlement_id' column might need to be added to 'operational_expenses'
+        try {
+            await supabase.from('operational_expenses')
+                .update({ settlement_id: settlement.id })
+                .gte('expense_date', startDate)
+                .lte('expense_date', endDate)
+                .is('settlement_id', null);
+        } catch (e) {
+            console.warn("Could not mark expenses as liquidated (missing column?)", e);
+        }
 
         return settlement;
     }

@@ -1,0 +1,224 @@
+/* src/modules/purchases/purchases.css */
+
+/* --- Modal Layout & General --- */
+.purchase-modal-content {
+    max-width: 950px;
+    width: 95%;
+    border-radius: var(--radius-lg);
+    background: white;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.purchase-header-bar {
+    background: var(--coffee);
+    color: var(--warm-white);
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.purchase-header-bar h3 {
+    margin: 0;
+    font-family: var(--font-head);
+    font-size: 1.4rem;
+    font-weight: 500;
+}
+
+.purchase-body {
+    padding: 25px;
+    overflow-y: auto;
+    flex: 1;
+    background: var(--warm-white);
+}
+
+/* --- Sections --- */
+.purchase-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.purchase-section-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    border-bottom: 2px solid var(--sand-beige);
+    padding-bottom: 8px;
+}
+
+/* --- Grid Layouts --- */
+.grid-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr;
+    gap: 20px;
+}
+
+.grid-items-input {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 0.5fr;
+    gap: 15px;
+    align-items: end;
+    background: var(--sand-beige);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+}
+
+/* --- Form Elements --- */
+.form-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--coffee);
+}
+
+.form-input-sm {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.form-input-sm:focus {
+    border-color: var(--olive);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(112, 130, 56, 0.1);
+}
+
+/* --- Data Table --- */
+.purchase-table-container {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: white;
+    overflow: hidden;
+}
+
+.purchase-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.purchase-table th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.purchase-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--coffee);
+}
+
+.purchase-table tr:last-child td {
+    border-bottom: none;
+}
+
+.purchase-table tr:hover {
+    background: #fdfdfc;
+}
+
+/* --- Totals Section --- */
+.purchase-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 10px;
+}
+
+.totals-box {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 15px 25px;
+    min-width: 250px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.total-row.grand-total {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid var(--border);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--olive);
+}
+
+/* --- Buttons --- */
+.btn-icon-sm {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--error);
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.btn-icon-sm:hover {
+    opacity: 1;
+}
+
+.btn-add-item {
+    background: var(--olive);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    height: 38px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-add-item:hover {
+    background: #5d6d2e;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .grid-header, .grid-items-input {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .purchase-footer {
+        flex-direction: column-reverse;
+    }
+    
+    .totals-box {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

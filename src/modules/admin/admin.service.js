@@ -24,5 +24,10 @@ export const AdminService = {
     async saveExpense(expense) {
         const { error } = await supabase.from('operational_expenses').insert([expense]);
         if (error) throw error;
+    },
+
+    async deleteExpense(id) {
+        const { error } = await supabase.from('operational_expenses').delete().eq('id', id);
+        if (error) throw error;
     }
 };
