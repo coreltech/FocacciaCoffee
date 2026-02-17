@@ -330,12 +330,20 @@ export const SalesView = {
         const payRows = document.querySelectorAll('.pay-row');
         if (payRows.length === 1 && totalUSD > 0) {
             const amtInput = payRows[0].querySelector('.p-amt');
-            // Only auto-fill if empty or equal to previous total (simple heuristic)
-            if (!amtInput.value || parseFloat(amtInput.value) === 0) {
+
+            // Check if it's a future reservation (Delivery Date > Today)
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            const hasFutureItem = cart.some(item => item.delivery_date && item.delivery_date > todayStr);
+
+            // Only auto-fill if empty or equal to previous total AND NOT a future reservation
+            if (!hasFutureItem && (!amtInput.value || parseFloat(amtInput.value) === 0)) {
                 amtInput.value = totalUSD.toFixed(2);
-                // Trigger input event manually if needed, but controller handles calculation on click/input
-                // We will rely on user interaction or final validation, but let's try to trigger it:
                 amtInput.dispatchEvent(new Event('input'));
+            } else if (hasFutureItem && (!amtInput.value || parseFloat(amtInput.value) === totalUSD)) {
+                // If it was auto-filled but now we have a future item, clear it (optional, but safer)
+                // Actually, let's just NOT auto-fill. If user manually entered it, keep it.
+                // But if it's empty, leave it empty.
+                if (!amtInput.value) amtInput.value = '';
             }
         }
 
