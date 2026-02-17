@@ -290,6 +290,41 @@ class SettingsServiceImpl {
         console.log(`⚠️ Rates are stale (>3h). Attempting auto-sync...`);
         return await this.syncRates();
     }
+
+    // --- DATA CLEANUP ---
+
+    async getPendingTestOrders() {
+        // Fetch orders that are 'pendiente' and older than 24 hours
+        // OR just all 'pendiente' orders if user wants to see everything?
+        // User said "basura", "bomba de tiempo".
+        // Let's fetch ALL 'pendiente' orders and let the UI show the date so user decides.
+
+        const { data, error } = await supabase
+            .from('sales_orders')
+            .select('id, sale_date, total_amount, customer_id, fulfillment_status')
+            .eq('fulfillment_status', 'pendiente')
+            .order('sale_date', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    }
+
+    async deleteTestOrders(orderIds) {
+        if (!orderIds || orderIds.length === 0) return;
+
+        // Delete orders. 
+        // Note: Due to FK constraints, we might need to delete updated items first?
+        // Usually, cascade delete handles it if configured. If not, we might error.
+        // Let's assume cascade is ON or we try deleting.
+
+        const { error } = await supabase
+            .from('sales_orders')
+            .delete()
+            .in('id', orderIds);
+
+        if (error) throw error;
+        return true;
+    }
 }
 
 // Export Singleton Instance

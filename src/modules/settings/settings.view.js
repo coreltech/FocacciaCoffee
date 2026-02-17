@@ -76,6 +76,25 @@ export const SettingsView = {
                     <p style="text-align:center; color:#94a3b8; padding: 20px;">Cargando historial...</p>
                 </div>
             </div>
+
+            <!-- MAINTENANCE ZONE -->
+            <div class="stat-card" style="padding: 25px; border-radius: 12px; border-top: 4px solid #ef4444; background: #fff1f2;">
+                <h3 style="margin-top:0; margin-bottom: 10px; font-size: 1.1rem; color: #b91c1c; display:flex; align-items:center; gap:8px;">
+                    🗑️ Zona de Mantenimiento
+                </h3>
+                <p style="color: #7f1d1d; font-size: 0.9rem; margin-bottom: 20px;">
+                    Detecta y elimina pedidos "Pendientes" antiguos (pruebas o errores) que ensucian el sistema.
+                </p>
+                
+                <button id="btn-scan-ghosts" class="btn-primary" 
+                    style="background: #ef4444; border: none; padding: 12px 20px; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    🔍 Escanear Pedidos Fantasma
+                </button>
+
+                <div id="cleanup-results" style="margin-top: 20px; display: none;">
+                    <!-- Results Injected Here -->
+                </div>
+            </div>
         </div>
 
         <style>
