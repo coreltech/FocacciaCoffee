@@ -8,7 +8,7 @@ orders AS (
     SELECT product_id, SUM(quantity) as total_qty
     FROM sales_orders
     WHERE fulfillment_status = 'pendiente'
-      AND sale_date >= date_trunc('week', CURRENT_DATE) -- Filter out old backlog (Accounts Receivable)
+      AND sale_date >= (date_trunc('week', CURRENT_DATE) - INTERVAL '1 day') -- Start from Sunday
     GROUP BY product_id
 ),
 composition_breakdown AS (

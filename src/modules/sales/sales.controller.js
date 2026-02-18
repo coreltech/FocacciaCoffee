@@ -531,15 +531,78 @@ function bindEvents(rates) {
 
             // Collect Payment Methods
             const paymentMethods = [];
-            // ...
+            let totalPaidUSD = 0;
 
-            // ... (logic continues) ...
+            document.querySelectorAll('.pay-row').forEach(row => {
+                const amt = parseFloat(row.querySelector('.p-amt').value) || 0;
+                const meth = row.querySelector('.p-meth').value;
+                const ref = row.querySelector('.p-ref').value;
+
+                if (amt > 0) {
+                    // Normalize to USD for calculation
+                    let amtInUSD = amt;
+                    if (meth.includes('Bs')) {
+                        amtInUSD = amt / rates.tasa_usd_ves;
+                    } else if (meth.includes('EUR')) {
+                        amtInUSD = (amt * rates.tasa_eur_ves) / rates.tasa_usd_ves;
+                    }
+
+                    totalPaidUSD += amtInUSD;
+
+                    paymentMethods.push({
+                        method: meth,
+                        amount_native: amt,
+                        amount_usd: amtInUSD, // Approx
+                        reference: ref,
+                        currency: meth.includes('Bs') ? 'VES' : (meth.includes('EUR') ? 'EUR' : 'USD')
+                    });
+                }
+            });
+
+            // Determine Status
+            const globalBalance = totalCartUSD - totalPaidUSD;
+            const globalStatus = (globalBalance <= 0.01) ? 'Pagado' : 'Pendiente';
 
             // Loop and Register Each Item
-            for (const item of cart) {
-                // ...
+            // We need to distribute the "Paid Amount" proportionally if it's a partial payment
+            // Or if it's fully paid, each item is fully paid.
+
+            let remainingPayToDistribute = totalPaidUSD;
+
+            for (let i = 0; i < cart.length; i++) {
+                const item = cart[i];
+                let itemPaid = 0;
+
+                if (globalStatus === 'Pagado') {
+                    itemPaid = item.total_amount;
+                } else {
+                    // Distribute proportionally or FIFO? 
+                    // Let's do FIFO (First item gets paid first) to clear oldest debts logic? 
+                    // Or Proportional. Proportional is fairer for "Partial Payment".
+                    // Let's do Proportional.
+                    const weight = item.total_amount / totalCartUSD;
+                    itemPaid = totalPaidUSD * weight;
+                }
+
+                // Prepare Payment Details specific to this item (copy the full list for reference)
+                const itemPaymentDetails = {
+                    items: paymentMethods,
+                    resumen: `${item.product_name} x${item.quantity}`,
+                    customer_web: document.getElementById('v-customer-id').options[document.getElementById('v-customer-id').selectedIndex].text,
+                    order_type: orderType,
+                    delivery_address: deliveryAddress
+                };
+
                 const saleData = {
-                    // ...
+                    product_id: item.product_id, // can be null for manual
+                    product_name: item.product_name,
+                    quantity: item.quantity,
+                    total_amount: item.total_amount,
+                    amount_paid: itemPaid,
+                    payment_status: globalStatus,
+                    payment_details: itemPaymentDetails,
+                    customer_id: custId || null,
+                    delivery_date: item.delivery_date || null
                 };
 
                 await SalesService.registerSale(saleData);

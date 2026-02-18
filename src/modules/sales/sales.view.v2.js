@@ -130,7 +130,7 @@ export const SalesView = {
                             </div>
                         </div>
 
-                        <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fef2f2; border-radius:6px; border:1px solid #fecaca;">⚠️ Cantidad supera el stock disponible</div>
+                        <div id="stock-warning" style="display:none; color:#d97706; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fffbeb; border-radius:6px; border:1px solid #fcd34d;">⚠️ Cantidad supera el stock (Se permitirá venta)</div>
 
                         <button id="btn-add-to-cart" class="btn-secondary" 
                             style="width:100%; padding:12px; margin-top:10px; background:#fff; color:#334155; border:2px dashed #cbd5e1; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
@@ -698,17 +698,14 @@ export const SalesView = {
     },
 
     toggleStockWarning(show) {
+        // PERMANENT FIX: Never block the button. Just show warning.
         document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
         const btn = document.getElementById('btn-add-to-cart');
-        if (show) {
-            btn.disabled = true;
-            btn.style.opacity = "0.5";
-            btn.style.cursor = "not-allowed";
-        } else {
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.cursor = "pointer";
-        }
+
+        // Always enabled
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
     },
 
     toggleManualMode(isManual, price) {
