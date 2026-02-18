@@ -518,8 +518,40 @@ export const SalesView = {
     renderSummary(resumen) {
         const sumTotal = document.getElementById('sum-total');
         const sumCredit = document.getElementById('sum-credit');
+        const summaryBar = document.getElementById('sales-summary-bar');
+
         if (sumTotal) sumTotal.innerText = `$${(resumen.total || 0).toFixed(2)}`;
         if (sumCredit) sumCredit.innerText = `$${(resumen.credito || 0).toFixed(2)}`;
+
+        // Render Methods Breakdown
+        // Remove old breakdown if exists
+        const oldBreakdown = document.getElementById('methods-breakdown');
+        if (oldBreakdown) oldBreakdown.remove();
+
+        if (resumen.metodos && Object.keys(resumen.metodos).length > 0) {
+            const breakdownDiv = document.createElement('div');
+            breakdownDiv.id = 'methods-breakdown';
+            breakdownDiv.style.cssText = "display:flex; gap:10px; flex-wrap:wrap; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1; font-size:0.8rem; color:#475569;";
+
+            Object.entries(resumen.metodos).forEach(([method, amount]) => {
+                const tag = document.createElement('span');
+                tag.style.cssText = "background:white; padding:2px 6px; border-radius:4px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:4px;";
+
+                // Icons for methods
+                let icon = '💵';
+                if (method.toLowerCase().includes('zelle')) icon = '📱';
+                if (method.toLowerCase().includes('pago movil') || method.toLowerCase().includes('móvil')) icon = '📲';
+                if (method.toLowerCase().includes('punto')) icon = '💳';
+
+                tag.innerHTML = `${icon} <b>${method}:</b> $${amount.toFixed(2)}`;
+                breakdownDiv.appendChild(tag);
+            });
+
+            if (summaryBar) {
+                summaryBar.style.flexDirection = 'column';
+                summaryBar.appendChild(breakdownDiv);
+            }
+        }
     },
 
     renderHistory(sales, append = false) {
@@ -550,8 +582,14 @@ export const SalesView = {
 
             card.innerHTML = `
                 <div>
-                    <div style="font-weight:bold; color:#1e293b;">${s.customers ? s.customers.name : 'Cliente Genérico'}</div>
-                    <div style="font-size:0.8rem; color:#64748b;">${new Date(s.created_at).toLocaleString()} • #${s.id.slice(0, 6)}</div>
+                    <div style="font-weight:bold; color:#1e293b; display:flex; align-items:center; gap:5px;">
+                        ${s.customers ? s.customers.name : 'Cliente Genérico'}
+                        ${isPaid ? '<span title="Solvente / Verificado" style="color:#22c55e; font-size:1rem;">☑️</span>' : ''}
+                    </div>
+                    <div style="font-size:0.8rem; color:#64748b;">
+                        ${new Date(s.created_at).toLocaleString()} • #${s.id.slice(0, 6)}
+                    </div>
+                    ${isPaid && s.payment_date ? `<div style="font-size:0.75rem; color:#059669;">Pagado el: ${new Date(s.payment_date).toLocaleDateString()}</div>` : ''}
                     ${!isPaid ? `<div style="font-size:0.75rem; color:#dc2626; font-weight:bold;">Deuda: $${s.balance_due}</div>` : ''}
                 </div>
                 <div style="text-align:right;">
