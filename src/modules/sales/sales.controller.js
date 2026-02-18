@@ -633,7 +633,7 @@ async function handleSubmitSale() {
                 final_unit_price: item.price,
                 sale_date: saleDate,
                 payment_methods: itemPayments,
-                delivery_address: deliveryAddress,
+                delivery_date: item.delivery_date,
                 order_type: orderType,
                 is_website: false,
                 manual_desc: item.product_name
