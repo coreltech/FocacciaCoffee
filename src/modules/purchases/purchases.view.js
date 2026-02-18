@@ -215,18 +215,18 @@ export const PurchasesView = {
      */
     renderPurchaseForm(suppliers, supplies, bcvRate) {
         return `
-            <div class="modal-overlay" id="purchase-modal">
+            <div class="modal-overlay" id="purchase-modal" style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); backdrop-filter:blur(2px);">
                 <div class="purchase-modal-content">
                     <div class="purchase-header-bar">
                         <h3>📦 Nueva Compra</h3>
-                        <button class="btn-close" id="close-purchase-modal" style="color:white;">✕</button>
+                        <button class="btn-close" id="close-purchase-modal" title="Cerrar">✕</button>
                     </div>
                     
                     <form id="purchase-form" class="purchase-body">
                         
                         <!-- HEADER: DATOS GENERALES -->
                         <div class="purchase-section">
-                            <h4 class="purchase-section-title">Datos del Documento</h4>
+                            <h4 class="purchase-section-title">📄 Datos del Documento</h4>
                             <div class="grid-header">
                                 <div class="form-control-group">
                                     <label class="form-label">Proveedor</label>
@@ -265,62 +265,64 @@ export const PurchasesView = {
                             </div>
                             <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
                                 <label class="form-label">Tasa BCV:</label>
-                                <input type="number" id="purchase-bcv-rate" name="bcv_rate" class="form-input-sm" step="0.01" value="${bcvRate}" style="width:100px; font-weight:bold; color:var(--olive);" required />
+                                <input type="number" id="purchase-bcv-rate" name="bcv_rate" class="form-input-sm input-currency" step="0.01" value="${bcvRate}" style="width:120px; font-weight:bold; color:var(--olive);" required />
                                 <span style="font-size:0.8rem; color:#64748b;">Bs/USD</span>
                             </div>
                         </div>
 
                         <!-- BODY: ITEMS -->
                         <div class="purchase-section">
-                            <h4 class="purchase-section-title">Detalle de Productos</h4>
+                            <h4 class="purchase-section-title">🛒 Detalle de Productos</h4>
                             
-                            <!-- Input Row -->
-                            <div class="grid-items-input">
-                                <div class="form-control-group">
-                                    <label class="form-label">Producto / Insumo</label>
-                                    <select id="item-supply" class="form-input-sm">
-                                        <option value="">Seleccione...</option>
-                                        ${supplies.map(s => `
-                                            <option value="${s.id}" 
-                                                data-unit="${s.unit}" 
-                                                data-equivalence="${s.equivalence || 0}" 
-                                                data-purchase-unit="${s.purchase_unit || ''}">
-                                                ${s.name} (${s.unit})
-                                            </option>
-                                        `).join('')}
-                                    </select>
-                                    <label style="font-size: 0.75rem; cursor: pointer; color: #2563eb; display: none; margin-top:2px;" id="lbl-use-presentation">
-                                        <input type="checkbox" id="item-use-presentation"> 
-                                        <span>Usar Presentación</span>
-                                    </label>
-                                </div>
+                            <!-- Input Container Highlighted -->
+                            <div class="add-item-container">
+                                <div class="grid-items-input">
+                                    <div class="form-control-group">
+                                        <label class="form-label">Producto / Insumo</label>
+                                        <select id="item-supply" class="form-input-sm">
+                                            <option value="">Seleccione...</option>
+                                            ${supplies.map(s => `
+                                                <option value="${s.id}" 
+                                                    data-unit="${s.unit}" 
+                                                    data-equivalence="${s.equivalence || 0}" 
+                                                    data-purchase-unit="${s.purchase_unit || ''}">
+                                                    ${s.name} (${s.unit})
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                        <label style="font-size: 0.75rem; cursor: pointer; color: #2563eb; display: none; margin-top:4px;" id="lbl-use-presentation">
+                                            <input type="checkbox" id="item-use-presentation"> 
+                                            <span style="margin-left:4px;">Usar Presentación</span>
+                                        </label>
+                                    </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Marca / Detalle</label>
-                                    <input type="text" id="item-brand" class="form-input-sm" placeholder="Ej: Primor" />
-                                </div>
+                                    <div class="form-control-group">
+                                        <label class="form-label">Marca / Detalle</label>
+                                        <input type="text" id="item-brand" class="form-input-sm" placeholder="Ej: Primor" />
+                                    </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label" id="lbl-item-quantity">Cantidad</label>
-                                    <input type="number" id="item-quantity" step="0.01" class="form-input-sm" placeholder="0.00" />
-                                </div>
+                                    <div class="form-control-group">
+                                        <label class="form-label" id="lbl-item-quantity">Cant.</label>
+                                        <input type="number" id="item-quantity" step="0.01" class="form-input-sm text-right" placeholder="0.00" />
+                                    </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Total USD ($)</label>
-                                    <input type="number" id="item-total" step="0.01" class="form-input-sm" placeholder="0.00" style="font-weight:bold; color:#15803d;" />
-                                </div>
+                                    <div class="form-control-group">
+                                        <label class="form-label">Total USD ($)</label>
+                                        <input type="number" id="item-total" step="0.01" class="form-input-sm input-currency input-total-usd" placeholder="0.00" />
+                                    </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Total Bs</label>
-                                    <input type="number" id="item-total-bs" step="0.01" class="form-input-sm" placeholder="0.00" style="color:#ea580c;" />
-                                </div>
+                                    <div class="form-control-group">
+                                        <label class="form-label">Total Bs</label>
+                                        <input type="number" id="item-total-bs" step="0.01" class="form-input-sm input-currency input-total-bs" placeholder="0.00" />
+                                    </div>
 
-                                <button type="button" id="btn-add-item" class="btn-add-item" title="Agregar Item">
-                                    +
-                                </button>
-                                
-                                <!-- Hidden Unit Price Calc -->
-                                <input type="hidden" id="item-price" />
+                                    <button type="button" id="btn-add-item" class="btn-add-item" title="Agregar a la lista (Enter)">
+                                        ➕ Agregar
+                                    </button>
+                                    
+                                    <!-- Hidden Unit Price Calc -->
+                                    <input type="hidden" id="item-price" />
+                                </div>
                             </div>
 
                             <!-- Table -->
@@ -338,7 +340,8 @@ export const PurchasesView = {
                                     </thead>
                                     <tbody id="items-tbody">
                                         <tr class="empty-row">
-                                            <td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">
+                                            <td colspan="6" style="text-align:center; padding:30px; color:#94a3b8; background:#f8fafc;">
+                                                <div style="font-size:2rem; margin-bottom:10px;">📋</div>
                                                 Agregue items a la lista
                                             </td>
                                         </tr>
@@ -350,7 +353,7 @@ export const PurchasesView = {
                         <!-- FOOTER: TOTALES & ACCIONES -->
                         <div class="purchase-footer">
                             <div style="flex:1;">
-                                <label class="form-label">Notas / Observaciones</label>
+                                <label class="form-label">📝 Notas / Observaciones</label>
                                 <textarea id="purchase-notes" name="notes" rows="3" class="form-input-sm" style="width:100%; margin-top:5px;" placeholder="Comentarios adicionales..."></textarea>
                             </div>
 
@@ -363,16 +366,15 @@ export const PurchasesView = {
                                     <span>TOTAL USD:</span>
                                     <span id="total-usd">$0.00</span>
                                 </div>
-                                <div class="total-row" style="color:var(--text-muted); font-size:0.9rem;">
-                                    <span>Equivalente Bs:</span>
-                                    <span id="total-bs">Bs 0.00</span>
+                                <div class="total-bs-display" id="total-bs">
+                                    Bs 0.00
                                 </div>
                             </div>
                         </div>
 
-                        <div style="margin-top:20px; text-align:right; border-top:1px solid var(--border); padding-top:20px;">
-                            <button type="button" class="btn-secondary" id="cancel-purchase" style="margin-right:10px;">Cancelar</button>
-                            <button type="submit" class="btn-primary" id="submit-purchase" style="min-width:150px;">
+                        <div style="margin-top:25px; text-align:right; border-top:1px solid #e2e8f0; padding-top:20px; display:flex; justify-content:flex-end; gap:15px;">
+                            <button type="button" class="btn-secondary" id="cancel-purchase">Cancelar</button>
+                            <button type="submit" class="btn-primary" id="submit-purchase" style="min-width:180px; font-size:1.05rem;">
                                 💾 Procesar Compra
                             </button>
                         </div>

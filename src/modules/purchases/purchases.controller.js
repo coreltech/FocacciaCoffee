@@ -390,6 +390,34 @@ function setupItemCalculationListeners() {
         calculateUnitPrice();
     });
 
+    // KEYBOARD SUPPORT: Enter on Quantity -> Move to Total or Add if Total calculated
+    qtyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (totalInput.value && parseFloat(totalInput.value) > 0) {
+                document.getElementById('btn-add-item').click();
+            } else {
+                totalInput.focus();
+            }
+        }
+    });
+
+    // KEYBOARD SUPPORT: Enter on Total -> Add Item
+    totalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-add-item').click();
+        }
+    });
+
+    // KEYBOARD SUPPORT: Enter on Total Bs -> Add Item
+    totalBsInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-add-item').click();
+        }
+    });
+
     // Si cambia Total Bs -> Calcula USD y Unit
     totalBsInput.addEventListener('input', () => {
         const bsVal = parseFloat(totalBsInput.value) || 0;
@@ -539,6 +567,9 @@ function addPurchaseItem() {
     brandInput.value = '';
     quantityInput.value = '';
     totalInput.value = '';
+
+    // FOCUS MANAGEMENT: Return to supply select for rapid entry
+    supplySelect.focus();
     document.getElementById('item-total-bs').value = '';
     priceInput.value = '';
     if (usePresCheck) usePresCheck.checked = false;
