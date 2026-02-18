@@ -220,7 +220,7 @@ export const PurchasesView = {
                     
                     <!-- Header con Gradiente y Patrón -->
                     <div class="purchase-header-bar">
-                        <h3>📦 Nueva Compra</h3>
+                        <h3 id="modal-title">📦 Nueva Compra</h3>
                         <button class="btn-close" id="close-purchase-modal" title="Cerrar">✕</button>
                     </div>
                     
