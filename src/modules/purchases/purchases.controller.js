@@ -775,14 +775,21 @@ async function viewPurchaseDetails(id) {
                             </tbody>
                         </table>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                             <div>
-                                <p><strong>Total USD:</strong> $${parseFloat(purchase.total_usd).toFixed(2)}</p>
-                                <p><strong>Total Bs:</strong> Bs ${parseFloat(purchase.total_bs).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</p>
+                                <p style="font-size:1.1rem;"><strong>Total USD:</strong> $${parseFloat(purchase.total_usd).toFixed(2)}</p>
+                                <p style="font-size:1.1rem; color:#64748b;"><strong>Total Bs:</strong> Bs ${parseFloat(purchase.total_bs).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</p>
                             </div>
-                            <button class="btn-primary" onclick="window.editPurchase('${purchase.id}')">✏️ Editar Compra</button>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn-secondary" style="background:#fee2e2; color:#ef4444; border:1px solid #fecaca;" onclick="window.deletePurchase('${purchase.id}')">
+                                    🗑️ Eliminar
+                                </button>
+                                <button class="btn-primary" onclick="window.editPurchase('${purchase.id}')">
+                                    ✏️ Editar Compra
+                                </button>
+                            </div>
                         </div>
-                        ${purchase.notes ? `<p><strong>Notas:</strong> ${purchase.notes}</p>` : ''}
+                        ${purchase.notes ? `<p style="margin-top:10px;"><strong>Notas:</strong> ${purchase.notes}</p>` : ''}
                     </div>
                 </div>
             </div>
@@ -795,6 +802,29 @@ async function viewPurchaseDetails(id) {
         showNotification('Error al cargar detalles de la compra', 'error');
     }
 }
+
+// Add Delete Function to Window
+window.deletePurchase = async function (id) {
+    if (!confirm('⚠️ ¿ESTÁ SEGURO?\n\nEsta acción eliminará la compra y descontará el stock agregado.\nNo se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        await PurchasesService.delete(id);
+
+        // Remove modals if open
+        document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+
+        showNotification('🗑️ Compra eliminada exitosamente', 'success');
+
+        // Reload list
+        await loadPurchasesTab();
+
+    } catch (error) {
+        console.error('Error eliminando compra:', error);
+        showNotification('Error eliminando compra: ' + error.message, 'error');
+    }
+};
 
 // ============================================
 // UTILIDADES

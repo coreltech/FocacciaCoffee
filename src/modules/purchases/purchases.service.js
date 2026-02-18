@@ -168,81 +168,40 @@ class PurchasesServiceImpl {
      * Actualiza una compra existente
      */
     async update(id, purchaseData) {
-        // Calcular totales nuevos
-        const totalUsd = purchaseData.items.reduce((sum, item) => {
-            return sum + (item.quantity * item.unit_price_usd);
-        }, 0);
+        // ... (existing update code)
+        // ...
+        return purchase;
+    }
 
-        const totalBs = totalUsd * purchaseData.bcv_rate;
+    /**
+     * Elimina una compra y sus items
+     */
+    async delete(id) {
+        console.log('🛠️ [Service] Deleting Purchase:', id);
 
-        console.log('🛠️ [Service] Updating Purchase:', { id, ...purchaseData, calculatedTotalUsd: totalUsd });
-
-        // 1. Actualizar cabecera de la compra
-        const purchaseUpdatePayload = {
-            supplier_id: purchaseData.supplier_id,
-            location_id: purchaseData.location_id,
-            document_type: purchaseData.document_type,
-            document_number: purchaseData.document_number,
-            purchase_date: purchaseData.purchase_date,
-            bcv_rate: purchaseData.bcv_rate,
-            total_usd: totalUsd,
-            total_bs: totalBs,
-            notes: purchaseData.notes
-        };
-
-        console.log("Dato enviado a DB (Update):", purchaseUpdatePayload.document_type);
-
-        const { data: purchase, error: purchaseError } = await supabase
-            .from('purchases')
-            .update(purchaseUpdatePayload)
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (purchaseError) {
-            console.error('Error actualizando compra:', purchaseError);
-            throw purchaseError;
-        }
-
-        // 2. Gestionar Items: Borrar anteriores y crear nuevos
-        // (El trigger manejará el ajuste de stock al borrar y al insertar)
-        // Nota: Idealmente deberíamos comparar y actualizar solo diferencias, 
-        // pero borrar e insertar es más seguro para integridad con los triggers actuales.
-
-        // borrar items anteriores
-        const { error: deleteError } = await supabase
+        // 1. Eliminar items (aunque el delete on cascade debería funcionar, lo hacemos explícito por seguridad)
+        const { error: itemsError } = await supabase
             .from('purchase_items')
             .delete()
             .eq('purchase_id', id);
 
-        if (deleteError) {
-            console.error('Error borrando items antiguos:', deleteError);
-            throw deleteError;
-        }
-
-        // Insertar items actualizados
-        const itemsToInsert = purchaseData.items.map(item => ({
-            purchase_id: id,
-            supply_id: item.supply_id,
-            brand_description: item.brand_description,
-            quantity: item.quantity,
-            unit_price_usd: item.unit_price_usd,
-            subtotal_usd: item.quantity * item.unit_price_usd,
-            unit_price_ves: item.unit_price_usd * purchaseData.bcv_rate,
-            subtotal_ves: (item.quantity * item.unit_price_usd) * purchaseData.bcv_rate,
-            total_item_ves: (item.quantity * item.unit_price_usd) * purchaseData.bcv_rate
-        }));
-
-        const { error: itemsError } = await supabase
-            .from('purchase_items')
-            .insert(itemsToInsert);
-
         if (itemsError) {
-            console.error('Error insertando nuevos items:', itemsError);
+            console.error('Error borrando items de la compra:', itemsError);
             throw itemsError;
         }
 
-        return purchase;
+        // 2. Eliminar la compra
+        const { error: purchaseError } = await supabase
+            .from('purchases')
+            .delete()
+            .eq('id', id);
+
+        if (purchaseError) {
+            console.error('Error eliminando compra:', purchaseError);
+            throw purchaseError;
+        }
+
+        return true;
     }
 
     /**

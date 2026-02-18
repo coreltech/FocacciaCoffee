@@ -66,6 +66,9 @@ export const PurchasesView = {
                     <button class="btn-icon" data-action="view" data-id="${purchase.id}" title="Ver detalles">
                         👁️
                     </button>
+                    <button class="btn-icon" onclick="window.deletePurchase('${purchase.id}')" title="Eliminar" style="color:#ef4444;">
+                        🗑️
+                    </button>
                 </td>
             </tr>
         `).join('');
