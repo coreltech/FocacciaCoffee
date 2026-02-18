@@ -123,3 +123,10 @@ Para problemas técnicos, revisa:
 
 Propietario: Focaccia Plus & Coffee  
 Todos los derechos reservados.
+
+## 📚 Documentación del Proyecto
+Para entender mejor cómo funciona el sistema y ver el historial de cambios, consulta los siguientes documentos:
+
+*   [🗺️ Auditoría del Sistema](documentacion/system_audit_report.md) - Mapa de arquitectura, módulos y dependencias.
+*   [🚀 Plan de Implementación](documentacion/implementation_plan.md) - Hoja de ruta, fases completadas y plan futuro (Fase 8).
+*   [🚨 Post-Mortem (Incidente Ventas)](documentacion/post_mortem.md) - Análisis del fallo crítico del 18/02 y soluciones aplicadas.
