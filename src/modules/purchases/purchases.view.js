@@ -251,7 +251,7 @@ export const PurchasesView = {
                                 <div class="modern-input-group">
                                     <label class="modern-label">Fecha</label>
                                     <input type="date" id="purchase-date" name="purchase_date" class="modern-input" 
-                                           value="${new Date().toISOString().split('T')[0]}" required />
+                                           value="${new Date().toLocaleDateString('en-CA')}" required />
                                 </div>
 
                                 <div class="modern-input-group">

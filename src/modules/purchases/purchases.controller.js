@@ -685,8 +685,8 @@ async function handlePurchaseSubmit(e) {
         location_id: formData.get('location_id'),
         document_type: formData.get('document_type'),
         document_number: formData.get('document_number'),
-        // FIX TIMEZONE: Append T12:00:00 to ensure it falls within the correct day regardless of UTC shift
-        purchase_date: formData.get('purchase_date') ? `${formData.get('purchase_date')}T12:00:00` : new Date().toISOString(),
+        // FIX TIMEZONE: Append current time to ensure it falls within the correct day
+        purchase_date: formData.get('purchase_date') ? `${formData.get('purchase_date')}T${new Date().toLocaleTimeString('en-GB')}` : new Date().toLocaleString('sv').replace(' ', 'T'),
         bcv_rate: parseFloat(formData.get('bcv_rate')),
         notes: formData.get('notes'),
         items: currentPurchaseItems
