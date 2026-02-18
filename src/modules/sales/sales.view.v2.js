@@ -576,7 +576,8 @@ export const SalesView = {
             const card = document.createElement('div');
             card.style.cssText = "background:white; border:1px solid #e2e8f0; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;";
 
-            const isPaid = s.payment_status === 'pagado';
+            const status = (s.payment_status || "").toLowerCase();
+            const isPaid = status === 'pagado' || (Number(s.balance_due) <= 0.01);
             const statusColor = isPaid ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
             const statusText = isPaid ? 'PAGADO' : 'PENDIENTE';
 
