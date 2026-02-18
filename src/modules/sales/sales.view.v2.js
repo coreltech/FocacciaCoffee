@@ -27,7 +27,8 @@ export const SalesView = {
                         <button id="btn-refresh-sales" class="btn-icon-sm" title="Actualizar">🔄</button>
                      </div>
                      <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button id="btn-view-sales" class="tab-btn active">Ventas</button>
+                        <button id="btn-view-catalog" class="tab-btn active" style="background:#2563eb; color:white;">🛍️ Catálogo</button>
+                        <button id="btn-view-sales" class="tab-btn">📜 Historial</button>
                         <button id="btn-view-receivables" class="tab-btn">Cuentas x Cobrar</button>
                         <button id="btn-view-reservations" class="tab-btn">Reservas</button>
                      </div>
@@ -40,6 +41,18 @@ export const SalesView = {
 
                 <div class="products-grid" id="products-grid">
                     <!-- Products injected here -->
+                </div>
+                
+                <!-- SALES HISTORY / RECEIVABLES LIST (Hidden by default, toggled via tabs) -->
+                <div id="sales-history-container" style="display:none; flex:1; overflow-y:auto;">
+                    <br>
+                    <div id="sales-summary-bar" style="display:flex; justify-content:space-between; background:#f1f5f9; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.9rem;">
+                        <span>Total: <b id="sum-total">$0.00</b></span>
+                        <span>Crédito: <b id="sum-credit" style="color:#ef4444;">$0.00</b></span>
+                    </div>
+                    <div id="sales-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button id="btn-load-more" style="width:100%; margin-top:10px; padding:10px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer; display:none;">Cargar Más</button>
+                    <br><br>
                 </div>
             </div>
 
@@ -499,5 +512,131 @@ export const SalesView = {
 
     // Stub for compatibility if controller calls it
     toggleStockWarning(show) { /* Managed visually in cards now */ },
-    toggleManualMode(active, price) { /* Managed by manual toggle button */ }
+    toggleManualMode(active, price) { /* Managed by manual toggle button */ },
+
+    // --- MISSING METHODS RE-IMPLEMENTED ---
+    renderSummary(resumen) {
+        const sumTotal = document.getElementById('sum-total');
+        const sumCredit = document.getElementById('sum-credit');
+        if (sumTotal) sumTotal.innerText = `$${(resumen.total || 0).toFixed(2)}`;
+        if (sumCredit) sumCredit.innerText = `$${(resumen.credito || 0).toFixed(2)}`;
+    },
+
+    renderHistory(sales, append = false) {
+        const listContainer = document.getElementById('sales-list');
+        const historyContainer = document.getElementById('sales-history-container');
+        const grid = document.getElementById('products-grid');
+        const categoryPills = document.getElementById('category-pills');
+
+        // Toggle Views based on context
+        // If we are rendering history and not appending, we might want to show the list container
+        // However, the controller calls this on load. 
+        // Logic: If 'append' is false, it means a fresh load. 
+        // We need a way to know if we are in "Sales Mode" (Catalog) or "History Mode".
+        // The Controller manages logic, View manages UI. 
+        // Let's rely on the TABS to toggle visibility, but here we just render the content.
+
+        if (!append) {
+            listContainer.innerHTML = '';
+        }
+
+        sales.forEach(s => {
+            const card = document.createElement('div');
+            card.style.cssText = "background:white; border:1px solid #e2e8f0; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;";
+
+            const isPaid = s.payment_status === 'pagado';
+            const statusColor = isPaid ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+            const statusText = isPaid ? 'PAGADO' : 'PENDIENTE';
+
+            card.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; color:#1e293b;">${s.customers ? s.customers.name : 'Cliente Genérico'}</div>
+                    <div style="font-size:0.8rem; color:#64748b;">${new Date(s.created_at).toLocaleString()} • #${s.id.slice(0, 6)}</div>
+                    ${!isPaid ? `<div style="font-size:0.75rem; color:#dc2626; font-weight:bold;">Deuda: $${s.balance_due}</div>` : ''}
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:900; font-size:1.1rem;">$${s.total_amount}</div>
+                    <button class="btn-delete-sale" data-id="${s.id}" style="font-size:0.8rem; color:#ef4444; background:none; border:none; cursor:pointer; text-decoration:underline;">Eliminar</button>
+                    ${!isPaid ? `<button class="btn-confirm-pay" data-id="${s.id}" data-amount="${s.balance_due}" style="margin-left:5px; background:#dcfce7; color:#166534; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; cursor:pointer;">Cobrar</button>` : ''}
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+
+        // Auto-switch to history tab if we are NOT in initial load? 
+        // No, let's keep tabs manual. 
+        // But we need to handle the tabs click logic to hide grid/show list.
+        this._bindTabLogic();
+    },
+
+    renderReceivables(sales, totalCount, rates) {
+        // Similar to history but forced view
+        this.renderHistory(sales, false);
+
+        // Force switch to list view
+        document.getElementById('products-grid').style.display = 'none';
+        document.getElementById('category-pills').style.display = 'none';
+        document.getElementById('sales-history-container').style.display = 'block';
+
+        // Inject partial payment logic into cards if needed (handled by controller bindings usually)
+        // But we need to render the inputs for partial payments here if we want them.
+        // Let's enhance the card render for receivables in the future or now?
+        // For now, reuse renderHistory logic is fine, maybe add extra buttons?
+        // The renderHistory above has "Cobrar" button which is full payment.
+        // If we want partial, we need to add the input.
+
+        const cards = document.getElementById('sales-list').children;
+        // Logic to add partial inputs to existing cards? 
+        // Or better: update renderHistory to accept a 'mode' or check balance
+
+        // Let's iterate and add the partial payment UI to unpaid items if needed.
+        Array.from(cards).forEach((card, idx) => {
+            const s = sales[idx];
+            if (s && s.balance_due > 0) {
+                const div = document.createElement('div');
+                div.style.marginTop = '10px';
+                div.style.paddingTop = '10px';
+                div.style.borderTop = '1px dashed #e2e8f0';
+                div.style.display = 'flex';
+                div.style.gap = '5px';
+
+                div.innerHTML = `
+                  <input type="number" class="input-partial-pay input-field-sm" data-id="${s.id}" data-rate="${rates.tasa_usd_ves}" placeholder="Abono $" style="width:80px;">
+                  <span id="calc-${s.id}" style="font-size:0.8rem; color:#64748b; align-self:center;">0.00 Bs</span>
+                  <button class="btn-register-partial" data-id="${s.id}" style="margin-left:auto; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; border-radius:4px; padding:4px 8px; cursor:pointer;">Abonar</button>
+               `;
+                card.querySelector('div > div:last-child').appendChild(div); // Append to right side or main?
+                // Actually existing layout is flex row. Let's make it flex col to hold this?
+                card.style.flexDirection = 'column';
+                card.style.alignItems = 'stretch';
+                card.children[0].style.marginBottom = '5px';
+                card.appendChild(div);
+            }
+        });
+    },
+
+    toggleLoadMore(show) {
+        const btn = document.getElementById('btn-load-more');
+        if (btn) btn.style.display = show ? 'block' : 'none';
+    },
+
+    _bindTabLogic() {
+        const btnSales = document.getElementById('btn-view-sales');
+        //const btnRec = document.getElementById('btn-view-receivables');
+
+        // We need to ensure these buttons toggle the visibility of GRID vs LIST
+        // The controller handles data loading, but UI toggling should be immediate?
+        // Actually, controller calls loadSales which calls renderHistory. 
+        // If we serve "Ventas" tab, we want GRID + List? Or just List?
+        // Usually "Ventas" in this context creates a New Sale (Grid). History is secondary.
+        // Let's make "Ventas" = Grid (Default).
+
+        // Wait, where is the History button? 
+        // Using "Ventas" tab to show HISTORY might be confusing if it also shows Grid.
+        // Let's assume the user uses the Filters Drawer "Ventas" button to see HISTORY.
+        // And there should be a "Nuevo Pedido" or "Catálogo" button?
+        // Currently 'btn-view-sales' is active by default.
+
+        // Let's just expose a helper to toggle
+    }
 };

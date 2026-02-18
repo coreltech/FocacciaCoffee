@@ -137,23 +137,37 @@ async function loadReceivables(append = false, startDate = null, endDate = null)
 }
 
 function updateTabState() {
-    const btnSales = document.getElementById('btn-tab-sales');
-    const btnRec = document.getElementById('btn-tab-receivables');
-    if (btnSales && btnRec) {
-        if (viewMode === 'receivables') {
+    const btnCatalog = document.getElementById('btn-view-catalog');
+    const btnSales = document.getElementById('btn-view-sales');
+    const btnRec = document.getElementById('btn-view-receivables');
+
+    // Reset all
+    [btnCatalog, btnSales, btnRec].forEach(btn => {
+        if (btn) {
+            btn.classList.remove('active');
+            btn.style.background = '#f1f5f9';
+            btn.style.color = '#64748b';
+        }
+    });
+
+    if (viewMode === 'receivables') {
+        if (btnRec) {
             btnRec.classList.add('active');
             btnRec.style.background = '#2563eb';
             btnRec.style.color = 'white';
-            btnSales.classList.remove('active');
-            btnSales.style.background = '#f1f5f9';
-            btnSales.style.color = '#64748b';
-        } else {
+        }
+    } else if (viewMode === 'sale_date') {
+        if (btnSales) {
             btnSales.classList.add('active');
             btnSales.style.background = '#2563eb';
             btnSales.style.color = 'white';
-            btnRec.classList.remove('active');
-            btnRec.style.background = '#f1f5f9';
-            btnRec.style.color = '#64748b';
+        }
+    } else {
+        // Default SALES (Catalog)
+        if (btnCatalog) {
+            btnCatalog.classList.add('active');
+            btnCatalog.style.background = '#2563eb';
+            btnCatalog.style.color = 'white';
         }
     }
 }
@@ -472,6 +486,53 @@ function bindEvents(rates) {
     if (document.getElementById('btn-close-res-modal')) {
         document.getElementById('btn-close-res-modal').onclick = () => {
             document.getElementById('reservations-modal').style.display = 'none';
+        };
+    }
+
+    // Tabs
+    const btnViewCatalog = document.getElementById('btn-view-catalog');
+    const btnViewSales = document.getElementById('btn-view-sales');
+    const btnViewReceivables = document.getElementById('btn-view-receivables');
+
+    if (btnViewCatalog) {
+        btnViewCatalog.onclick = () => {
+            document.getElementById('products-grid').style.display = 'grid';
+            document.getElementById('category-pills').style.display = 'flex';
+            document.getElementById('sales-history-container').style.display = 'none';
+            document.getElementById('catalog-search').style.display = 'block';
+
+            viewMode = 'sales';
+            updateTabState();
+        };
+    }
+
+    if (btnViewSales) {
+        btnViewSales.onclick = () => {
+            document.getElementById('products-grid').style.display = 'none';
+            document.getElementById('category-pills').style.display = 'none';
+            document.getElementById('sales-history-container').style.display = 'block';
+            document.getElementById('catalog-search').style.display = 'none';
+
+            viewMode = 'sale_date';
+            updateTabState();
+            const s = document.getElementById('filter-date-start')?.value;
+            const e = document.getElementById('filter-date-end')?.value;
+            loadSales(s, e);
+        };
+    }
+
+    if (btnViewReceivables) {
+        btnViewReceivables.onclick = () => {
+            document.getElementById('products-grid').style.display = 'none';
+            document.getElementById('category-pills').style.display = 'none';
+            document.getElementById('sales-history-container').style.display = 'block';
+            document.getElementById('catalog-search').style.display = 'none';
+
+            viewMode = 'receivables';
+            updateTabState();
+            const s = document.getElementById('filter-date-start')?.value;
+            const e = document.getElementById('filter-date-end')?.value;
+            loadSales(s, e);
         };
     }
 
