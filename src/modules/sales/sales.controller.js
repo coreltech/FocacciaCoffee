@@ -140,9 +140,10 @@ function updateTabState() {
     const btnCatalog = document.getElementById('btn-view-catalog');
     const btnSales = document.getElementById('btn-view-sales');
     const btnRec = document.getElementById('btn-view-receivables');
+    const btnRes = document.getElementById('btn-view-reservations');
 
     // Reset all
-    [btnCatalog, btnSales, btnRec].forEach(btn => {
+    [btnCatalog, btnSales, btnRec, btnRes].forEach(btn => {
         if (btn) {
             btn.classList.remove('active');
             btn.style.background = '#f1f5f9';
@@ -161,6 +162,12 @@ function updateTabState() {
             btnSales.classList.add('active');
             btnSales.style.background = '#2563eb';
             btnSales.style.color = 'white';
+        }
+    } else if (viewMode === 'reservations') {
+        if (btnRes) {
+            btnRes.classList.add('active');
+            btnRes.style.background = '#2563eb';
+            btnRes.style.color = 'white';
         }
     } else {
         // Default SALES (Catalog)
@@ -474,13 +481,22 @@ function bindEvents(rates) {
     const btnViewReservations = document.getElementById('btn-view-reservations');
     if (btnViewReservations) {
         btnViewReservations.onclick = async () => {
-            const modal = document.getElementById('reservations-modal');
-            modal.style.display = 'flex';
-            document.getElementById('reservations-content').innerHTML = 'Loading...';
+            document.getElementById('products-grid').style.display = 'none';
+            document.getElementById('category-pills').style.display = 'none';
+            document.getElementById('sales-history-container').style.display = 'block';
+            document.getElementById('catalog-search').style.display = 'none';
+
+            viewMode = 'reservations';
+            updateTabState();
+
+            document.getElementById('sales-history-container').innerHTML = '<p style="text-align:center; padding:20px; color:#64748b;">Cargando reservas...</p>';
             try {
                 const data = await SalesService.getUpcomingReservations();
-                SalesView.renderReservationsModal(data);
-            } catch (e) { console.error(e); }
+                SalesView.renderReservationsList(data);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('sales-history-container').innerHTML = `<p style="color:red; text-align:center;">Error: ${e.message}</p>`;
+            }
         };
     }
     if (document.getElementById('btn-close-res-modal')) {

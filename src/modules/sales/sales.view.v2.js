@@ -486,8 +486,76 @@ export const SalesView = {
     },
 
     // ... (Helpers for Reservations/Recievables can stay similar or be adapted) ...
+    renderReservationsList(data) {
+        // data is { "YYYY-MM-DD": { items: { "Product": qty }, details: [] } }
+        const container = document.getElementById('sales-history-container');
+        const listContainer = document.getElementById('sales-list');
+        const summaryBar = document.getElementById('sales-summary-bar');
+
+        // Toggle Visibility
+        document.getElementById('products-grid').style.display = 'none';
+        document.getElementById('category-pills').style.display = 'none';
+        container.style.display = 'block';
+
+        // Clear Summary Bar for Reservations Mode (Maybe show "Total Orders"?)
+        if (summaryBar) {
+            const totalOrders = Object.values(data).reduce((acc, d) => acc + d.details.length, 0);
+            summaryBar.innerHTML = `
+                <div style="width:100%; text-align:center;">
+                    <span style="font-size:0.9rem; color:#64748b;">Reservas Pendientes</span>
+                    <div style="font-size:1.5rem; font-weight:800; color:#2563eb;">${totalOrders} Odr</div>
+                </div>
+            `;
+            summaryBar.style.display = 'flex';
+        }
+
+        listContainer.innerHTML = '';
+        const dates = Object.keys(data).sort();
+
+        if (dates.length === 0) {
+            listContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#94a3b8;">No hay reservas futuras.</p>';
+            return;
+        }
+
+        dates.forEach(date => {
+            const dayData = data[date];
+
+            // Header for Day
+            const dayHeader = document.createElement('div');
+            dayHeader.style.cssText = "background:#f0fdf4; padding:10px; border-radius:8px; margin-top:10px; border-left:4px solid #16a34a;";
+            dayHeader.innerHTML = `<h3 style="margin:0; color:#166534;">📅 ${new Date(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</h3>`;
+            listContainer.appendChild(dayHeader);
+
+            // Items for Day
+            dayData.details.forEach(order => {
+                const card = document.createElement('div');
+                card.style.cssText = "background:white; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;";
+
+                const isPaid = (order.status || '').toLowerCase() === 'pagado';
+                const statusBadge = isPaid
+                    ? `<span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-size:0.7rem;">PAGADO</span>`
+                    : `<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px; font-size:0.7rem;">PENDIENTE</span>`;
+
+                card.innerHTML = `
+                    <div>
+                        <div style="font-weight:bold; color:#334155;">${order.customer}</div>
+                        <div style="display:flex; align-items:center; gap:5px; font-size:0.9rem;">
+                            <span>${order.product}</span>
+                            <b style="background:#e0f2fe; color:#0369a1; padding:0 5px; border-radius:10px;">x${order.qty}</b>
+                        </div>
+                    </div>
+                    <div>
+                        ${statusBadge}
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        });
+    },
+
     renderReservationsModal(data) {
-        // Reuse logic but target new modal ID structure if changed
+        // Keep for legacy or if we want to revert, but effectively superseded by renderReservationsList
+        // ... (unchanged)
         const content = document.getElementById('reservations-content');
         if (!content) return;
 
@@ -590,8 +658,16 @@ export const SalesView = {
                     <div style="font-size:0.8rem; color:#64748b;">
                         ${new Date(s.created_at).toLocaleString()} • #${s.id.slice(0, 6)}
                     </div>
-                    ${isPaid && s.payment_date ? `<div style="font-size:0.75rem; color:#059669;">Pagado el: ${new Date(s.payment_date).toLocaleDateString()}</div>` : ''}
-                    ${!isPaid ? `<div style="font-size:0.75rem; color:#dc2626; font-weight:bold;">Deuda: $${s.balance_due}</div>` : ''}
+                    
+                    <div style="display:flex; gap:5px; margin-top:2px;">
+                         ${s.order_type === 'delivery'
+                    ? `<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">🛵 Delivery: ${s.delivery_date || 'N/A'}</span>`
+                    : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem;">📍 ${s.order_type || 'Pickup'}</span>`
+                }
+                    </div>
+
+                    ${isPaid && s.payment_date ? `<div style="font-size:0.75rem; color:#059669; margin-top:2px;">Pagado el: ${new Date(s.payment_date).toLocaleDateString()}</div>` : ''}
+                    ${!isPaid ? `<div style="font-size:0.75rem; color:#dc2626; font-weight:bold; margin-top:2px;">Deuda: $${Number(s.balance_due).toFixed(2)}</div>` : ''}
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:900; font-size:1.1rem;">$${s.total_amount}</div>
@@ -609,7 +685,23 @@ export const SalesView = {
     },
 
     renderReceivables(sales, totalCount, rates) {
-        // Similar to history but forced view
+        // Calculate Total Debt
+        const totalDebt = sales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
+
+        // 1. Render Summary Bar specifically for Receivables
+        const summaryBar = document.getElementById('sales-summary-bar');
+        if (summaryBar) {
+            summaryBar.innerHTML = `
+                <div style="width:100%; text-align:center;">
+                    <span style="font-size:0.9rem; color:#64748b;">Total por Cobrar</span>
+                    <div style="font-size:1.8rem; font-weight:900; color:#dc2626;">$${totalDebt.toFixed(2)}</div>
+                    <div style="font-size:0.8rem; color:#94a3b8;">${sales.length} Deudores</div>
+                </div>
+            `;
+            summaryBar.style.display = 'flex';
+        }
+
+        // 2. Reuse history render for the list
         this.renderHistory(sales, false);
 
         // Force switch to list view
