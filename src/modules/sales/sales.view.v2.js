@@ -1,749 +1,382 @@
 export const SalesView = {
     renderLayout(container, initialDate, initialEndDate, rates) {
         container.innerHTML = `
-        <div class="layout">
-            <!-- LEFT: PRODUCT CATALOG -->
-            <div class="glass-panel catalog-panel">
-                <div class="catalog-header">
-                    <div>
-                         <h1 class="gradient-text">🛒 Punto de Venta</h1>
-                         <div style="display:flex; gap:10px; align-items:center;">
-                            <small style="color:#64748b; font-weight:600;">1$ = ${rates.tasa_usd_ves.toFixed(2)} Bs</small>
-                            <button id="btn-toggle-filters" style="background:none; border:none; cursor:pointer; font-size:1rem;">⚙️</button>
-                         </div>
-                    </div>
-                    <div style="position:relative;">
-                        <input type="text" id="catalog-search" class="search-bar" placeholder="🔍 Buscar producto...">
-                        <button id="btn-clear-search" style="position:absolute; right:10px; top:10px; background:none; border:none; cursor:pointer; display:none;">✕</button>
-                    </div>
-                </div>
+        <div class="main-container">
+            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
+                <div>
+                    <h1 id="sales-title" style="font-size: 1.8rem; margin:0 0 8px 0;">🛒 Punto de Venta</h1>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <input type="date" id="filter-date-start" value="${initialDate}" class="input-field" 
+                            style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
+                        <span style="font-weight:bold; color:#cbd5e1;">➔</span>
+                        <input type="date" id="filter-date-end" value="${initialEndDate || initialDate}" class="input-field" 
+                            style="padding:8px 12px; font-size:0.85rem; border:2px solid #e2e8f0; border-radius:6px;">
+                        
+                        <div style="display:flex; align-items:center; gap:5px; background:white; padding:5px 10px; border-radius:6px; border:1px solid #e2e8f0;">
+                            <input type="checkbox" id="chk-view-delivery" style="cursor:pointer;">
+                            <label for="chk-view-delivery" style="font-size:0.8rem; cursor:pointer; user-select:none;">Ver Entregas/Reservas</label>
+                        </div>
 
-                <!-- FILTERS DRAWER (Hidden by default) -->
-                <div id="filters-drawer" style="display:none; padding-bottom:15px; margin-bottom:15px; border-bottom:1px solid #e2e8f0;">
-                     <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="date" id="filter-date-start" value="${initialDate}" class="input-field-sm">
-                        <span style="color:#cbd5e1;">➔</span>
-                        <input type="date" id="filter-date-end" value="${initialEndDate || initialDate}" class="input-field-sm">
-                        <button id="btn-refresh-sales" class="btn-icon-sm" title="Actualizar">🔄</button>
-                     </div>
-                     <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button id="btn-view-catalog" class="tab-btn active" style="background:#2563eb; color:white;">🛍️ Catálogo</button>
-                        <button id="btn-view-sales" class="tab-btn">📜 Historial</button>
-                        <button id="btn-view-receivables" class="tab-btn">Cuentas x Cobrar</button>
-                        <button id="btn-view-reservations" class="tab-btn">Reservas</button>
-                     </div>
-                </div>
-
-                <div class="categories" id="category-pills">
-                    <div class="cat-pill active" data-cat="all">Todos</div>
-                    <!-- Dynamic categories -->
-                </div>
-
-                <div class="products-grid" id="products-grid">
-                    <!-- Products injected here -->
-                </div>
-                
-                <!-- SALES HISTORY / RECEIVABLES LIST (Hidden by default, toggled via tabs) -->
-                <div id="sales-history-container" style="display:none; flex:1; overflow-y:auto;">
-                    <br>
-                    <div id="sales-summary-bar" style="display:flex; justify-content:space-between; background:#f1f5f9; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.9rem;">
-                        <span>Total: <b id="sum-total">$0.00</b></span>
-                        <span>Crédito: <b id="sum-credit" style="color:#ef4444;">$0.00</b></span>
-                    </div>
-                    <div id="sales-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-                    <button id="btn-load-more" style="width:100%; margin-top:10px; padding:10px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer; display:none;">Cargar Más</button>
-                    <br><br>
-                </div>
-            </div>
-
-            <!-- RIGHT: CART -->
-            <div class="glass-panel cart-panel">
-                <h2 style="margin:0 0 10px 0; font-size:1.2rem; color:#1e293b;">🛍️ Orden Actual</h2>
-                
-                <div class="customer-select-area">
-                    <select id="v-customer-id" style="flex:1; padding:10px; border-radius:8px; border:1px solid #cbd5e1; outline:none; background:#f8fafc;">
-                        <option value="">Cliente Genérico</option>
-                    </select>
-                    <button id="btn-add-customer" style="background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; border-radius:8px; width:40px; cursor:pointer; font-weight:bold; font-size:1.2rem;">+</button>
-                    <button id="btn-edit-customer" style="background:#f1f5f9; border:1px solid #e2e8f0; color:#64748b; border-radius:8px; width:40px; cursor:pointer;">✏️</button>
-                </div>
-                
-                <!-- NEW: Order Type Selector (Compact) -->
-                 <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <select id="v-order-type" style="flex:1; padding:8px; border-radius:6px; border:1px solid #e2e8f0; font-size:0.85rem;">
-                        <option value="pickup">📍 Pickup</option>
-                        <option value="delivery">🛵 Delivery</option>
-                        <option value="dine_in">🍽️ En Mesa</option>
-                    </select>
-                    <input type="date" id="v-delivery-date" style="flex:1; padding:8px; border-radius:6px; border:1px solid #e2e8f0; font-size:0.85rem; display:none;" title="Fecha Entrega Futura">
-                 </div>
-                 
-                 <textarea id="v-delivery-address" placeholder="Dirección de entrega..." rows="2" style="width:100%; box-sizing:border-box; padding:8px; margin-bottom:10px; border:1px solid #bae6fd; border-radius:6px; background:#f0f9ff; display:none; resize:none; font-size:0.85rem;"></textarea>
-
-                <div class="cart-items" id="cart-list">
-                    <p style="text-align:center; color:#94a3b8; margin-top:20px;">Carrito vacío</p>
-                </div>
-                
-                <!-- Manual Entry Toggle -->
-                 <div style="margin-top:10px; text-align:center;">
-                    <button id="btn-toggle-manual" style="background:none; border:none; color:#64748b; text-decoration:underline; cursor:pointer; font-size:0.8rem;">+ Item Manual</button>
-                    <div id="manual-entry-box" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-top:5px; text-align:left; border:1px solid #e2e8f0;">
-                        <input type="text" id="manual-desc" placeholder="Descripción" class="input-field-sm" style="width:100%; margin-bottom:5px;">
                         <div style="display:flex; gap:5px;">
-                            <input type="number" id="manual-price" placeholder="$ Precio" class="input-field-sm" style="width:80px;">
-                            <button id="btn-add-manual" style="flex:1; background:#2563eb; color:white; border:none; border-radius:4px; cursor:pointer;">Agregar</button>
+                            <button id="btn-tab-sales" class="tab-btn active" style="background:#2563eb; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋 Ventas</button>
+                            <button id="btn-tab-receivables" class="tab-btn" style="background:#f1f5f9; color:#64748b; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">💰 Cuentas por Cobrar</button>
+                            <button id="btn-view-reservations" class="tab-btn" style="background:#f1f5f9; color:#0f766e; border:1px solid #ccfbf1; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📅 Próximas Reservas</button>
                         </div>
                     </div>
-                 </div>
-
-                <div style="flex:1;"></div>
-
-                <!-- Payment Methods Section (Compact) -->
-                <div id="payment-methods-container" style="max-height:100px; overflow-y:auto; margin-bottom:10px; font-size:0.85rem;">
-                    <!-- Rows added dynamically -->
                 </div>
-                <button id="btn-add-pay-method" style="width:100%; margin-bottom:10px; background:#f1f5f9; border:1px dashed #cbd5e1; padding:5px; border-radius:6px; cursor:pointer; font-size:0.8rem; color:#475569;">+ Método de Pago</button>
-
-                <div class="total-section">
-                    <div style="font-size:0.9rem; opacity:0.8; margin-bottom:5px;">TOTAL A PAGAR</div>
-                    <div style="font-size:2.5rem; font-weight:900;" id="cart-total-usd">$0.00</div>
-                    <div style="font-size:1.1rem; color:#86efac; margin-bottom:10px;" id="cart-total-ves">0.00 Bs</div>
-                    <button id="btn-submit-sale" class="pay-btn" disabled>🚫 CARRITO VACÍO</button>
+                <div style="background:#fff; padding:12px 16px; border-radius:10px; border:2px solid #e2e8f0;">
+                    <small style="color:#64748b; font-weight:800; font-size:0.65rem; display:block; text-align:center;">TASA BCV</small>
+                    <b style="display:block; text-align:center; font-size:1rem; margin-top:2px;">1$ = ${rates.tasa_usd_ves.toFixed(2)} Bs</b>
                 </div>
-            </div>
-            
-            <!-- HIDDEN INPUTS FOR CONTROLLER LOGIC COMPATIBILITY -->
-            <input type="hidden" id="v-qty" value="1">
-            <input type="hidden" id="v-final-price">
-            <input type="hidden" id="v-sale-date" value="${initialDate}">
-        </div>
+            </header>
 
-        <!-- MODALS -->
-        <div id="reservations-modal" class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>📅 Próximas Reservas</h2>
-                    <button id="btn-close-res-modal" class="close-btn">&times;</button>
-                </div>
-                <div id="reservations-content" style="max-height:60vh; overflow-y:auto;"></div>
-            </div>
-        </div>
-
-        <div id="new-customer-modal" class="modal-overlay">
-             <div class="modal-content" style="max-width:400px;">
-                <div class="modal-header">
-                    <h3 id="lbl-cust-form-title">Nuevo Cliente</h3>
-                    <button id="btn-cancel-customer" class="close-btn">&times;</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <input type="hidden" id="edit-cust-id">
-                    <input type="text" id="new-cust-name" placeholder="Nombre Completo *" class="input-field">
-                    <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field">
-                    <input type="email" id="new-cust-email" placeholder="Email" class="input-field">
-                    <textarea id="new-cust-address" placeholder="Dirección" class="input-field" rows="2"></textarea>
+            <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:25px;" class="sales-grid">
+                <!-- COLUMNA IZQUIERDA: FORMULARIO Y CARRITO -->
+                <div class="stat-card" style="padding:25px;">
+                    <h3 style="margin:0 0 20px 0; border-bottom: 2px solid #e2e8f0; padding-bottom:12px; font-size:1.1rem;">📝 Nueva Venta</h3>
                     
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button id="btn-save-customer" class="btn-primary" style="flex:1;">Guardar</button>
-                        <button id="btn-del-customer" style="background:#fee2e2; color:#ef4444; border:none; padding:10px; border-radius:8px; cursor:pointer;" title="Eliminar Cliente">🗑️</button>
+                    <!-- 1. FECHA Y TIPO DE ENTREGA -->
+                    <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 FECHA REGISTRO</label>
+                            <input type="date" id="v-sale-date" class="input-field" value="${initialDate}"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">📅 ENTREGA (OPCIONAL)</label>
+                            <input type="date" id="v-delivery-date" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #bae6fd; border-radius:6px; background-color:#f0f9ff; color:#0369a1; font-weight:bold;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">🚚 TIPO DE ENTREGA</label>
+                            <select id="v-order-type" class="input-field" 
+                                onchange="document.getElementById('div-delivery-address').style.display = (this.value === 'delivery') ? 'block' : 'none'"
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="pickup">📍 Pickup (Retiro)</option>
+                                <option value="delivery">🛵 Delivery</option>
+                                <option value="dine_in">🍽️ En Local</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DIRECCION DE DELIVERY (CONDICIONAL) -->
+                    <div id="div-delivery-address" style="display:none; margin-bottom:15px; background:#f0f9ff; padding:10px; border-radius:6px; border:1px solid #bae6fd;">
+                        <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:5px; color:#0284c7;">📍 DIRECCIÓN DE ENTREGA</label>
+                        <textarea id="v-delivery-address" class="input-field" placeholder="Dirección detallada..." rows="2" style="width:100%; box-sizing:border-box; padding:8px;"></textarea>
+                    </div>
+
+                    <!-- 2. CLIENTE -->
+                     <div class="input-group" style="margin-bottom:15px; border-bottom:1px dashed #e2e8f0; padding-bottom:15px;">
+                        <label style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.85rem; margin-bottom:8px;">
+                            CLIENTE
+                            <div style="display:flex; gap:5px;">
+                                <button id="btn-edit-customer" title="Editar Cliente Seleccionado" style="background:#f1f5f9; border:none; color:#64748b; font-size:0.9rem; cursor:pointer; padding:4px 8px; border-radius:4px;">✏️</button>
+                                <button id="btn-add-customer" style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:800; cursor:pointer; padding:4px 8px; border-radius:4px; transition:background 0.2s;">+ NUEVO</button>
+                            </div>
+                        </label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="v-customer-id" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="">Cliente Genérico</option>
+                            </select>
+                             <button id="btn-del-customer" title="Borrar Cliente" style="background:#fee2e2; border:none; color:#ef4444; font-size:0.9rem; cursor:pointer; padding:0 12px; border-radius:6px;">🗑️</button>
+                        </div>
+                        
+                        <div id="new-customer-form" style="display:none; background:#eff6ff; padding:12px; border-radius:8px; margin-top:8px; border:1px solid #bfdbfe;">
+                            <label id="lbl-cust-form-title" style="font-size:0.75rem; color:#1e40af; font-weight:bold; display:block; margin-bottom:8px;">RATA NUEVO CLIENTE</label>
+                            <input type="hidden" id="edit-cust-id">
+                            <input type="text" id="new-cust-name" placeholder="Nombre Completo *" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="text" id="new-cust-phone" placeholder="Teléfono" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <input type="email" id="new-cust-email" placeholder="Email (Opcional)" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;">
+                            <textarea id="new-cust-address" placeholder="Dirección Preferida (Opcional)" class="input-field" rows="2"
+                                style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #93c5fd; border-radius:4px; margin-bottom:8px;"></textarea>
+                            <div style="display:flex; gap:5px;">
+                                <button id="btn-save-customer" style="flex:1; background:#2563eb; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar</button>
+                                <button id="btn-cancel-customer" style="width:30px; background:#ef4444; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. SELECCION DE PRODUCTO -->
+                    <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+                         <h4 style="margin:0 0 10px 0; font-size:0.85rem; color:#64748b; text-transform:uppercase;">➕ Agregar Ítems</h4>
+                        <div class="input-group">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRODUCTO</label>
+                            <select id="v-catalog-select" class="input-field" 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                                <option value="">Cargando catálogo...</option>
+                            </select>
+                        </div>
+
+                        <div id="manual-desc-container" class="input-group" style="display:none; margin-top:15px;">
+                            <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">DESCRIPCIÓN DE VENTA MANUAL</label>
+                            <input type="text" id="v-manual-desc" class="input-field" placeholder="Ej: Focaccia especial de ajo..." 
+                                style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px;">
+                            <div class="input-group">
+                                <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">PRECIO UNIT. $</label>
+                                <input type="number" id="v-final-price" class="input-field" step="0.01" 
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:8px;">CANTIDAD</label>
+                                <input type="number" id="v-qty" class="input-field" value="1" min="1"
+                                    style="width:100%; box-sizing:border-box; padding:10px; border:2px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                        </div>
+
+                        <div id="stock-warning" style="display:none; color:#ef4444; font-size:0.75rem; font-weight:bold; margin-top:8px; padding:8px; background:#fef2f2; border-radius:6px; border:1px solid #fecaca;">⚠️ Cantidad supera el stock disponible</div>
+
+                        <button id="btn-add-to-cart" class="btn-secondary" 
+                            style="width:100%; padding:12px; margin-top:10px; background:#fff; color:#334155; border:2px dashed #cbd5e1; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9rem; transition:all 0.2s;">
+                            🛒 Agregar al Carrito
+                        </button>
+                    </div>
+
+                    <!-- 4. SECCIÓN CARRITO -->
+                    <div id="cart-section" style="margin-top:25px; border-top:2px solid #e2e8f0; padding-top:15px;">
+                        <h4 style="margin:0 0 10px 0; color:#475569;">🛍️ Carrito de Compra <span id="cart-count-badge" style="background:#ef4444; color:white; font-size:0.7rem; padding:2px 6px; border-radius:10px; display:none;">0</span></h4>
+                        
+                        <div id="cart-list" style="max-height: 200px; overflow-y: auto; margin-bottom:15px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px;">
+                            <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin:10px 0;">Carrito vacío</p>
+                        </div>
+                        
+                        <!-- TOTALES Y PAGOS -->
+                        <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-top:15px;">
+                             <label style="font-size:0.75rem; color:#64748b; font-weight:800; text-transform:uppercase; display:block; margin-bottom:12px;">💳 Métodos de Pago</label>
+                             <div id="payment-container">
+                                <!-- Dynamic rows invoked by controller -->
+                             </div>
+                             <button id="add-pay-row" style="font-size:0.8rem; color:#475569; background:none; border:none; cursor:pointer; text-decoration:underline;">+ Agregar otro método</button>
+
+                             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #cbd5e1; padding-top:10px;">
+                                <span style="font-weight:bold; color:#334155;">TOTAL A PAGAR:</span>
+                                <div style="text-align:right;">
+                                    <b id="cart-total-usd" style="font-size:1.4rem; color:#16a34a; display:block;">$0.00</b>
+                                    <span id="cart-total-ves" style="font-size:0.9rem; color:#64748b;">0.00 Bs</span>
+                                </div>
+                             </div>
+                        </div>
+
+                        <button id="btn-submit-sale" class="btn-primary" 
+                            style="width:100%; padding:16px; margin-top:18px; background:#2563eb; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.2s;">
+                            ✅ Procesar Venta Completa
+                        </button>
                     </div>
                 </div>
-             </div>
+
+                <!-- LISTADO HISTÓRICO Y CIERRE -->
+                <div>
+                    <div id="daily-summary" style="background:#fff; border:2px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+
+                    <div id="sales-history">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                    
+                    <button id="btn-load-more" 
+                        style="width:100%; padding:15px; background:#f1f5f9; color:#64748b; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:15px; display:none; transition:background 0.2s;">
+                        ⬇️ Cargar más ventas
+                    </button>
+                </div>
+            </div>
         </div>
 
+        <div id="reservations-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+            <div style="background:white; width:90%; max-width:600px; max-height:80vh; border-radius:12px; padding:20px; display:flex; flex-direction:column; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+                    <h2 style="margin:0; font-size:1.2rem;">📅 Próximas Reservas</h2>
+                    <button id="btn-close-res-modal" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div id="reservations-content" style="flex:1; overflow-y:auto;">
+                    <p style="text-align:center; color:#64748b;">Cargando...</p>
+                </div>
+            </div>
+        </div>
+
+
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-
-            :root {
-                --primary: #2563eb;
-                --primary-dark: #1e40af;
-                --glass-bg: rgba(255, 255, 255, 0.85);
-                --glass-border: rgba(255, 255, 255, 0.6);
-                --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
-            }
-
-            /* OVERRIDES */
-            #app-content { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
-
-            .layout {
-                display: grid;
-                grid-template-columns: 1fr 350px;
-                gap: 20px;
-                height: calc(100vh - 70px); /* Adjust for navbar */
-                padding: 10px 20px;
-                box-sizing: border-box;
-                font-family: 'Inter', sans-serif;
-            }
-
-            @media (max-width: 900px) {
-                .layout { grid-template-columns: 1fr; height: auto; overflow-y:auto; }
-                .cart-panel { position: relative; height: auto; border-left:none; order: -1; } /* Cart on top on mobile? Or bottom? */
-                /* Actually cart usually better at bottom or separate tab on mobile. For now, let's stack */
-            }
-
-            .glass-panel {
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 16px;
-                box-shadow: var(--shadow-lg);
-                padding: 20px;
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                box-sizing: border-box;
-                transition: all 0.3s;
-            }
-
-            .search-bar {
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                padding: 10px 15px;
-                border-radius: 10px;
-                width: 250px;
-                transition: all 0.2s;
-            }
-            .search-bar:focus { outline:none; border-color:var(--primary); background:white; width:300px; }
-
-            /* GRID & CARDS */
-            .products-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 12px;
-                overflow-y: auto;
-                padding: 5px;
-                flex:1;
-            }
-
-            .product-card {
-                 background: white;
-                 border: 1px solid #f1f5f9;
-                 border-radius: 12px;
-                 padding: 15px;
-                 text-align: center;
-                 cursor: pointer;
-                 transition: all 0.2s;
-                 position: relative;
-                 display: flex;
-                 flex-direction: column;
-                 justify-content: space-between;
-                 min-height: 120px;
-                 box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            }
-
-            .product-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 12px -3px rgba(0,0,0,0.08);
-                border-color: #bfdbfe;
+            .sales-grid {
+                grid-template-columns: 1fr 1.2fr;
             }
             
-            .product-card:active { transform: scale(0.96); }
+            @media (max-width: 1024px) {
+                .sales-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+            
+            #btn-submit-sale:disabled {
+                background: #94a3b8 !important;
+                cursor: not-allowed;
+            }
 
-            .p-icon { font-size: 2rem; margin-bottom: 8px; display:block; }
-            .p-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; color:#334155; line-height:1.2; }
-            .p-price { font-weight: 800; color: var(--primary); font-size: 1rem; }
-            .p-stock-warn { font-size:0.65rem; color:#ef4444; background:#fee2e2; padding:2px 4px; border-radius:4px; position:absolute; top:5px; right:5px; font-weight:bold; }
-
-            /* CART STYLE */
-            .cart-items { flex:1; overflow-y: auto; padding-right:5px; max-height: 40vh; }
             .cart-item {
-                display: flex; justify-content: space-between; align-items: center;
-                padding: 10px; background: white; border-radius: 10px;
-                margin-bottom: 8px; border: 1px solid #f1f5f9;
-                animation: slideIn 0.3s ease-out;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: white;
+                padding: 10px;
+                border-radius: 6px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 5px;
             }
-            .cart-item:hover { border-color: #cbd5e1; }
             
-            .cart-actions { display:flex; gap:5px; align-items:center; }
-            .btn-qty { width:24px; height:24px; border-radius:4px; border:1px solid #cbd5e1; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#64748b; }
-            .btn-qty:hover { background:#f1f5f9; color:#0f172a; }
-
-            .total-section {
-                background: #0f172a; 
-                color: white; 
-                padding: 20px; 
-                border-radius: 16px; 
-                text-align: center; 
-                margin-top: auto;
-                box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+            .cart-remove-btn {
+                background: #fee2e2;
+                color: #ef4444;
+                border: none;
+                width: 24px;
+                height: 24px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
-            .pay-btn {
-                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-                color: white; border: none; width: 100%; padding: 12px;
-                border-radius: 10px; font-size: 1.1rem; font-weight: 800;
-                margin-top: 10px; cursor: pointer; transition: transform 0.1s;
-                box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2);
-            }
-            .pay-btn:disabled { background: #475569; cursor: not-allowed; opacity:0.7; box-shadow:none; }
-            .pay-btn:active { transform: scale(0.98); }
-
-            /* PILLS */
-            .categories { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width:none; }
-            .cat-pill {
-                background: #f1f5f9; padding: 6px 14px; border-radius: 20px;
-                font-size: 0.85rem; font-weight: 600; color: #64748b;
-                cursor: pointer; white-space: nowrap; transition: all 0.2s;
-            }
-            .cat-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
-
-            /* UTILS */
-            .gradient-text {
-                background: linear-gradient(45deg, #2563eb, #3b82f6);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                margin:0; font-size:1.5rem;
-            }
-            .modal-overlay {
-                display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-                background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999;
-                justify-content:center; align-items:center;
-            }
-            .modal-content {
-                background:white; padding:25px; border-radius:16px; width:90%; max-width:500px;
-                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            }
-            .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
-            .close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b; }
-            
-            .customer-select-area { display: flex; gap:10px; margin-bottom:10px; }
-            
-            @keyframes slideIn {
-                from { opacity:0; transform:translateX(10px); }
-                to { opacity:1; transform:translateX(0); }
+            .input-field:focus, select:focus {
+                outline: none;
+                border-color: #2563eb !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
             }
         </style>
         `;
     },
 
+    populateCatalog(catalog) {
+        const select = document.getElementById('v-catalog-select');
+        select.innerHTML = '<option value="">-- Seleccionar --</option>';
+        catalog.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.dataset.price = p.precio_venta_final;
+            opt.dataset.stock = p.stock_disponible || 0;
+            opt.textContent = `${p.product_name} (Stock: ${p.stock_disponible || 0})`;
+            select.appendChild(opt);
+        });
+        select.insertAdjacentHTML('beforeend', '<option value="manual">+ MANUAL (ESPECIFICAR)</option>');
+    },
+
     populateCustomers(customers) {
         const select = document.getElementById('v-customer-id');
+        // Save current selection if any
         const currentVal = select.value;
+
+        // Mantener "Cliente Genérico"
         select.innerHTML = '<option value="">Cliente Genérico</option>';
         customers.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.text = c.name;
-            opt.dataset.address = c.address || "";
-            opt.dataset.phone = c.phone || "";
+            opt.text = `${c.name} (${c.phone || 'Sin tlf'})`;
+            opt.dataset.address = c.address || ""; // Store Address
             select.appendChild(opt);
         });
+
+        // Restore selection if still exists, otherwise default
         if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
             select.value = currentVal;
         }
     },
 
-    populateCatalog(catalog) {
-        // Render Grid
-        const grid = document.getElementById('products-grid');
-        const searchInput = document.getElementById('catalog-search');
-        const clearBtn = document.getElementById('btn-clear-search');
-
-        // Store catalog globally for simple filtering
-        this.fullCatalog = catalog;
-
-        this._renderGridItems(catalog);
-
-        // Bind Search
-        if (searchInput) {
-            searchInput.oninput = (e) => {
-                const term = e.target.value.toLowerCase();
-                clearBtn.style.display = term ? 'block' : 'none';
-                const filtered = this.fullCatalog.filter(p => p.product_name.toLowerCase().includes(term));
-                this._renderGridItems(filtered);
-            };
-        }
-        if (clearBtn) {
-            clearBtn.onclick = () => {
-                searchInput.value = '';
-                searchInput.dispatchEvent(new Event('input'));
-            };
-        }
-    },
-
-    _renderGridItems(items) {
-        const grid = document.getElementById('products-grid');
-        grid.innerHTML = '';
-
-        if (items.length === 0) {
-            grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#94a3b8; margin-top:20px;">No se encontraron productos</p>';
-            return;
-        }
-
-        items.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.dataset.id = p.id;
-
-            // Simple Icon based on name (very basic heuristic)
-            let icon = '📦';
-            const name = p.product_name.toLowerCase();
-            if (name.includes('focaccia')) icon = '🍕';
-            else if (name.includes('cafe') || name.includes('café')) icon = '☕';
-            else if (name.includes('coca') || name.includes('bebida') || name.includes('agua')) icon = '🥤';
-            else if (name.includes('tiramisu') || name.includes('postre')) icon = '🍰';
-
-            const stock = p.stock_disponible || 0;
-            const stockWarn = (stock < 5) ? `<span class="p-stock-warn">${stock} disp</span>` : '';
-
-            card.innerHTML = `
-                ${stockWarn}
-                <span class="p-icon">${icon}</span>
-                <span class="p-name">${p.product_name}</span>
-                <span class="p-price">$${p.precio_venta_final.toFixed(2)}</span>
-            `;
-
-            // Interaction: Click to Add
-            card.onclick = () => {
-                // Trigger Add Event logic (we'll bind this in controller or expose a method)
-                // For now, let's dispatch a custom event or call a global handler if we want
-                // Better: The controller binds to '.product-card' click? 
-                // Or better yet, we pass the logic into render. 
-                // Let's use a CustomEvent that controller listens to? 
-                // Or just a global window function? 
-                // Let's use a standard DOM event dispatch to the container
-                const event = new CustomEvent('add-product', { detail: p });
-                document.getElementById('app-content').dispatchEvent(event);
-            };
-
-            grid.appendChild(card);
-        });
-    },
-
     renderCart(cart, rates) {
         const listDiv = document.getElementById('cart-list');
-        const totalUSDLabel = document.getElementById('cart-total-usd');
-        const totalVESLabel = document.getElementById('cart-total-ves');
-        const submitBtn = document.getElementById('btn-submit-sale');
+        const badge = document.getElementById('cart-count-badge');
 
-        listDiv.innerHTML = '';
+        // Update Badge
+        if (cart.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = cart.length;
+        } else {
+            badge.style.display = 'none';
+        }
 
+        // Render List
         if (cart.length === 0) {
-            listDiv.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">Carrito vacío</p>';
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '🚫 CARRITO VACÍO';
-            submitBtn.style.background = '#475569';
-            if (totalUSDLabel) totalUSDLabel.innerText = "$0.00";
-            if (totalVESLabel) totalVESLabel.innerText = "0.00 Bs";
-            return;
-        }
-
-        cart.forEach((item, index) => {
-            const el = document.createElement('div');
-            el.className = 'cart-item';
-            el.innerHTML = `
-                <div style="flex:1;">
-                    <b style="font-size:0.9rem; color:#334155; display:block;">${item.product_name}</b>
-                    <small style="color:#64748b;">$${item.price.toFixed(2)} c/u</small>
-                </div>
-                <div class="cart-actions">
-                    <button class="btn-qty btn-minus" data-idx="${index}">−</button>
-                    <span style="font-weight:bold; font-size:0.9rem; width:20px; text-align:center;">${item.quantity}</span>
-                    <button class="btn-qty btn-plus" data-idx="${index}">+</button>
-                </div>
-                <div style="font-weight:bold; color:#0f172a; min-width:60px; text-align:right;">
-                    $${item.total_amount.toFixed(2)}
-                </div>
-                <button class="cart-remove-btn" data-index="${index}" style="margin-left:10px; background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">×</button>
-            `;
-            listDiv.appendChild(el);
-        });
-
-        const totalUSD = cart.reduce((acc, i) => acc + i.total_amount, 0);
-        const totalVES = totalUSD * rates.tasa_usd_ves;
-
-        if (totalUSDLabel) totalUSDLabel.innerText = `$${totalUSD.toFixed(2)}`;
-        if (totalVESLabel) totalVESLabel.innerText = `~ ${totalVES.toLocaleString('es-VE')} Bs`;
-
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '✅ COBRAR';
-        submitBtn.style.background = ''; // Reset to gradient
-    },
-
-    addPaymentRow() {
-        const container = document.getElementById('payment-methods-container');
-        const row = document.createElement('div');
-        row.className = 'pay-row';
-        row.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr 1fr 20px; gap:5px; margin-bottom:5px; align-items:center;';
-        row.innerHTML = `
-            <input type="number" class="p-amt input-field-sm" placeholder="Monto" step="0.01" style="padding:6px; border:1px solid #e2e8f0; border-radius:4px;">
-            <select class="p-meth input-field-sm" style="padding:6px; border:1px solid #e2e8f0; border-radius:4px;">
-                <option value="Efectivo $">💵 Efec $</option>
-                <option value="Pago Móvil Bs">📲 P.Móvil</option>
-                <option value="Zelle $">📱 Zelle</option>
-                <option value="Efectivo Bs">💸 Efec Bs</option>
-                <option value="Punto de Venta">💳 Punto</option>
-            </select>
-            <input type="text" class="p-ref input-field-sm" placeholder="Ref" style="padding:6px; border:1px solid #e2e8f0; border-radius:4px;">
-            <button class="btn-rm-pay-row" style="background:none; border:none; color:#ef4444; cursor:pointer;">×</button>
-        `;
-        container.appendChild(row);
-        return row;
-    },
-
-    applyVendorRestrictions() {
-        // ... (Optional: Hide settings button or filters)
-        document.getElementById('btn-toggle-filters').style.display = 'none';
-        document.getElementById('v-sale-date').parentElement.style.display = 'none'; // Only if we had a container
-    },
-
-    // ... (Helpers for Reservations/Recievables can stay similar or be adapted) ...
-    renderReservationsList(data) {
-        // data is { "YYYY-MM-DD": { items: { "Product": qty }, details: [] } }
-        const container = document.getElementById('sales-history-container');
-        const listContainer = document.getElementById('sales-list');
-        const summaryBar = document.getElementById('sales-summary-bar');
-
-        // Toggle Visibility
-        document.getElementById('products-grid').style.display = 'none';
-        document.getElementById('category-pills').style.display = 'none';
-        container.style.display = 'block';
-
-        // Clear Summary Bar for Reservations Mode (Maybe show "Total Orders"?)
-        if (summaryBar) {
-            const totalOrders = Object.values(data).reduce((acc, d) => acc + d.details.length, 0);
-            summaryBar.innerHTML = `
-                <div style="width:100%; text-align:center;">
-                    <span style="font-size:0.9rem; color:#64748b;">Reservas Pendientes</span>
-                    <div style="font-size:1.5rem; font-weight:800; color:#2563eb;">${totalOrders} Odr</div>
-                </div>
-            `;
-            summaryBar.style.display = 'flex';
-        }
-
-        listContainer.innerHTML = '';
-        const dates = Object.keys(data).sort();
-
-        if (dates.length === 0) {
-            listContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#94a3b8;">No hay reservas futuras.</p>';
-            return;
-        }
-
-        dates.forEach(date => {
-            const dayData = data[date];
-
-            // Header for Day
-            const dayHeader = document.createElement('div');
-            dayHeader.style.cssText = "background:#f0fdf4; padding:10px; border-radius:8px; margin-top:10px; border-left:4px solid #16a34a;";
-            dayHeader.innerHTML = `<h3 style="margin:0; color:#166534;">📅 ${new Date(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</h3>`;
-            listContainer.appendChild(dayHeader);
-
-            // Items for Day
-            dayData.details.forEach(order => {
-                const card = document.createElement('div');
-                card.style.cssText = "background:white; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;";
-
-                const isPaid = (order.status || '').toLowerCase() === 'pagado';
-                const statusBadge = isPaid
-                    ? `<span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-size:0.7rem;">PAGADO</span>`
-                    : `<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px; font-size:0.7rem;">PENDIENTE</span>`;
-
-                card.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold; color:#334155;">${order.customer}</div>
-                        <div style="display:flex; align-items:center; gap:5px; font-size:0.9rem;">
-                            <span>${order.product}</span>
-                            <b style="background:#e0f2fe; color:#0369a1; padding:0 5px; border-radius:10px;">x${order.qty}</b>
+            listDiv.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin:10px 0;">Carrito vacío</p>';
+        } else {
+            listDiv.innerHTML = cart.map((item, idx) => `
+                <div class="cart-item">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:0.85rem; color:#334155;">${item.product_name}</div>
+                        <div style="font-size:0.75rem; color:#64748b;">
+                            ${item.quantity} x $${item.price.toFixed(2)} 
+                            ${item.delivery_date ? `<span style="color:#d97706; background:#fef3c7; padding:1px 4px; border-radius:3px; margin-left:5px;">📅 ${item.delivery_date}</span>` : ''}
                         </div>
                     </div>
-                    <div>
-                        ${statusBadge}
+                    <div style="text-align:right; margin-right:10px;">
+                        <div style="font-weight:bold; font-size:0.9rem; color:#0f172a;">$${item.total_amount.toFixed(2)}</div>
                     </div>
-                `;
-                listContainer.appendChild(card);
-            });
-        });
-    },
-
-    renderReservationsModal(data) {
-        // Keep for legacy or if we want to revert, but effectively superseded by renderReservationsList
-        // ... (unchanged)
-        const content = document.getElementById('reservations-content');
-        if (!content) return;
-
-        const dates = Object.keys(data).sort();
-        if (dates.length === 0) {
-            content.innerHTML = '<p style="text-align:center; padding:20px;">No hay reservas.</p>';
-            return;
+                    <button class="cart-remove-btn" data-index="${idx}" title="Eliminar">×</button>
+                </div>
+            `).join('');
         }
 
-        content.innerHTML = dates.map(date => {
-            const dayData = data[date];
-            const itemsHtml = Object.entries(dayData.items).map(([prod, qty]) => `
-                    <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:0.9rem;">
-                        <span>${prod}</span><b>x${qty}</b>
-                    </div>`).join('');
-            return `<div style="background:#f0fdf4; margin-bottom:10px; padding:10px; border-radius:8px;">
-                        <h4 style="margin:0 0 5px 0;">${date}</h4>
-                        ${itemsHtml}
-                    </div>`;
-        }).join('');
+        // Calculate Totals
+        const totalUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
+        const totalVES = totalUSD * rates.tasa_usd_ves;
+
+        document.getElementById('cart-total-usd').innerText = `$${totalUSD.toFixed(2)}`;
+        document.getElementById('cart-total-ves').innerText = `${totalVES.toFixed(2)} Bs`;
+
+        // Update Payment Input Default to Total if only 1 row and empty
+        const payRows = document.querySelectorAll('.pay-row');
+        if (payRows.length === 1 && totalUSD > 0) {
+            const amtInput = payRows[0].querySelector('.p-amt');
+
+            // Check if it's a future reservation (Delivery Date > Today)
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            const hasFutureItem = cart.some(item => item.delivery_date && item.delivery_date > todayStr);
+
+            // Only auto-fill if empty or equal to previous total AND NOT a future reservation
+            if (!hasFutureItem && (!amtInput.value || parseFloat(amtInput.value) === 0)) {
+                amtInput.value = totalUSD.toFixed(2);
+                amtInput.dispatchEvent(new Event('input'));
+            } else if (hasFutureItem && (!amtInput.value || parseFloat(amtInput.value) === totalUSD)) {
+                // If it was auto-filled but now we have a future item, clear it (optional, but safer)
+                // Actually, let's just NOT auto-fill. If user manually entered it, keep it.
+                // But if it's empty, leave it empty.
+                if (!amtInput.value) amtInput.value = '';
+            }
+        }
+
+        // Enable/Disable Submit
+        const btnSubmit = document.getElementById('btn-submit-sale');
+        if (cart.length === 0) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = "🚫 Carrito Vacío";
+        } else {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = "✅ Procesar Venta Completa";
+        }
     },
 
-    // Stub for compatibility if controller calls it
-    toggleStockWarning(show) { /* Managed visually in cards now */ },
-    toggleManualMode(active, price) { /* Managed by manual toggle button */ },
-
-    // --- MISSING METHODS RE-IMPLEMENTED ---
     renderSummary(resumen) {
-        const sumTotal = document.getElementById('sum-total');
-        const sumCredit = document.getElementById('sum-credit');
-        const summaryBar = document.getElementById('sales-summary-bar');
-
-        if (sumTotal) sumTotal.innerText = `$${(resumen.total || 0).toFixed(2)}`;
-        if (sumCredit) sumCredit.innerText = `$${(resumen.credito || 0).toFixed(2)}`;
-
-        // Render Methods Breakdown
-        // Remove old breakdown if exists
-        const oldBreakdown = document.getElementById('methods-breakdown');
-        if (oldBreakdown) oldBreakdown.remove();
-
-        if (resumen.metodos && Object.keys(resumen.metodos).length > 0) {
-            const breakdownDiv = document.createElement('div');
-            breakdownDiv.id = 'methods-breakdown';
-            breakdownDiv.style.cssText = "display:flex; gap:10px; flex-wrap:wrap; margin-top:5px; padding-top:5px; border-top:1px dashed #cbd5e1; font-size:0.8rem; color:#475569;";
-
-            Object.entries(resumen.metodos).forEach(([method, amount]) => {
-                const tag = document.createElement('span');
-                tag.style.cssText = "background:white; padding:2px 6px; border-radius:4px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:4px;";
-
-                // Icons for methods
-                let icon = '💵';
-                if (method.toLowerCase().includes('zelle')) icon = '📱';
-                if (method.toLowerCase().includes('pago movil') || method.toLowerCase().includes('móvil')) icon = '📲';
-                if (method.toLowerCase().includes('punto')) icon = '💳';
-
-                tag.innerHTML = `${icon} <b>${method}:</b> $${amount.toFixed(2)}`;
-                breakdownDiv.appendChild(tag);
-            });
-
-            if (summaryBar) {
-                summaryBar.style.flexDirection = 'column';
-                summaryBar.appendChild(breakdownDiv);
-            }
-        }
-    },
-
-    renderHistory(sales, append = false) {
-        const listContainer = document.getElementById('sales-list');
-        const historyContainer = document.getElementById('sales-history-container');
-        const grid = document.getElementById('products-grid');
-        const categoryPills = document.getElementById('category-pills');
-
-        // Toggle Views based on context
-        // If we are rendering history and not appending, we might want to show the list container
-        // However, the controller calls this on load. 
-        // Logic: If 'append' is false, it means a fresh load. 
-        // We need a way to know if we are in "Sales Mode" (Catalog) or "History Mode".
-        // The Controller manages logic, View manages UI. 
-        // Let's rely on the TABS to toggle visibility, but here we just render the content.
-
-        if (!append) {
-            listContainer.innerHTML = '';
-        }
-
-        sales.forEach(s => {
-            const card = document.createElement('div');
-            card.style.cssText = "background:white; border:1px solid #e2e8f0; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;";
-
-            const status = (s.payment_status || "").toLowerCase();
-            const isPaid = status === 'pagado' || (Number(s.balance_due) <= 0.01);
-            const statusColor = isPaid ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
-            const statusText = isPaid ? 'PAGADO' : 'PENDIENTE';
-
-            card.innerHTML = `
-                <div>
-                    <div style="font-weight:bold; color:#1e293b; display:flex; align-items:center; gap:5px;">
-                        ${s.customers ? s.customers.name : 'Cliente Genérico'}
-                        ${isPaid ? '<span title="Solvente / Verificado" style="color:#22c55e; font-size:1rem;">☑️</span>' : ''}
-                    </div>
-                    <div style="font-size:0.8rem; color:#64748b;">
-                        ${new Date(s.created_at).toLocaleString()} • #${s.id.slice(0, 6)}
-                    </div>
-                    
-                    <div style="display:flex; gap:5px; margin-top:2px;">
-                         ${s.order_type === 'delivery'
-                    ? `<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">🛵 Delivery: ${s.delivery_date || 'N/A'}</span>`
-                    : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem;">📍 ${s.order_type || 'Pickup'}</span>`
-                }
-                    </div>
-
-                    ${isPaid && s.payment_date ? `<div style="font-size:0.75rem; color:#059669; margin-top:2px;">Pagado el: ${new Date(s.payment_date).toLocaleDateString()}</div>` : ''}
-                    ${!isPaid ? `<div style="font-size:0.75rem; color:#dc2626; font-weight:bold; margin-top:2px;">Deuda: $${Number(s.balance_due).toFixed(2)}</div>` : ''}
+        const div = document.getElementById('daily-summary');
+        div.style.display = 'block'; // Ensure it's visible again
+        div.innerHTML = `
+            <h4 style="margin:0 0 10px 0;">📊 Cierre del Día</h4>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div style="background:#f0fdf4; padding:10px; border-radius:8px;">
+                    <small style="display:block; color:#166534;">ENTRÓ EN CAJA</small>
+                    <b style="font-size:1.1rem;">$${(resumen.total - resumen.credito).toFixed(2)}</b>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:900; font-size:1.1rem;">$${s.total_amount}</div>
-                    <button class="btn-delete-sale" data-id="${s.id}" style="font-size:0.8rem; color:#ef4444; background:none; border:none; cursor:pointer; text-decoration:underline;">Eliminar</button>
-                    ${!isPaid ? `<button class="btn-confirm-pay" data-id="${s.id}" data-amount="${s.balance_due}" style="margin-left:5px; background:#dcfce7; color:#166534; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; cursor:pointer;">Cobrar</button>` : ''}
+                <div style="background:#fff1f2; padding:10px; border-radius:8px;">
+                    <small style="display:block; color:#991b1b;">EN CRÉDITO</small>
+                    <b style="font-size:1.1rem;">$${resumen.credito.toFixed(2)}</b>
                 </div>
-            `;
-            listContainer.appendChild(card);
-        });
-
-        // Auto-switch to history tab if we are NOT in initial load? 
-        // No, let's keep tabs manual. 
-        // But we need to handle the tabs click logic to hide grid/show list.
-        this._bindTabLogic();
-    },
-
-    renderReceivables(sales, totalCount, rates) {
-        // Calculate Total Debt
-        const totalDebt = sales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
-
-        // 1. Render Summary Bar specifically for Receivables
-        const summaryBar = document.getElementById('sales-summary-bar');
-        if (summaryBar) {
-            summaryBar.innerHTML = `
-                <div style="width:100%; text-align:center;">
-                    <span style="font-size:0.9rem; color:#64748b;">Total por Cobrar</span>
-                    <div style="font-size:1.8rem; font-weight:900; color:#dc2626;">$${totalDebt.toFixed(2)}</div>
-                    <div style="font-size:0.8rem; color:#94a3b8;">${sales.length} Deudores</div>
-                </div>
-            `;
-            summaryBar.style.display = 'flex';
-        }
-
-        // 2. Reuse history render for the list
-        this.renderHistory(sales, false);
-
-        // Force switch to list view
-        document.getElementById('products-grid').style.display = 'none';
-        document.getElementById('category-pills').style.display = 'none';
-        document.getElementById('sales-history-container').style.display = 'block';
-
-        // Inject partial payment logic into cards if needed (handled by controller bindings usually)
-        // But we need to render the inputs for partial payments here if we want them.
-        // Let's enhance the card render for receivables in the future or now?
-        // For now, reuse renderHistory logic is fine, maybe add extra buttons?
-        // The renderHistory above has "Cobrar" button which is full payment.
-        // If we want partial, we need to add the input.
-
-        const cards = document.getElementById('sales-list').children;
-        // Logic to add partial inputs to existing cards? 
-        // Or better: update renderHistory to accept a 'mode' or check balance
-
-        // Let's iterate and add the partial payment UI to unpaid items if needed.
-        Array.from(cards).forEach((card, idx) => {
-            const s = sales[idx];
-            if (s && s.balance_due > 0) {
-                const div = document.createElement('div');
-                div.style.marginTop = '10px';
-                div.style.paddingTop = '10px';
-                div.style.borderTop = '1px dashed #e2e8f0';
-                div.style.display = 'flex';
-                div.style.gap = '5px';
-
-                div.innerHTML = `
-                  <input type="number" class="input-partial-pay input-field-sm" data-id="${s.id}" data-rate="${rates.tasa_usd_ves}" placeholder="Abono $" style="width:80px;">
-                  <span id="calc-${s.id}" style="font-size:0.8rem; color:#64748b; align-self:center;">0.00 Bs</span>
-                  <button class="btn-register-partial" data-id="${s.id}" style="margin-left:auto; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; border-radius:4px; padding:4px 8px; cursor:pointer;">Abonar</button>
-               `;
-                card.querySelector('div > div:last-child').appendChild(div); // Append to right side or main?
-                // Actually existing layout is flex row. Let's make it flex col to hold this?
-                card.style.flexDirection = 'column';
-                card.style.alignItems = 'stretch';
-                card.children[0].style.marginBottom = '5px';
-                card.appendChild(div);
-            }
-        });
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                ${Object.entries(resumen.metodos).map(([m, val]) => `<div style="font-size:0.7rem; background:#f8fafc; padding:4px 8px; border-radius:4px;">${m}: <b>$${val.toFixed(2)}</b></div>`).join('')}
+            </div>
+        `;
     },
 
     toggleLoadMore(show) {
@@ -751,23 +384,391 @@ export const SalesView = {
         if (btn) btn.style.display = show ? 'block' : 'none';
     },
 
-    _bindTabLogic() {
-        const btnSales = document.getElementById('btn-view-sales');
-        //const btnRec = document.getElementById('btn-view-receivables');
+    applyVendorRestrictions() {
+        // 1. Ocultar Pestaña de Cuentas por Cobrar
+        const btnRec = document.getElementById('btn-tab-receivables');
+        if (btnRec) btnRec.style.display = 'none';
 
-        // We need to ensure these buttons toggle the visibility of GRID vs LIST
-        // The controller handles data loading, but UI toggling should be immediate?
-        // Actually, controller calls loadSales which calls renderHistory. 
-        // If we serve "Ventas" tab, we want GRID + List? Or just List?
-        // Usually "Ventas" in this context creates a New Sale (Grid). History is secondary.
-        // Let's make "Ventas" = Grid (Default).
+        // 2. Ocultar Filtros de Fecha (Solo Hoy)
+        const dateStart = document.getElementById('filter-date-start');
+        const dateEnd = document.getElementById('filter-date-end');
+        const dateArrow = document.querySelector('header span');
 
-        // Wait, where is the History button? 
-        // Using "Ventas" tab to show HISTORY might be confusing if it also shows Grid.
-        // Let's assume the user uses the Filters Drawer "Ventas" button to see HISTORY.
-        // And there should be a "Nuevo Pedido" or "Catálogo" button?
-        // Currently 'btn-view-sales' is active by default.
+        if (dateStart) dateStart.parentElement.style.display = 'none'; // Ocultar todo el bloque de fechas
 
-        // Let's just expose a helper to toggle
+        // 3. Ocultar Checkbox de Ver Entregas (Si no es relevante)
+        const chkDelivery = document.getElementById('chk-view-delivery');
+        if (chkDelivery) chkDelivery.parentElement.style.display = 'none';
+
+        // 4. Simplificar Header
+        const headerTitle = document.getElementById('sales-title');
+        if (headerTitle) headerTitle.innerText = '📱 Modo Vendedor';
+
+        // 5. Ocultar Input de Fecha Retroactiva (Backdating)
+        const saleDateInput = document.getElementById('v-sale-date');
+        if (saleDateInput) {
+            saleDateInput.parentElement.style.display = 'none';
+        }
+
+        // 6. Optimización Móvil (CSS inyectado)
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .nav-bar { display: none !important; } /* Ocultar menú principal para ganar espacio */
+            body { padding-top: 10px !important; }
+            .sales-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+            .stat-card { padding: 15px !important; border-radius: 12px; }
+            .btn-add-cart { padding: 15px !important; font-size: 1.1rem !important; }
+            .catalog-item-btn { padding: 12px !important; }
+            #payment-container { padding: 10px; background: #f8fafc; border-radius: 8px; }
+            /* Ocultar botones peligrosos */
+            .btn-delete-sale, .btn-confirm-pay { display: none !important; }
+        `;
+        document.head.appendChild(style);
+    },
+
+    renderHistory(sales, append = false) {
+        const div = document.getElementById('sales-history');
+
+        if (!append) {
+            div.innerHTML = '';
+        }
+
+        if (sales.length === 0 && !append) {
+            div.innerHTML = '<p style="text-align:center; color:#94a3b8;">No hay ventas registradas.</p>';
+            return;
+        }
+
+        const formatterVES = new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'VES' });
+
+        const html = sales.map(s => {
+            const isWeb = s.product_name && s.product_name.startsWith('WEB:');
+            const status = (s.payment_status || "").trim().toLowerCase();
+            const isPending = (status !== 'pagado');
+
+            // Lógica de Nombre
+            let displayCustomer = s.customers?.name || s.payment_details?.customer_web || s.client_name || 'Cliente Genérico';
+            if (isWeb) displayCustomer = `🌐 ${displayCustomer}`;
+
+            const isDelivery = s.payment_details?.order_type === 'delivery';
+            const orderTypeStr = isDelivery ? '🛵 DELIVERY' : '📍 PICKUP';
+            const addressStr = s.payment_details?.delivery_address;
+
+            // Delivery Date Badge
+            let deliveryDateBadge = '';
+            if (s.delivery_date) {
+                const d = new Date(s.delivery_date);
+                const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+                const adjustedDate = new Date(d.getTime() + userTimezoneOffset);
+                const dateStr = adjustedDate.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', weekday: 'short' });
+                deliveryDateBadge = `<span style="background:#fef08a; color:#854d0e; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.7rem; border:1px solid #fde047; white-space:nowrap;">📅 ${dateStr.toUpperCase()}</span>`;
+            }
+
+            const productTitle = (isWeb && s.payment_details?.resumen)
+                ? s.payment_details.resumen
+                : s.product_name;
+
+            return `
+                <div style="background:white; border:1px solid #f1f5f9; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid ${isPending ? '#f87171' : '#10b981'}; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                ${deliveryDateBadge}
+                                <span style="font-size:0.7rem; color:#64748b; font-weight:800; text-transform:uppercase;">${orderTypeStr}</span>
+                            </div>
+                            <b style="font-size:0.95rem; color:#1e293b; display:block;">${productTitle}</b>
+                        </div>
+                        <button class="btn-delete-sale" data-id="${s.id}" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:0 0 0 10px;">🗑️</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <span style="font-size:0.85rem; color:#64748b; font-weight:500;">👤 ${displayCustomer}</span>
+                        <b style="font-size:1rem; color:#0f172a;">$${parseFloat(s.total_amount).toFixed(2)}</b>
+                    </div>
+
+                    ${addressStr ? `
+                        <div style="margin-top:8px; font-size:0.75rem; color:#0369a1; background:#f0f9ff; padding:8px; border-radius:6px; border:1px solid #bae6fd;">
+                           🏠 <b>Dirección:</b> ${addressStr}
+                        </div>
+                    ` : ''}
+
+                    ${(s.payment_details && s.payment_details.items) ? `
+                        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:5px;">
+                            ${s.payment_details.items.map(p => `
+                                <span style="font-size:0.65rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; color:#475569;">
+                                    ${p.method}: <b>${p.currency === 'VES' ? p.amount_native.toFixed(2) + ' Bs' : '$' + p.amount_native.toFixed(2)}</b>
+                                </span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${isPending ? `
+                        <button class="btn-confirm-pay" data-id="${s.id}" data-amount="${s.total_amount}"
+                                style="width:100%; margin-top:12px; background:#2563eb; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.8rem; transition: background 0.2s;">
+                            ✅ REGISTRAR COBRO TOTAL
+                        </button>
+                    ` : '<div style="text-align:right; margin-top:12px; color:#059669; font-weight:bold; font-size:0.85rem;">✓ PAGADO</div>'}
+                </div>
+            `;
+        }).join('');
+
+        div.insertAdjacentHTML('beforeend', html);
+    },
+
+    renderReceivables(sales, totalCount, rates) {
+        const div = document.getElementById('sales-history');
+        const summaryDiv = document.getElementById('daily-summary');
+
+        // Receivables Summary
+        // Receivables Summary & Filters
+        if (summaryDiv) {
+            const paidSales = sales.filter(s => {
+                const balance = parseFloat(s.balance_due) || 0;
+                return balance <= 0.01;
+            });
+            const pendingSales = sales.filter(s => {
+                const balance = parseFloat(s.balance_due) || 0;
+                return balance > 0.01;
+            });
+
+            // Calculate totals for "Paid/Solvent" view
+            const totalCollectedUSD = paidSales.reduce((acc, s) => acc + (parseFloat(s.amount_paid_usd || s.amount_paid || s.total_amount) || 0), 0);
+            const totalCollectedVES = totalCollectedUSD * (rates.tasa_usd_ves || 0);
+
+            // Calculate totals for "Pending" view
+            const totalDebt = pendingSales.reduce((acc, s) => acc + (parseFloat(s.balance_due) || 0), 0);
+
+            summaryDiv.innerHTML = `
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+                    <button id="btn-filter-pending" class="filter-btn active" style="padding:10px 20px; border-radius:8px; border:none; background:#ef4444; color:white; font-weight:bold; cursor:pointer;">Pendientes (${pendingSales.length})</button>
+                    <button id="btn-filter-paid" class="filter-btn" style="padding:10px 20px; border-radius:8px; border:none; background:#f1f5f9; color:#64748b; font-weight:bold; cursor:pointer;">Pagados / Solventes (${paidSales.length})</button>
+                </div>
+
+                <div id="summary-pending" style="background:#fff1f2; padding:20px; border-radius:12px; border:2px solid #fecaca; text-align:center;">
+                    <h4 style="margin:0 0 10px 0; color:#991b1b;">💰 Total por Cobrar</h4>
+                    <b style="font-size:2rem; color:#ef4444;">$${totalDebt.toFixed(2)}</b>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#7f1d1d;">${pendingSales.length} órdenes pendientes</p>
+                </div>
+
+                <div id="summary-paid" style="display:none; background:#f0fdf4; padding:20px; border-radius:12px; border:2px solid #bbf7d0; text-align:center;">
+                    <h4 style="margin:0 0 10px 0; color:#166534;">✅ Dinero en Caja (Solventes)</h4>
+                    <b style="font-size:2rem; color:#16a34a;">$${totalCollectedUSD.toFixed(2)}</b>
+                    <div style="font-size:1rem; color:#15803d; margin-top:5px;">~ ${totalCollectedVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs</div>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:#14532d;">${paidSales.length} órdenes cobradas</p>
+                </div>
+            `;
+        }
+
+        // Logic to filter the list based on selection (default pending)
+        // We need to know which filter is active. We can store it in a closure or just render all and hide via CSS?
+        // Better: Render all but give them classes, then use buttons to toggle visibility.
+
+        if (sales.length === 0) {
+            div.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">🎉 No hay movimientos en este período.</p>';
+            return;
+        }
+
+        const html = sales.map(s => {
+            const customerName = s.customers?.name || 'Cliente Desconocido';
+            const phone = s.customers?.phone || 'Sin Tlf';
+            const balance = parseFloat(s.balance_due).toFixed(2);
+            const total = parseFloat(s.total_amount).toFixed(2);
+            const paid = parseFloat(s.amount_paid_usd || s.amount_paid || 0).toFixed(2);
+            const dateStr = s.sale_date.split('T')[0];
+            const rate = rates?.tasa_usd_ves || 0;
+
+            const isPaid = parseFloat(s.balance_due) <= 0.01;
+            const rowClass = isPaid ? 'row-paid' : 'row-pending';
+            const displayStyle = isPaid ? 'none' : 'block'; // Default show pending
+
+            // Date of full payment? We don't have it easily unless we query payments. 
+            // We can show "Pagado" check.
+
+            return `
+                <div class="${rowClass}" style="display:${displayStyle}; background:white; border:1px solid ${isPaid ? '#bbf7d0' : '#fecaca'}; padding:15px; border-radius:10px; margin-bottom:12px; border-left:5px solid ${isPaid ? '#16a34a' : '#ef4444'}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="color:#64748b; font-size:0.75rem; margin-bottom:4px;">📅 ${dateStr} &bull; ID: ${s.id.slice(0, 8)}</div>
+                            <b style="font-size:1.1rem; color:#1e293b; display:block;">${customerName} ${isPaid ? '✅' : ''}</b>
+                            <span style="font-size:0.85rem; color:#64748b;">📞 ${phone}</span>
+                            <div style="margin-top:5px; font-size:0.85rem; color:#334155;">
+                                Producto: <b>${s.product_name}</b> <br>
+                                Total Venta: $${total} <br>
+                                Pagado: $${paid}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <small style="display:block; color:${isPaid ? '#15803d' : '#991b1b'}; font-weight:bold;">${isPaid ? 'COBRADO' : 'DEUDA'}</small>
+                            <b style="font-size:1.4rem; color:${isPaid ? '#16a34a' : '#ef4444'};">$${isPaid ? total : balance}</b>
+                        </div>
+                    </div>
+
+                    ${!isPaid ? `
+                    <!-- CALCULADORA DE PAGO (SOLO PENDIENTES) -->
+                    <div style="background:#fff7ed; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #ffedd5;">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#d97706; display:block; margin-bottom:5px;">🧮 ABONO / PAGO PARCIAL ($)</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="number" class="input-partial-pay" data-id="${s.id}" data-rate="${rate}" 
+                                placeholder="Monto $" step="0.01" max="${balance}"
+                                style="flex:1; padding:8px; border:1px solid #fdba74; border-radius:6px;">
+                            <button class="btn-register-partial" data-id="${s.id}"
+                                style="background:#f97316; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold;">
+                                Registrar
+                            </button>
+                        </div>
+                        <div style="margin-top:5px; font-size:0.8rem; color:#9a3412;">
+                            Cobrar hoy: <b class="calc-ves-display" id="calc-${s.id}">0.00 Bs</b>
+                            <small style="color:#ca8a04;">(Tasa: ${rate})</small>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+        div.innerHTML = html;
+
+        // Bind Filter Events inline (or better in controller?)
+        // Since we render HTML here, let's add listeners if elements exist
+        const btnPending = document.getElementById('btn-filter-pending');
+        const btnPaid = document.getElementById('btn-filter-paid');
+        const sumPending = document.getElementById('summary-pending');
+        const sumPaid = document.getElementById('summary-paid');
+
+        if (btnPending && btnPaid) {
+            btnPending.onclick = () => {
+                btnPending.classList.add('active');
+                btnPending.style.background = '#ef4444';
+                btnPending.style.color = 'white';
+
+                btnPaid.classList.remove('active');
+                btnPaid.style.background = '#f1f5f9';
+                btnPaid.style.color = '#64748b';
+
+                sumPending.style.display = 'block';
+                sumPaid.style.display = 'none';
+
+                div.querySelectorAll('.row-pending').forEach(el => el.style.display = 'block');
+                div.querySelectorAll('.row-paid').forEach(el => el.style.display = 'none');
+            };
+
+            btnPaid.onclick = () => {
+                btnPaid.classList.add('active');
+                btnPaid.style.background = '#16a34a';
+                btnPaid.style.color = 'white';
+
+                btnPending.classList.remove('active');
+                btnPending.style.background = '#f1f5f9';
+                btnPending.style.color = '#64748b';
+
+                sumPending.style.display = 'none';
+                sumPaid.style.display = 'block';
+
+                div.querySelectorAll('.row-pending').forEach(el => el.style.display = 'none');
+                div.querySelectorAll('.row-paid').forEach(el => el.style.display = 'block');
+            };
+        }
+    },
+
+    addPaymentRow() {
+        const container = document.getElementById('payment-container');
+        const row = document.createElement('div');
+        row.className = 'pay-row';
+        row.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr 1fr 0.2fr; gap:5px; margin-bottom:8px;';
+
+        row.innerHTML = `
+            <input type="number" class="p-amt input-field" placeholder="Monto" step="0.01">
+            <select class="p-meth input-field" style="font-size: 0.8rem;">
+                <option value="Efectivo $">💵 Efectivo $</option>
+                <option value="Pago Móvil Bs">📲 Pago Móvil (Bs)</option>
+                <option value="Zelle $">📱 Zelle $</option>
+                <option value="Efectivo Bs">💸 Efectivo (Bs)</option>
+                <option value="Transferencia EUR">🇪🇺 Transf. EUR</option>
+                <option value="Punto de Venta">💳 Punto de Venta</option>
+            </select>
+            <input type="text" class="p-ref input-field" placeholder="Ref / Operación" style="font-size: 0.8rem;">
+            <button class="btn-rm-pay-row" style="background:#fee2e2; color:#ef4444; border:none; border-radius:4px; cursor:pointer;">×</button>
+        `;
+
+        container.appendChild(row);
+        return row;
+    },
+
+    updateTotals(totalUSD, totalVES) {
+        // Unused in new logic, managed by renderCart
+    },
+
+    toggleStockWarning(show) {
+        document.getElementById('stock-warning').style.display = show ? 'block' : 'none';
+        const btn = document.getElementById('btn-add-to-cart');
+        if (show) {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
+        } else {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+        }
+    },
+
+    toggleManualMode(isManual, price) {
+        const manualContainer = document.getElementById('manual-desc-container');
+        const manualDesc = document.getElementById('v-manual-desc');
+        const priceInput = document.getElementById('v-final-price');
+        const qtyInput = document.getElementById('v-qty');
+
+        if (isManual) {
+            manualContainer.style.display = 'block';
+            priceInput.value = "";
+            priceInput.readOnly = false;
+            priceInput.style.backgroundColor = "#fff";
+            manualDesc.focus();
+        } else {
+            manualContainer.style.display = 'none';
+            manualDesc.value = "";
+            priceInput.value = price;
+            priceInput.readOnly = true;
+            priceInput.style.backgroundColor = "#f1f5f9";
+            qtyInput.focus();
+        }
+
+    },
+
+    renderReservationsModal(data) {
+        const modal = document.getElementById('reservations-modal');
+        const content = document.getElementById('reservations-content');
+        modal.style.display = 'flex'; // Show modal
+
+        const dates = Object.keys(data).sort(); // Ensure sorted date string YYYY-MM-DD
+
+        if (dates.length === 0) {
+            content.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">No hay reservas futuras registradas.</p>';
+            return;
+        }
+
+        content.innerHTML = dates.map(date => {
+            const dayData = data[date];
+            // Format Date nicely
+            const dateObj = new Date(date);
+            const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
+            const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
+            const dateStr = adjustedDate.toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+            const itemsHtml = Object.entries(dayData.items).map(([prod, qty]) => `
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
+                        <span style="color:#334155;">${prod}</span>
+                        <b style="color:#0f172a;">x${qty}</b>
+                    </div>
+                    `).join('');
+
+            return `
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:15px; margin-bottom:15px;">
+                        <h3 style="margin:0 0 10px 0; color:#166534; font-size:1rem; text-transform:capitalize;">${dateStr}</h3>
+                        <div style="background:white; padding:10px; border-radius:8px;">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                    `;
+        }).join('');
     }
-};
+}

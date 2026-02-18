@@ -137,44 +137,23 @@ async function loadReceivables(append = false, startDate = null, endDate = null)
 }
 
 function updateTabState() {
-    const btnCatalog = document.getElementById('btn-view-catalog');
-    const btnSales = document.getElementById('btn-view-sales');
-    const btnRec = document.getElementById('btn-view-receivables');
-    const btnRes = document.getElementById('btn-view-reservations');
-
-    // Reset all
-    [btnCatalog, btnSales, btnRec, btnRes].forEach(btn => {
-        if (btn) {
-            btn.classList.remove('active');
-            btn.style.background = '#f1f5f9';
-            btn.style.color = '#64748b';
-        }
-    });
-
-    if (viewMode === 'receivables') {
-        if (btnRec) {
+    const btnSales = document.getElementById('btn-tab-sales');
+    const btnRec = document.getElementById('btn-tab-receivables');
+    if (btnSales && btnRec) {
+        if (viewMode === 'receivables') {
             btnRec.classList.add('active');
             btnRec.style.background = '#2563eb';
             btnRec.style.color = 'white';
-        }
-    } else if (viewMode === 'sale_date') {
-        if (btnSales) {
+            btnSales.classList.remove('active');
+            btnSales.style.background = '#f1f5f9';
+            btnSales.style.color = '#64748b';
+        } else {
             btnSales.classList.add('active');
             btnSales.style.background = '#2563eb';
             btnSales.style.color = 'white';
-        }
-    } else if (viewMode === 'reservations') {
-        if (btnRes) {
-            btnRes.classList.add('active');
-            btnRes.style.background = '#2563eb';
-            btnRes.style.color = 'white';
-        }
-    } else {
-        // Default SALES (Catalog)
-        if (btnCatalog) {
-            btnCatalog.classList.add('active');
-            btnCatalog.style.background = '#2563eb';
-            btnCatalog.style.color = 'white';
+            btnRec.classList.remove('active');
+            btnRec.style.background = '#f1f5f9';
+            btnRec.style.color = '#64748b';
         }
     }
 }
@@ -207,7 +186,6 @@ function renderHistoryAndSummary(sales, dailyStats, append, totalCount) {
 }
 
 function bindDynamicEvents() {
-    // 1. Delete Sale
     document.querySelectorAll('.btn-delete-sale').forEach(btn => {
         btn.onclick = async () => {
             if (confirm("¿Eliminar registro?")) {
@@ -223,7 +201,6 @@ function bindDynamicEvents() {
         };
     });
 
-    // 2. Confirm Payment
     document.querySelectorAll('.btn-confirm-pay').forEach(btn => {
         btn.onclick = async () => {
             const amt = parseFloat(btn.dataset.amount);
@@ -240,45 +217,26 @@ function bindDynamicEvents() {
         };
     });
 
-    // 3. Cart Actions
+    // Remove from cart buttons
     document.querySelectorAll('.cart-remove-btn').forEach(btn => {
-        btn.onclick = () => {
-            const idx = parseInt(btn.dataset.index);
-            cart.splice(idx, 1);
-            SalesView.renderCart(cart, currentRates);
-            bindDynamicEvents();
-        };
+        btn.onclick = () => requestedCartRemove(btn);
     });
 
-    document.querySelectorAll('.btn-plus').forEach(btn => {
-        btn.onclick = () => {
-            const idx = parseInt(btn.dataset.idx);
-            cart[idx].quantity++;
-            cart[idx].total_amount = cart[idx].quantity * cart[idx].price;
-            SalesView.renderCart(cart, currentRates);
-            bindDynamicEvents();
-        };
-    });
+    function requestedCartRemove(btn) {
+        const idx = parseInt(btn.dataset.index);
+        cart.splice(idx, 1);
+        SalesView.renderCart(cart, currentRates);
+    }
 
-    document.querySelectorAll('.btn-minus').forEach(btn => {
-        btn.onclick = () => {
-            const idx = parseInt(btn.dataset.idx);
-            if (cart[idx].quantity > 1) {
-                cart[idx].quantity--;
-                cart[idx].total_amount = cart[idx].quantity * cart[idx].price;
-                SalesView.renderCart(cart, currentRates);
-                bindDynamicEvents();
-            }
-        };
-    });
-
-    // 4. Partial Payment
+    // --- PARTIAL PAYMENT LOGIC ---
     document.querySelectorAll('.input-partial-pay').forEach(inp => {
         inp.oninput = (e) => {
             const val = parseFloat(e.target.value) || 0;
             const rate = parseFloat(e.target.dataset.rate) || 0;
             const vesDisplay = document.getElementById(`calc-${e.target.dataset.id}`);
-            if (vesDisplay) vesDisplay.textContent = (val * rate).toFixed(2) + ' Bs';
+            if (vesDisplay) {
+                vesDisplay.textContent = (val * rate).toFixed(2) + ' Bs';
+            }
         };
     });
 
@@ -295,8 +253,9 @@ function bindDynamicEvents() {
                 btn.disabled = true;
                 btn.textContent = "...";
                 await SalesService.registerPartialPayment(id, amountVal, currentRates.tasa_usd_ves);
+
                 alert("✅ Abono registrado");
-                loadReceivables();
+                loadReceivables(); // Reload list
             } catch (e) {
                 console.error(e);
                 alert("Error: " + e.message);
@@ -325,462 +284,430 @@ function setupRealtime(selectedDate) {
 }
 
 function bindEvents(rates) {
+    const priceInput = document.getElementById('v-final-price');
+    const qtyInput = document.getElementById('v-qty');
+    const catalogSelect = document.getElementById('v-catalog-select');
+    const btnAddToCart = document.getElementById('btn-add-to-cart');
     const btnSubmitSale = document.getElementById('btn-submit-sale');
-    const addPayBtn = document.getElementById('btn-add-pay-method');
+    const addPayBtn = document.getElementById('add-pay-row');
 
-    // Manual Entry Logic
-    const btnToggleManual = document.getElementById('btn-toggle-manual');
-    const manualBox = document.getElementById('manual-entry-box');
-    const btnAddManual = document.getElementById('btn-add-manual');
-
-    if (btnToggleManual) {
-        btnToggleManual.onclick = () => {
-            const isVisible = manualBox.style.display === 'block';
-            manualBox.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) document.getElementById('manual-desc').focus();
-        };
-    }
-
-    if (btnAddManual) {
-        btnAddManual.onclick = () => {
-            const desc = document.getElementById('manual-desc').value.trim();
-            const price = parseFloat(document.getElementById('manual-price').value);
-
-            if (!desc || !price || price <= 0) return Toast.show("Datos inválidos", "error");
-
-            cart.push({
-                product_id: null,
-                product_name: desc,
-                quantity: 1,
-                price: price,
-                total_amount: price,
-                delivery_date: document.getElementById('v-delivery-date')?.value || null
-            });
-
-            Toast.show("Item manual agregado", "success");
-            SalesView.renderCart(cart, currentRates);
-            bindDynamicEvents();
-
-            // Clear inputs
-            document.getElementById('manual-desc').value = '';
-            document.getElementById('manual-price').value = '';
-            manualBox.style.display = 'none';
-        };
-    }
-
-    // New Grid Interaction
-    const appContent = document.getElementById('app-content');
-    appContent.addEventListener('add-product', (e) => {
-        const product = e.detail;
-        const existing = cart.find(i => i.product_id === product.id);
-
-        if (existing) {
-            existing.quantity++;
-            existing.total_amount = existing.quantity * existing.price;
-            Toast.show(`+1 ${product.product_name}`, "success");
-        } else {
-            cart.push({
-                product_id: product.id,
-                product_name: product.product_name,
-                quantity: 1,
-                price: product.precio_venta_final,
-                total_amount: product.precio_venta_final,
-                delivery_date: document.getElementById('v-delivery-date')?.value || null
-            });
-            Toast.show("Agregado al carrito", "success");
-        }
-        SalesView.renderCart(cart, currentRates);
-        bindDynamicEvents();
-    });
-
-    // Category Filter Pills
-    document.querySelectorAll('.cat-pill').forEach(pill => {
-        pill.onclick = () => {
-            document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-
-            const cat = pill.dataset.cat;
-            if (cat === 'all') {
-                SalesView.populateCatalog(SalesView.fullCatalog);
-            } else {
-                const filtered = SalesView.fullCatalog.filter(p => {
-                    const name = p.product_name.toLowerCase();
-                    if (cat === 'focaccia') return name.includes('focaccia') || name.includes('pizza') || name.includes('pan');
-                    if (cat === 'drinks') return name.includes('coca') || name.includes('bebida') || name.includes('agua') || name.includes('cafe');
-                    if (cat === 'dessert') return name.includes('tiramisu') || name.includes('postre') || name.includes('dulce');
-                    return false;
-                });
-                SalesView._renderGridItems(filtered);
-            }
-        };
-    });
-
-    // Dynamic Category Generation (Quick Fix)
-    const catContainer = document.getElementById('category-pills');
-    if (catContainer && catContainer.children.length === 1) {
-        catContainer.innerHTML += `
-            <div class="cat-pill" data-cat="focaccia">🍕 Focaccias</div>
-            <div class="cat-pill" data-cat="drinks">🥤 Bebidas/Café</div>
-            <div class="cat-pill" data-cat="dessert">🍰 Postres</div>
-        `;
-        document.querySelectorAll('.cat-pill').forEach(pill => {
-            pill.onclick = () => {
-                document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                const cat = pill.dataset.cat;
-                const all = SalesView.fullCatalog || [];
-
-                if (cat === 'all') SalesView._renderGridItems(all);
-                else {
-                    const filtered = all.filter(p => {
-                        const name = p.product_name.toLowerCase();
-                        if (cat === 'focaccia') return name.includes('focaccia') || name.includes('pizza') || name.includes('pan');
-                        if (cat === 'drinks') return name.includes('coca') || name.includes('pepsi') || name.includes('agua') || name.includes('cafe') || name.includes('latte');
-                        if (cat === 'dessert') return name.includes('tiramisu') || name.includes('torta') || name.includes('dulce') || name.includes('cookie');
-                        return false;
-                    });
-                    SalesView._renderGridItems(filtered);
-                }
-            };
-        });
-    }
-
-    // Filters Toggle
-    const btnToggleFilters = document.getElementById('btn-toggle-filters');
-    if (btnToggleFilters) {
-        btnToggleFilters.onclick = () => {
-            const drawer = document.getElementById('filters-drawer');
-            drawer.style.display = (drawer.style.display === 'none') ? 'block' : 'none';
-        }
-    }
-
+    // New Date Range Inputs
     const filterStart = document.getElementById('filter-date-start');
     const filterEnd = document.getElementById('filter-date-end');
-    const btnRefresh = document.getElementById('btn-refresh-sales');
 
-    if (btnRefresh) {
-        btnRefresh.onclick = () => {
-            currentPage = 0;
-            loadSales(filterStart.value, filterEnd.value);
-        }
-    }
+    const chkViewDelivery = document.getElementById('chk-view-delivery');
+    const btnLoadMore = document.getElementById('btn-load-more');
+    const deliveryDateInput = document.getElementById('v-delivery-date');
 
-    if (addPayBtn) {
-        addPayBtn.onclick = () => {
-            const row = SalesView.addPaymentRow();
-            bindPayInputs();
-        };
-    }
-
-    bindPayInputs();
-
-    if (btnSubmitSale) {
-        btnSubmitSale.onclick = handleSubmitSale;
-    }
+    // Tabs
+    const btnTabSales = document.getElementById('btn-tab-sales');
+    const btnTabRec = document.getElementById('btn-tab-receivables');
 
     const btnViewReservations = document.getElementById('btn-view-reservations');
+    const btnCloseResModal = document.getElementById('btn-close-res-modal');
+
     if (btnViewReservations) {
         btnViewReservations.onclick = async () => {
-            document.getElementById('products-grid').style.display = 'none';
-            document.getElementById('category-pills').style.display = 'none';
-            document.getElementById('sales-history-container').style.display = 'block';
-            document.getElementById('catalog-search').style.display = 'none';
-
-            viewMode = 'reservations';
-            updateTabState();
-
-            document.getElementById('sales-history-container').innerHTML = '<p style="text-align:center; padding:20px; color:#64748b;">Cargando reservas...</p>';
             try {
+                // Show modal with loading state immediately if possible, or just wait
+                // Ideally View should expose a method to showLoadingModal
+                SalesView.renderReservationsModal({}); // Or specific loading state
+                document.getElementById('reservations-modal').style.display = 'flex';
+                document.getElementById('reservations-content').innerHTML = '<p style="text-align:center; padding:20px;">Cargando datos...</p>';
+
                 const data = await SalesService.getUpcomingReservations();
-                SalesView.renderReservationsList(data);
-            } catch (e) {
-                console.error(e);
-                document.getElementById('sales-history-container').innerHTML = `<p style="color:red; text-align:center;">Error: ${e.message}</p>`;
+                SalesView.renderReservationsModal(data);
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando reservas: " + err.message);
+                document.getElementById('reservations-modal').style.display = 'none';
             }
         };
     }
-    if (document.getElementById('btn-close-res-modal')) {
-        document.getElementById('btn-close-res-modal').onclick = () => {
+
+    if (btnCloseResModal) {
+        btnCloseResModal.onclick = () => {
             document.getElementById('reservations-modal').style.display = 'none';
         };
     }
 
-    // Tabs
-    const btnViewCatalog = document.getElementById('btn-view-catalog');
-    const btnViewSales = document.getElementById('btn-view-sales');
-    const btnViewReceivables = document.getElementById('btn-view-receivables');
-
-    if (btnViewCatalog) {
-        btnViewCatalog.onclick = () => {
-            document.getElementById('products-grid').style.display = 'grid';
-            document.getElementById('category-pills').style.display = 'flex';
-            document.getElementById('sales-history-container').style.display = 'none';
-            document.getElementById('catalog-search').style.display = 'block';
-
-            viewMode = 'sales';
-            updateTabState();
+    if (btnTabSales) {
+        btnTabSales.onclick = () => {
+            viewMode = 'sale_date'; // or prev mode
+            currentPage = 0;
+            loadSales(filterStart.value, filterEnd.value);
         };
     }
-
-    if (btnViewSales) {
-        btnViewSales.onclick = () => {
-            document.getElementById('products-grid').style.display = 'none';
-            document.getElementById('category-pills').style.display = 'none';
-            document.getElementById('sales-history-container').style.display = 'block';
-            document.getElementById('catalog-search').style.display = 'none';
-
-            viewMode = 'sale_date';
-            updateTabState();
-            const s = document.getElementById('filter-date-start')?.value;
-            const e = document.getElementById('filter-date-end')?.value;
-            loadSales(s, e);
-        };
-    }
-
-    if (btnViewReceivables) {
-        btnViewReceivables.onclick = () => {
-            document.getElementById('products-grid').style.display = 'none';
-            document.getElementById('category-pills').style.display = 'none';
-            document.getElementById('sales-history-container').style.display = 'block';
-            document.getElementById('catalog-search').style.display = 'none';
-
+    if (btnTabRec) {
+        btnTabRec.onclick = () => {
             viewMode = 'receivables';
-            updateTabState();
-            const s = document.getElementById('filter-date-start')?.value;
-            const e = document.getElementById('filter-date-end')?.value;
-            loadSales(s, e);
+            currentPage = 0;
+            loadSales(filterStart.value, filterEnd.value); // Load receivables with current dates
         };
     }
 
-    initCustomerManagement();
-}
+    // Filter Change Events
+    const handleDateChange = () => {
+        currentPage = 0;
+        loadSales(filterStart.value, filterEnd.value);
+    };
 
-const updatePaymentCalc = () => {
-    let paidUsd = 0;
-    document.querySelectorAll('.pay-row').forEach(row => {
-        const val = parseFloat(row.querySelector('.p-amt').value) || 0;
-        const meth = row.querySelector('.p-meth').value;
-        if (meth.includes('Bs')) {
-            paidUsd += val / currentRates.tasa_usd_ves;
-        } else if (meth.includes('EUR')) {
-            paidUsd += (val * currentRates.tasa_eur_ves) / currentRates.tasa_usd_ves;
+    if (filterStart) filterStart.onchange = handleDateChange;
+    if (filterEnd) filterEnd.onchange = handleDateChange;
+
+    if (chkViewDelivery) {
+        chkViewDelivery.onchange = () => {
+            viewMode = chkViewDelivery.checked ? 'delivery_date' : 'sale_date';
+            currentPage = 0;
+            loadSales(filterStart.value, filterEnd.value);
+        };
+    }
+
+    // --- CALCULATOR LOGIC ---
+    const calculateLineItem = () => {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+
+        const opt = catalogSelect.options[catalogSelect.selectedIndex];
+        const deliveryDate = deliveryDateInput.value;
+        const now = new Date();
+        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const saleDateInput = document.getElementById('v-sale-date');
+        const saleDateVal = saleDateInput ? saleDateInput.value : todayStr;
+
+        // Allow if preorder OR backdated (past date)
+        const isPreorder = deliveryDate && (deliveryDate > todayStr);
+        const isBackdated = saleDateVal < todayStr;
+
+        if (opt && opt.value && opt.value !== 'manual' && !isPreorder && !isBackdated) {
+            const stockDisp = parseFloat(opt.dataset.stock) || 0;
+            SalesView.toggleStockWarning(qty > stockDisp);
         } else {
-            paidUsd += val;
+            SalesView.toggleStockWarning(false);
         }
-    });
-    return paidUsd;
-};
+        return qty * price;
+    };
 
-const bindPayInputs = () => {
-    document.querySelectorAll('.p-amt').forEach(inp => inp.oninput = updatePaymentCalc);
-    document.querySelectorAll('.btn-rm-pay-row').forEach(btn => {
-        btn.onclick = (e) => {
-            e.target.closest('.pay-row').remove();
-            updatePaymentCalc();
-        };
-    });
-};
+    catalogSelect.onchange = (e) => {
+        const opt = e.target.options[e.target.selectedIndex];
+        const isManual = opt.value === 'manual';
+        const price = opt.dataset.price || "";
+        SalesView.toggleManualMode(isManual, price);
+        calculateLineItem();
+    };
 
-async function handleSubmitSale() {
-    const btnSubmitSale = document.getElementById('btn-submit-sale');
-    const custId = document.getElementById('v-customer-id').value;
-    const totalCartUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
-    const paidUSD = updatePaymentCalc();
-    const balance = totalCartUSD - paidUSD;
+    priceInput.oninput = calculateLineItem;
+    qtyInput.oninput = calculateLineItem;
+    deliveryDateInput.onchange = calculateLineItem;
+    const saleDateInput = document.getElementById('v-sale-date');
+    if (saleDateInput) saleDateInput.onchange = calculateLineItem;
 
-    const orderType = document.getElementById('v-order-type').value;
-    const deliveryAddress = document.getElementById('v-delivery-address').value.trim();
-    const saleDate = document.getElementById('filter-date-start').value;
+    // --- CART LOGIC ---
+    btnAddToCart.onclick = () => {
+        const opt = catalogSelect.options[catalogSelect.selectedIndex];
+        const qty = parseFloat(qtyInput.value) || 1;
+        const price = parseFloat(priceInput.value) || 0;
+        const manualDesc = document.getElementById('v-manual-desc').value;
+        const deliveryDate = deliveryDateInput.value || null;
 
-    if (orderType === 'delivery' && !deliveryAddress) {
-        document.getElementById('v-delivery-address').style.display = 'block';
-        return Toast.show("⚠️ Falta dirección de entrega", "error");
-    }
+        if (!opt.value) return Toast.show("Selecciona un producto", "error");
+        if (opt.value === 'manual' && !manualDesc) return Toast.show("Describe la venta manual", "error");
+        if (price <= 0) return Toast.show("Precio inválido", "error");
+        if (qty <= 0) return Toast.show("Cantidad inválida", "error");
 
-    if (balance > 0.01 && !custId) return alert("⚠️ Para ventas a crédito, selecciona un CLIENTE.");
-
-    if (!confirm(`¿Procesar venta por $${totalCartUSD.toFixed(2)}?`)) return;
-
-    btnSubmitSale.disabled = true;
-    btnSubmitSale.innerText = "Procesando...";
-
-    try {
-        const paymentMethods = [];
-        document.querySelectorAll('.pay-row').forEach(row => {
-            const val = parseFloat(row.querySelector('.p-amt').value) || 0;
-            if (val > 0) {
-                paymentMethods.push({
-                    method: row.querySelector('.p-meth').value,
-                    amount: val,
-                    currency: row.querySelector('.p-meth').value.includes('Bs') ? 'VES' : 'USD'
-                });
-            }
+        cart.push({
+            product_id: opt.value === 'manual' ? null : opt.value,
+            product_name: opt.value === 'manual' ? manualDesc : opt.text.split(' (')[0],
+            quantity: qty,
+            price: price,
+            total_amount: price * qty,
+            delivery_date: deliveryDate
         });
 
-        for (const item of cart) {
-            const itemTotal = item.total_amount;
-            const total = totalCartUSD;
-            const ratio = (total > 0) ? (itemTotal / total) : 0;
-            const itemPayments = paymentMethods.map(pm => ({
-                ...pm,
-                amount: pm.amount * ratio
-            }));
+        Toast.show("Producto agregado al carrito", "success");
+        SalesView.renderCart(cart, rates);
+        bindDynamicEvents();
 
-            await SalesService.registerSale({
-                customer_id: custId,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                final_unit_price: item.price,
-                sale_date: saleDate,
-                payment_methods: itemPayments,
-                delivery_date: item.delivery_date,
-                order_type: orderType,
-                is_website: false,
-                manual_desc: item.product_name
-            });
+        // Reset Inputs
+        qtyInput.value = 1;
+        catalogSelect.value = "";
+        SalesView.toggleManualMode(false, "");
+    };
+
+    // --- PAYMENT CALCULATOR ---
+    const updatePaymentCalc = () => {
+        let paidUsd = 0;
+        document.querySelectorAll('.pay-row').forEach(row => {
+            const val = parseFloat(row.querySelector('.p-amt').value) || 0;
+            const meth = row.querySelector('.p-meth').value;
+            if (meth.includes('Bs')) {
+                paidUsd += val / rates.tasa_usd_ves;
+            } else if (meth.includes('EUR')) {
+                paidUsd += (val * rates.tasa_eur_ves) / rates.tasa_usd_ves;
+            } else {
+                paidUsd += val;
+            }
+        });
+        return paidUsd;
+    };
+
+    const bindPayInputs = () => {
+        document.querySelectorAll('.p-amt').forEach(inp => inp.oninput = updatePaymentCalc);
+        document.querySelectorAll('.btn-rm-pay-row').forEach(btn => {
+            btn.onclick = (e) => {
+                const row = e.target.closest('.pay-row');
+                if (document.querySelectorAll('.pay-row').length > 1) {
+                    row.remove();
+                    updatePaymentCalc();
+                } else {
+                    // If it's the last one, just clear it
+                    row.querySelector('.p-amt').value = '';
+                    row.querySelector('.p-ref').value = '';
+                    updatePaymentCalc();
+                }
+            };
+        });
+    };
+
+    addPayBtn.onclick = () => {
+        const row = SalesView.addPaymentRow();
+        bindPayInputs(); // Re-bind new row
+    };
+
+    SalesView.addPaymentRow();
+    bindPayInputs();
+
+    // --- UI TOGGLES ---
+    const orderTypeSelect = document.getElementById('v-order-type');
+    const deliveryAddrDiv = document.getElementById('div-delivery-address');
+
+    // Ensure initial state check in case of reload/render quirks, though display:none is default
+    // Ensure initial state check in case of reload/render quirks, though display:none is default
+    if (orderTypeSelect) {
+        // Use addEventListener to avoid overwriting inline HTML handlers
+        orderTypeSelect.addEventListener('change', () => {
+            const isDelivery = orderTypeSelect.value === 'delivery';
+            if (deliveryAddrDiv) deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
+        });
+
+        // Trigger once to set initial state correctly
+        const isDelivery = orderTypeSelect.value === 'delivery';
+        if (deliveryAddrDiv) deliveryAddrDiv.style.display = isDelivery ? 'block' : 'none';
+    }
+
+    // --- SUBMIT SALE ---
+    btnSubmitSale.onclick = async () => {
+        if (cart.length === 0) return Toast.show("El carrito está vacío", "error");
+
+        const custId = document.getElementById('v-customer-id').value;
+        const totalCartUSD = cart.reduce((acc, item) => acc + item.total_amount, 0);
+        const paidUSD = updatePaymentCalc();
+        const balance = totalCartUSD - paidUSD;
+        // NEW: Order Type
+        const orderType = document.getElementById('v-order-type').value;
+        const deliveryAddress = document.getElementById('v-delivery-address').value.trim();
+        const saleDate = document.getElementById('v-sale-date').value; // Backdating input
+
+        if (orderType === 'delivery' && !deliveryAddress) {
+            const addrInput = document.getElementById('v-delivery-address');
+            if (addrInput) {
+                addrInput.style.border = "2px solid #ef4444";
+                addrInput.focus();
+                // Reset border on input
+                addrInput.oninput = () => addrInput.style.border = "1px solid #bae6fd";
+            }
+            return Toast.show("⚠️ Falta la dirección de entrega", "error");
         }
 
-        Toast.show("✅ Venta registrada", "success");
-        cart = [];
-        SalesView.renderCart(cart, currentRates);
+        if (balance > 0.01 && !custId) return alert("⚠️ Para ventas a crédito (deuda pendiente), debes seleccionar un CLIENTE.");
 
-        const start = document.getElementById('filter-date-start').value;
-        const end = document.getElementById('filter-date-end').value;
-        loadSales(start, end);
+        if (!confirm(`¿Procesar venta por $${totalCartUSD.toFixed(2)}?`)) return;
 
-        document.getElementById('payment-methods-container').innerHTML = '';
-        SalesView.addPaymentRow();
-        bindPayInputs();
+        btnSubmitSale.disabled = true;
+        btnSubmitSale.innerText = "Procesando...";
 
-    } catch (err) {
-        console.error(err);
-        alert("Error: " + err.message);
-    } finally {
-        btnSubmitSale.disabled = false;
-        btnSubmitSale.innerText = "✅ COBRAR";
-    }
-}
+        try {
+            // ... (rest of logic unchanged) ...
 
-function initCustomerManagement() {
-    const formNewCust = document.getElementById('new-customer-form');
-    const inputName = document.getElementById('new-cust-name');
-    const inputPhone = document.getElementById('new-cust-phone');
-    const inputEmail = document.getElementById('new-cust-email');
-    const inputAddress = document.getElementById('new-cust-address');
-    const inputId = document.getElementById('edit-cust-id');
-    const lblFormTitle = document.getElementById('lbl-cust-form-title');
+            // Collect Payment Methods
+            const paymentMethods = [];
+            // ...
 
-    const btnAddCustomer = document.getElementById('btn-add-customer');
-    const btnSaveCust = document.getElementById('btn-save-customer');
-    const btnCancelCust = document.getElementById('btn-cancel-customer');
-    const btnEditCust = document.getElementById('btn-edit-customer');
-    const btnDelCust = document.getElementById('btn-del-customer');
-    const selectCust = document.getElementById('v-customer-id');
-    const deliveryAddrInput = document.getElementById('v-delivery-address');
+            // ... (logic continues) ...
 
-    if (selectCust) {
-        selectCust.onchange = () => {
-            const opt = selectCust.options[selectCust.selectedIndex];
-            if (opt.dataset && opt.dataset.address) {
-                if (deliveryAddrInput) deliveryAddrInput.value = opt.dataset.address;
+            // Loop and Register Each Item
+            for (const item of cart) {
+                // ...
+                const saleData = {
+                    // ...
+                };
+
+                await SalesService.registerSale(saleData);
             }
-        };
-    }
 
-    if (!formNewCust) return;
+            Toast.show("✅ Venta registrada exitosamente", "success");
+            cart = [];
+            SalesView.renderCart(cart, rates);
 
-    if (btnAddCustomer) {
-        btnAddCustomer.onclick = () => {
-            inputId.value = "";
-            lblFormTitle.textContent = "REGISTRAR NUEVO CLIENTE";
-            inputName.value = "";
-            inputPhone.value = "";
-            inputEmail.value = "";
-            inputAddress.value = "";
-            formNewCust.style.display = 'block';
-            inputName.focus();
-        };
-    }
+            // Reload based on current view
+            const start = document.getElementById('filter-date-start')?.value || saleDate;
+            const end = document.getElementById('filter-date-end')?.value || saleDate;
+            loadSales(start, end);
 
-    if (btnEditCust) {
-        btnEditCust.onclick = () => {
-            const custId = selectCust.value;
-            if (!custId) return Toast.show("Seleccione un cliente para editar", "error");
+            // Reset Payment inputs
+            document.getElementById('payment-container').innerHTML = '';
+            SalesView.addPaymentRow();
+            bindPayInputs();
 
-            const opt = selectCust.options[selectCust.selectedIndex];
-            const text = opt.text;
+        } catch (err) {
+            console.error("Error submitting cart:", err);
+            SalesView.renderCart(cart, rates); // Re-render to ensure buttons work
 
-            inputId.value = custId;
-            lblFormTitle.textContent = "EDITAR CLIENTE";
-            inputName.value = text.split(' (')[0].trim();
-            inputAddress.value = opt.dataset.address || "";
-            inputPhone.value = "";
-            inputEmail.value = "";
-
-            formNewCust.style.display = 'block';
-            inputName.focus();
-        };
-    }
-
-    if (btnDelCust) {
-        btnDelCust.onclick = async () => {
-            const custId = selectCust.value;
-            if (!custId) return Toast.show("Seleccione un cliente", "error");
-
-            if (!confirm("¿Eliminar este cliente? Se mantendrán sus ventas históricas.")) return;
-
-            try {
-                await SalesService.deleteCustomer(custId);
-                Toast.show("Cliente eliminado", "success");
-
-                const s = document.getElementById('filter-date-start')?.value;
-                const e = document.getElementById('filter-date-end')?.value;
-                loadSales(s, e);
-            } catch (err) {
-                Toast.show("Error eliminando: " + err.message, "error");
-            }
-        };
-    }
-
-    if (btnCancelCust) {
-        btnCancelCust.onclick = () => {
-            formNewCust.style.display = 'none';
-        };
-    }
-
-    if (btnSaveCust) {
-        btnSaveCust.onclick = async () => {
-            const name = inputName.value.trim();
-            const phone = inputPhone.value.trim();
-            const email = inputEmail.value.trim();
-            const address = inputAddress.value.trim();
-            const id = inputId.value;
-
-            if (!name) return alert("El nombre es obligatorio");
-
-            try {
-                if (id) {
-                    await SalesService.updateCustomer(id, { name, phone, email, address });
-                    Toast.show(`Cliente actualizado`, "success");
-                } else {
-                    await SalesService.registerCustomer({ name, phone, email, address });
-                    Toast.show(`Cliente creado`, "success");
-                }
-
-                inputName.value = '';
-                inputPhone.value = '';
-                inputEmail.value = '';
-                inputAddress.value = '';
-                inputId.value = '';
-                formNewCust.style.display = 'none';
-
-                const s = document.getElementById('filter-date-start')?.value;
-                const e = document.getElementById('filter-date-end')?.value;
-                await loadSales(s, e);
-            } catch (err) {
-                console.error("Error saving customer:", err);
+            if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+                alert("⚠️ Error de Conexión: No se pudo contactar al servidor. Verifica tu internet e intenta nuevamente.");
+            } else {
                 alert("Error: " + err.message);
             }
-        };
+        } finally {
+            btnSubmitSale.disabled = false;
+            btnSubmitSale.innerText = "Registrar Venta";
+        }
+    };
+
+    initCustomerManagement();
+
+    // --- CUSTOMER MANAGEMENT ISOLATED ---
+    function initCustomerManagement() {
+        const formNewCust = document.getElementById('new-customer-form');
+        const inputName = document.getElementById('new-cust-name');
+        const inputPhone = document.getElementById('new-cust-phone');
+        const inputEmail = document.getElementById('new-cust-email');
+        const inputAddress = document.getElementById('new-cust-address'); // New
+        const inputId = document.getElementById('edit-cust-id');
+        const lblFormTitle = document.getElementById('lbl-cust-form-title');
+
+        const btnAddCustomer = document.getElementById('btn-add-customer'); // top button
+        const btnSaveCust = document.getElementById('btn-save-customer');
+        const btnCancelCust = document.getElementById('btn-cancel-customer');
+        const btnEditCust = document.getElementById('btn-edit-customer');
+        const btnDelCust = document.getElementById('btn-del-customer');
+        const selectCust = document.getElementById('v-customer-id');
+        const deliveryAddrInput = document.getElementById('v-delivery-address'); // Main form address input
+
+        // Auto-fill Delivery Address on Customer Select
+        if (selectCust) {
+            selectCust.onchange = () => {
+                const opt = selectCust.options[selectCust.selectedIndex];
+                // We need to access the full customer object to get the address.
+                // Hack: We can pull it from dataset if we populate it in view.
+                // Let's rely on PopulateCustomers to add data-address
+                if (opt.dataset && opt.dataset.address) {
+                    if (deliveryAddrInput) deliveryAddrInput.value = opt.dataset.address;
+                }
+            };
+        }
+
+        if (!formNewCust) return;
+
+        // Open Add
+        if (btnAddCustomer) {
+            btnAddCustomer.onclick = () => {
+                inputId.value = "";
+                lblFormTitle.textContent = "REGISTRAR NUEVO CLIENTE";
+                inputName.value = "";
+                inputPhone.value = "";
+                inputEmail.value = "";
+                inputAddress.value = "";
+                formNewCust.style.display = 'block';
+                inputName.focus();
+            };
+        }
+
+        // Open Edit
+        if (btnEditCust) {
+            btnEditCust.onclick = () => {
+                const custId = selectCust.value;
+                if (!custId) return Toast.show("Seleccione un cliente para editar", "error");
+
+                const opt = selectCust.options[selectCust.selectedIndex];
+                const text = opt.text;
+
+                inputId.value = custId;
+                lblFormTitle.textContent = "EDITAR CLIENTE";
+                inputName.value = text.split(' (')[0].trim();
+                // Try to set address from dataset
+                inputAddress.value = opt.dataset.address || "";
+                inputPhone.value = ""; // Missing unless we store it
+                inputEmail.value = "";
+
+                formNewCust.style.display = 'block';
+                inputName.focus();
+            };
+        }
+
+        // Delete
+        if (btnDelCust) {
+            btnDelCust.onclick = async () => {
+                const custId = selectCust.value;
+                if (!custId) return Toast.show("Seleccione un cliente", "error");
+
+                if (!confirm("¿Eliminar este cliente? Se mantendrán sus ventas históricas.")) return;
+
+                try {
+                    await SalesService.deleteCustomer(custId);
+                    Toast.show("Cliente eliminado", "success");
+
+                    const s = document.getElementById('filter-date-start')?.value;
+                    const e = document.getElementById('filter-date-end')?.value;
+                    loadSales(s, e);
+                } catch (err) {
+                    Toast.show("Error eliminando: " + err.message, "error");
+                }
+            };
+        }
+
+        // Cancel
+        if (btnCancelCust) {
+            btnCancelCust.onclick = () => {
+                formNewCust.style.display = 'none';
+            };
+        }
+
+        // Save
+        if (btnSaveCust) {
+            btnSaveCust.onclick = async () => {
+                const name = inputName.value.trim();
+                const phone = inputPhone.value.trim();
+                const email = inputEmail.value.trim();
+                const address = inputAddress.value.trim();
+                const id = inputId.value;
+
+                if (!name) return alert("El nombre es obligatorio");
+
+                try {
+                    if (id) {
+                        await SalesService.updateCustomer(id, { name, phone, email, address });
+                        Toast.show(`Cliente actualizado`, "success");
+                    } else {
+                        await SalesService.registerCustomer({ name, phone, email, address });
+                        Toast.show(`Cliente creado`, "success");
+                    }
+
+                    inputName.value = '';
+                    inputPhone.value = '';
+                    inputEmail.value = '';
+                    inputAddress.value = '';
+                    inputId.value = '';
+                    formNewCust.style.display = 'none';
+
+                    const s = document.getElementById('filter-date-start')?.value;
+                    const e = document.getElementById('filter-date-end')?.value;
+                    await loadSales(s, e);
+                } catch (err) {
+                    console.error("Error saving customer:", err);
+                    alert("Error: " + err.message); // Using alert as requested/used in context
+                }
+            };
+        }
     }
 }

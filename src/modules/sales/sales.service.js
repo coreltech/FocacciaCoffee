@@ -159,53 +159,9 @@ export const SalesService = {
             }
 
             return { success: true, new_sale_id: insData.id, message: "Venta histórica registrada (Sin impactar stock actual)" };
-            return { success: true, new_sale_id: insData.id, message: "Venta histórica registrada (Sin impactar stock actual)" };
         }
 
-        // --- FUTURE RESERVATION FLOW (Production on Demand) ---
-        // If delivery_date > today, we assume stock will be produced. Bypass stock check.
-        const deliveryDateStr = saleData.delivery_date;
-        const isFuture = deliveryDateStr && deliveryDateStr > todayStr;
-
-        if (isFuture) {
-            console.log("📅 Future Reservation detected. Bypassing stock check (Production on Demand).");
-
-            // Calculate fields 
-            const balanceDue = saleData.total_amount - saleData.amount_paid;
-
-            // Ensure sale_date is today for the record creation, but delivery_date is future
-            // actually sale_date should be NOW if not specified
-            const finalSaleDate = new Date().toISOString();
-
-            const payload = {
-                product_id: saleData.product_id,
-                product_name: saleData.product_name,
-                quantity: saleData.quantity,
-                total_amount: saleData.total_amount,
-                amount_paid: saleData.amount_paid,
-                balance_due: balanceDue,
-                payment_status: saleData.payment_status,
-                payment_details: saleData.payment_details,
-                customer_id: saleData.customer_id,
-                delivery_date: saleData.delivery_date,
-                sale_date: finalSaleDate
-            };
-
-            const { data: insData, error: insError } = await supabase
-                .from('sales_orders')
-                .insert([payload])
-                .select()
-                .single();
-
-            if (insError) {
-                console.error("Reservation Insert Error:", insError);
-                throw insError;
-            }
-
-            return { success: true, new_sale_id: insData.id, message: "Reserva registrada (Producción pendiente)" };
-        }
-
-        // --- NORMAL FLOW (Immediate/Today) -> Use RPC with Locking & Stock Check ---
+        // --- NORMAL FLOW (Future/Today) -> Use RPC with Locking & Stock Check ---
         const { data, error } = await supabase.rpc('registrar_venta_atomica', {
             p_product_id: saleData.product_id,
             p_quantity: saleData.quantity,
