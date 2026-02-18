@@ -582,35 +582,17 @@ function addPurchaseItem() {
 }
 
 function renderPurchaseItems() {
-    const tbody = document.getElementById('items-tbody');
+    const container = document.getElementById('items-card-container');
+    const badge = document.getElementById('items-count-badge');
 
-    if (currentPurchaseItems.length === 0) {
-        tbody.innerHTML = `
-            <tr class="empty-row">
-                <td colspan="6" class="text-center">No hay items agregados</td>
-            </tr>
-        `;
-        updateTotals();
-        return;
+    // Update Badge
+    if (badge) {
+        badge.style.display = currentPurchaseItems.length > 0 ? 'inline-block' : 'none';
+        badge.textContent = `${currentPurchaseItems.length} item${currentPurchaseItems.length !== 1 ? 's' : ''}`;
     }
 
-    tbody.innerHTML = currentPurchaseItems.map((item, index) => `
-        <tr>
-            <td>
-                <strong>${item.supply_name}</strong><br>
-                <span style="font-size:0.85rem; color:#64748b;">${item.supply_unit}</span>
-            </td>
-            <td>${item.brand_description || '-'}</td>
-            <td class="text-right">${parseFloat(item.quantity).toFixed(2)}</td>
-            <td class="text-right">$${parseFloat(item.unit_price_usd).toFixed(2)}</td>
-            <td class="text-right" style="font-weight:bold;">$${parseFloat(item.subtotal).toFixed(2)}</td>
-            <td class="text-center">
-                <button type="button" class="btn-icon-sm" data-index="${index}" onclick="window.removePurchaseItem(${index})" title="Eliminar Item">
-                    🗑️
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    // Render Cards
+    container.innerHTML = PurchasesView.renderPurchaseItemsCards(currentPurchaseItems);
 
     updateTotals();
 }

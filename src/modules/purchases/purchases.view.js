@@ -211,12 +211,14 @@ export const PurchasesView = {
     },
 
     /**
-     * Renderiza el formulario de nueva compra con Diseño Profesional
+     * Renderiza el formulario de nueva compra con Diseño Radical (Fase 2)
      */
     renderPurchaseForm(suppliers, supplies, bcvRate) {
         return `
-            <div class="modal-overlay" id="purchase-modal" style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); backdrop-filter:blur(2px);">
+            <div class="modal-overlay purchase-modal-backdrop" id="purchase-modal" style="display:flex; align-items:center; justify-content:center;">
                 <div class="purchase-modal-content">
+                    
+                    <!-- Header con Gradiente y Patrón -->
                     <div class="purchase-header-bar">
                         <h3>📦 Nueva Compra</h3>
                         <button class="btn-close" id="close-purchase-modal" title="Cerrar">✕</button>
@@ -224,63 +226,64 @@ export const PurchasesView = {
                     
                     <form id="purchase-form" class="purchase-body">
                         
-                        <!-- HEADER: DATOS GENERALES -->
+                        <!-- SECCIÓN 1: DATOS (Card) -->
                         <div class="purchase-section">
                             <h4 class="purchase-section-title">📄 Datos del Documento</h4>
                             <div class="grid-header">
-                                <div class="form-control-group">
-                                    <label class="form-label">Proveedor</label>
-                                    <select id="purchase-supplier" name="supplier_id" class="form-input-sm" required>
+                                <div class="modern-input-group">
+                                    <label class="modern-label">Proveedor</label>
+                                    <select id="purchase-supplier" name="supplier_id" class="modern-input" required>
                                         <option value="">Seleccione...</option>
                                         ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                                     </select>
-                                    <button type="button" id="btn-load-last-purchase" style="display:none; margin-top:5px; font-size:0.75rem; padding:4px 8px; border:1px solid #cbd5e1; background:#f8fafc; border-radius:4px; cursor:pointer; color:#475569;">
+                                    <button type="button" id="btn-load-last-purchase" style="display:none; margin-top:5px; font-size:0.75rem; border:none; background:transparent; color:#2563eb; cursor:pointer; text-align:left; padding-left:0;">
                                         🔄 Cargar items anteriores
                                     </button>
                                 </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Ubicación de Recepción</label>
-                                    <select id="purchase-location" name="location_id" class="form-input-sm" required disabled>
+                                <div class="modern-input-group">
+                                    <label class="modern-label">Ubicación</label>
+                                    <select id="purchase-location" name="location_id" class="modern-input" required disabled>
                                         <option value="">Seleccione proveedor...</option>
                                     </select>
                                 </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Fecha de Emisión</label>
-                                    <input type="date" id="purchase-date" name="purchase_date" class="form-input-sm" 
+                                <div class="modern-input-group">
+                                    <label class="modern-label">Fecha</label>
+                                    <input type="date" id="purchase-date" name="purchase_date" class="modern-input" 
                                            value="${new Date().toISOString().split('T')[0]}" required />
                                 </div>
 
-                                <div class="form-control-group">
-                                    <label class="form-label">Nº Documento</label>
-                                    <div style="display:flex; gap:5px;">
-                                        <select id="purchase-doc-type" name="document_type" class="form-input-sm" style="width:80px;">
+                                <div class="modern-input-group">
+                                    <label class="modern-label">Documento</label>
+                                    <div style="display:flex; gap:8px;">
+                                        <select id="purchase-doc-type" name="document_type" class="modern-input" style="width:90px;">
                                             <option value="Factura">Fact</option>
                                             <option value="Nota de Entrega">NE</option>
                                         </select>
-                                        <input type="text" id="purchase-doc-number" name="document_number" class="form-input-sm" placeholder="CONTROL-001" style="flex:1;" />
+                                        <input type="text" id="purchase-doc-number" name="document_number" class="modern-input" placeholder="000-000" style="flex:1;" />
                                     </div>
                                 </div>
                             </div>
-                            <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
-                                <label class="form-label">Tasa BCV:</label>
-                                <input type="number" id="purchase-bcv-rate" name="bcv_rate" class="form-input-sm input-currency" step="0.01" value="${bcvRate}" style="width:120px; font-weight:bold; color:var(--olive);" required />
-                                <span style="font-size:0.8rem; color:#64748b;">Bs/USD</span>
+                            <!-- Tasa BCV flotante o integrada -->
+                            <div style="margin-top:15px; display:flex; align-items:center; gap:10px; background:#f0fdf4; padding:8px 15px; border-radius:8px; width:fit-content; border:1px solid #bbf7d0;">
+                                <span style="font-size:1.2rem;">💵</span>
+                                <label class="modern-label" style="margin:0;">Tasa BCV:</label>
+                                <input type="number" id="purchase-bcv-rate" name="bcv_rate" class="modern-input input-currency" step="0.01" value="${bcvRate}" style="width:100px; padding:5px 10px; border:none; background:transparent; font-size:1.1rem; color:#166534;" required />
+                                <span style="font-size:0.8rem; color:#166534; font-weight:600;">Bs/USD</span>
                             </div>
                         </div>
 
-                        <!-- BODY: ITEMS -->
-                        <div class="purchase-section">
-                            <h4 class="purchase-section-title">🛒 Detalle de Productos</h4>
+                        <!-- SECCIÓN 2: ITEMS (Floating Panel + Cards) -->
+                        <div style="position:relative;">
                             
-                            <!-- Input Container Highlighted -->
-                            <div class="add-item-container">
-                                <div class="grid-items-input">
-                                    <div class="form-control-group">
-                                        <label class="form-label">Producto / Insumo</label>
-                                        <select id="item-supply" class="form-input-sm">
-                                            <option value="">Seleccione...</option>
+                            <!-- FLOATING ADD PANEL -->
+                            <div class="add-item-panel">
+                                <div class="grid-inputs-modern">
+                                    <div class="modern-input-group">
+                                        <label class="modern-label">Producto</label>
+                                        <select id="item-supply" class="modern-input">
+                                            <option value="">Buscar producto...</option>
                                             ${supplies.map(s => `
                                                 <option value="${s.id}" 
                                                     data-unit="${s.unit}" 
@@ -290,92 +293,79 @@ export const PurchasesView = {
                                                 </option>
                                             `).join('')}
                                         </select>
-                                        <label style="font-size: 0.75rem; cursor: pointer; color: #2563eb; display: none; margin-top:4px;" id="lbl-use-presentation">
+                                        <label style="font-size: 0.75rem; cursor: pointer; color: var(--olive); display: none; margin-top:4px;" id="lbl-use-presentation">
                                             <input type="checkbox" id="item-use-presentation"> 
-                                            <span style="margin-left:4px;">Usar Presentación</span>
+                                            <span style="margin-left:4px; font-weight:600;">Usar Presentación</span>
                                         </label>
                                     </div>
 
-                                    <div class="form-control-group">
-                                        <label class="form-label">Marca / Detalle</label>
-                                        <input type="text" id="item-brand" class="form-input-sm" placeholder="Ej: Primor" />
+                                    <div class="modern-input-group">
+                                        <label class="modern-label">Marca</label>
+                                        <input type="text" id="item-brand" class="modern-input" placeholder="Opcional" />
                                     </div>
 
-                                    <div class="form-control-group">
-                                        <label class="form-label" id="lbl-item-quantity">Cant.</label>
-                                        <input type="number" id="item-quantity" step="0.01" class="form-input-sm text-right" placeholder="0.00" />
+                                    <div class="modern-input-group">
+                                        <label class="modern-label" id="lbl-item-quantity">Cant.</label>
+                                        <input type="number" id="item-quantity" step="0.01" class="modern-input input-currency" placeholder="0" />
                                     </div>
 
-                                    <div class="form-control-group">
-                                        <label class="form-label">Total USD ($)</label>
-                                        <input type="number" id="item-total" step="0.01" class="form-input-sm input-currency input-total-usd" placeholder="0.00" />
+                                    <div class="modern-input-group">
+                                        <label class="modern-label">Total $</label>
+                                        <input type="number" id="item-total" step="0.01" class="modern-input input-currency" placeholder="0.00" style="color:#15803d;" />
                                     </div>
 
-                                    <div class="form-control-group">
-                                        <label class="form-label">Total Bs</label>
-                                        <input type="number" id="item-total-bs" step="0.01" class="form-input-sm input-currency input-total-bs" placeholder="0.00" />
+                                    <div class="modern-input-group">
+                                        <label class="modern-label">Total Bs</label>
+                                        <input type="number" id="item-total-bs" step="0.01" class="modern-input input-currency" placeholder="0.00" style="color:#ea580c;" />
                                     </div>
 
-                                    <button type="button" id="btn-add-item" class="btn-add-item" title="Agregar a la lista (Enter)">
-                                        ➕ Agregar
+                                    <!-- FAB Button -->
+                                    <button type="button" id="btn-add-item" class="btn-fab-add" title="Agregar (Enter)">
+                                        ＋
                                     </button>
                                     
-                                    <!-- Hidden Unit Price Calc -->
                                     <input type="hidden" id="item-price" />
                                 </div>
                             </div>
 
-                            <!-- Table -->
-                            <div class="purchase-table-container">
-                                <table class="purchase-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:30%;">Descripción</th>
-                                            <th style="width:20%;">Marca</th>
-                                            <th class="text-right" style="width:10%;">Cant.</th>
-                                            <th class="text-right" style="width:15%;">Precio Unit.</th>
-                                            <th class="text-right" style="width:15%;">Total ($)</th>
-                                            <th class="text-center" style="width:10%;">...</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="items-tbody">
-                                        <tr class="empty-row">
-                                            <td colspan="6" style="text-align:center; padding:30px; color:#94a3b8; background:#f8fafc;">
-                                                <div style="font-size:2rem; margin-bottom:10px;">📋</div>
-                                                Agregue items a la lista
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- ITEMS GRID (Cards) -->
+                            <h4 class="purchase-section-title" style="margin-bottom:10px;">
+                                🛒 Carrito de Compras 
+                                <span id="items-count-badge" class="badge badge-info" style="margin-left:10px; display:none;">0 items</span>
+                            </h4>
+                            
+                            <div id="items-card-container" class="items-card-grid">
+                                <!-- Empty State -->
+                                <div id="empty-cart-state" style="grid-column: 1 / -1; text-align:center; padding:40px; color:#94a3b8; border: 2px dashed #e2e8f0; border-radius:16px;">
+                                    <div style="font-size:3rem; margin-bottom:10px; opacity:0.5;">🛍️</div>
+                                    <p>El carrito está vacío</p>
+                                    <small>Agrega productos usando el panel superior</small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- FOOTER MODERN -->
+                        <div class="purchase-footer-modern">
+                            <div style="flex:1; max-width:400px;">
+                                <div class="modern-input-group">
+                                    <label class="modern-label">Notas</label>
+                                    <textarea id="purchase-notes" name="notes" rows="2" class="modern-input" placeholder="Observaciones..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="totals-modern">
+                                <div class="total-label">Total a Pagar</div>
+                                <div class="grand-total-display" id="total-usd">$0.00</div>
+                                <div style="color:#64748b; font-size:1.1rem; font-weight:500;" id="total-bs">Bs 0.00</div>
                             </div>
                         </div>
 
-                        <!-- FOOTER: TOTALES & ACCIONES -->
-                        <div class="purchase-footer">
-                            <div style="flex:1;">
-                                <label class="form-label">📝 Notas / Observaciones</label>
-                                <textarea id="purchase-notes" name="notes" rows="3" class="form-input-sm" style="width:100%; margin-top:5px;" placeholder="Comentarios adicionales..."></textarea>
-                            </div>
-
-                            <div class="totals-box">
-                                <div class="total-row">
-                                    <span>Subtotal:</span>
-                                    <span id="preview-subtotal">$0.00</span>
-                                </div>
-                                <div class="total-row grand-total">
-                                    <span>TOTAL USD:</span>
-                                    <span id="total-usd">$0.00</span>
-                                </div>
-                                <div class="total-bs-display" id="total-bs">
-                                    Bs 0.00
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="margin-top:25px; text-align:right; border-top:1px solid #e2e8f0; padding-top:20px; display:flex; justify-content:flex-end; gap:15px;">
-                            <button type="button" class="btn-secondary" id="cancel-purchase">Cancelar</button>
-                            <button type="submit" class="btn-primary" id="submit-purchase" style="min-width:180px; font-size:1.05rem;">
-                                💾 Procesar Compra
+                        <!-- ACTIONS -->
+                        <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:20px;">
+                            <button type="button" class="btn-ghost" id="cancel-purchase">Cancelar</button>
+                            <button type="submit" class="btn-giant-primary" id="submit-purchase">
+                                ✅ Procesar Compra
                             </button>
                         </div>
 
@@ -383,6 +373,48 @@ export const PurchasesView = {
                 </div>
             </div>
         `;
+    },
+
+    /**
+     * Renderiza la lista de items como tarjetas (Fase 2 - Radical)
+     */
+    renderPurchaseItemsCards(items) {
+        if (!items || items.length === 0) {
+            return `
+                <div id="empty-cart-state" style="grid-column: 1 / -1; text-align:center; padding:40px; color:#94a3b8; border: 2px dashed #e2e8f0; border-radius:16px;">
+                    <div style="font-size:3rem; margin-bottom:10px; opacity:0.5; animation: float 3s ease-in-out infinite;">🛍️</div>
+                    <p style="font-weight:600; color:#64748b;">El carrito está vacío</p>
+                    <small style="color:#94a3b8;">Agrega productos usando el panel superior</small>
+                </div>
+            `;
+        }
+
+        return items.map((item, index) => `
+            <div class="item-card" style="animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.05}s both;">
+                <button type="button" class="btn-remove-card" onclick="window.removePurchaseItem(${index})" title="Eliminar">✕</button>
+                
+                <div class="item-card-header">
+                    <div style="flex:1; padding-right:10px;">
+                        <div class="item-name">${item.supply_name}</div>
+                        <div class="item-brand">${item.brand_description || 'Sin marca'}</div>
+                    </div>
+                    <div class="item-total-badge">
+                        $${parseFloat(item.subtotal).toFixed(2)}
+                    </div>
+                </div>
+
+                <div class="item-meta">
+                    <div class="item-row-detail">
+                        <span>Cant:</span>
+                        <strong style="color:#334155;">${parseFloat(item.quantity).toFixed(2)} ${item.supply_unit}</strong>
+                    </div>
+                    <div class="item-row-detail">
+                        <span>P. Unit:</span>
+                        <span>$${parseFloat(item.unit_price_usd).toFixed(4)}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     },
 
     /**
