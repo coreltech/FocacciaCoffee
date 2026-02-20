@@ -28,6 +28,7 @@ export async function loadRecipesPro() {
 
 function bindEvents() {
     const btnNew = document.getElementById('btn-new-recipe');
+    const btnExport = document.getElementById('btn-export-recipes'); // New Button
     const btnClose = document.getElementById('btn-close-form');
     const btnCancel = document.getElementById('btn-cancel-form');
     const btnSave = document.getElementById('btn-save-recipe');
@@ -41,6 +42,53 @@ function bindEvents() {
         RecipesProView.resetForm();
         RecipesProView.showForm(true);
         updateCalculations();
+    };
+
+    btnExport.onclick = () => {
+        if (!recipes || recipes.length === 0) return alert("No hay recetas para exportar.");
+
+        const csvRows = [];
+        // Header
+        csvRows.push("ID Receta,Nombre Receta,Tipo,Peso Final (g),Ingrediente,Es Base,Unidad,Cantidad,Porcentaje,Costo Unitario");
+
+        recipes.forEach(r => {
+            if (r.items && r.items.length > 0) {
+                r.items.forEach(item => {
+                    const row = [
+                        r.id,
+                        `"${r.name.replace(/"/g, '""')}"`, // Escape quotes
+                        r.tipo_receta,
+                        r.expected_weight || 0,
+                        `"${item.name.replace(/"/g, '""')}"`,
+                        item.is_base ? "SI" : "NO",
+                        item.unit_type,
+                        item.quantity,
+                        item.percentage,
+                        item.cost_per_unit_min
+                    ];
+                    csvRows.push(row.join(","));
+                });
+            } else {
+                // Empty recipe
+                const row = [
+                    r.id,
+                    `"${r.name.replace(/"/g, '""')}"`,
+                    r.tipo_receta,
+                    r.expected_weight || 0,
+                    "", "NO", "", 0, 0, 0
+                ];
+                csvRows.push(row.join(","));
+            }
+        });
+
+        const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `recetas_profesionales_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     btnClose.onclick = btnCancel.onclick = () => {

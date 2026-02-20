@@ -8,6 +8,7 @@ export const RecipesProView = {
                     <p style="color: #64748b; font-size: 0.95rem;">Manejo de fórmulas panaderas, porcentajes y márgenes de contribución.</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
+                    <button id="btn-export-recipes" class="btn-primary" style="padding: 12px 20px; background-color: #10b981; border: none; color: white; border-radius: 6px; cursor: pointer;">⬇️ Exportar CSV</button>
                     <button id="btn-new-recipe" class="btn-primary" style="padding: 12px 20px;">+ Nueva Receta</button>
                 </div>
             </header>
