@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focaccia & Coffee ERP</title>
+  <link rel="stylesheet" href="src/ui/theme.css?v=logout4" />
+  <link rel="stylesheet" href="src/modules/purchases/purchases.css?v=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>window.jsPDF = window.jspdf ? window.jspdf.jsPDF : null;</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Hamburger Button (Mobile Only) -->
+  <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <header class="nav-bar" id="nav-bar">
+    <!-- Mobile Menu Header -->
+    <div class="mobile-menu-header">
+      <h2>📋 Menú</h2>
+      <button class="mobile-close-btn" id="mobile-close-btn">✕</button>
+    </div>
+
+    <!-- Core Operations -->
+    <div class="nav-group">
+      <span class="nav-group-title">Operaciones</span>
+      <button class="nav-btn" data-tab="dashboard">🏠 Inicio</button>
+      <button class="nav-btn" data-tab="ventas">🥖 Ventas</button>
+      <button class="nav-btn" data-tab="catalogo">📋 Catálogo</button>
+      <button class="nav-btn" data-tab="finanzas">💰 Inversión</button>
+    </div>
+
+    <div class="nav-sep"></div>
+
+    <!-- Inventory & Production -->
+    <div class="nav-group">
+      <span class="nav-group-title">Inventario & Producción</span>
+      <button class="nav-btn" data-tab="suministros">📦 Suministros</button>
+      <button class="nav-btn" data-tab="recetas">👩‍🍳 Recetas</button>
+      <button class="nav-btn" data-tab="produccion">🥣 Producción</button>
+      <button class="nav-btn" data-tab="compras">🛒 Compras</button>
+      <button class="nav-btn" data-tab="mermas" style="color:var(--error); border-color:var(--error);">🗑️
+        Perdidas</button>
+    </div>
+
+    <div class="nav-sep"></div>
+
+    <!-- Configuration -->
+    <div class="nav-group">
+      <span class="nav-group-title">Configuración</span>
+      <button class="nav-btn" data-tab="tasas">🪙 Tasas</button>
+      <button class="nav-btn" data-tab="config_productos">⚙️ Config</button>
+      <button class="nav-btn" data-tab="administracion">💼 Admin</button>
+    </div>
+
+    <div class="nav-sep"></div>
+
+    <!-- Analytics -->
+    <div class="nav-group">
+      <span class="nav-group-title">Análisis</span>
+      <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
+      <button class="nav-btn" data-tab="cierre_semanal">📅 Cierre Semanal</button>
+      <button class="nav-btn" data-tab="liquidacion">🤝 Liquidación</button>
+      <button class="nav-btn" data-tab="laboratorio">🧪 Laboratorio</button>
+      <button class="nav-btn" data-tab="biblioteca">📚 Biblioteca</button>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+
+  <main id="app-content" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <div class="stat-card" style="text-align:center; padding: 50px;">
+      <h2 style="color: #64748b;">🍞 Preparando la masa...</h2>
+      <p style="color: #94a3b8;">Iniciando sistema de inteligencia artesanal</p>
+    </div>
+  </main>
+
+  <script type="module">
+    window.addEventListener('load', async () => {
+      try {
+        // Dynamic imports
+        const { StateManager } = await import('./src/core/state.js');
+        const { initRouter } = await import('./src/core/router.js');
+
+        // Pre-carga de datos críticos (Tasas)
+        await StateManager.init();
+
+        // Carga de la App
+        await initRouter();
+      } catch (err) {
+        console.error("Error de inicio:", err);
+        document.getElementById('app-content').innerHTML = `
+          <div class="stat-card" style="border:2px solid #ef4444; background: #fef2f2;">
+            <h3 style="color: #b91c1c;">❌ Error de Sistema</h3>
+            <p>No se pudo conectar con los módulos internos.</p>
+            <pre style="font-size: 0.8rem; background: #fee2e2; padding: 10px; border-radius: 8px;">${err.message}</pre>
+          </div>
+        `;
+      }
+    });
+
+    // Mobile Menu Functionality
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const navBar = document.getElementById('nav-bar');
+    const mobileOverlay = document.getElementById('mobile-menu-overlay');
+    const mobileCloseBtn = document.getElementById('mobile-close-btn');
+    const navButtons = document.querySelectorAll('.nav-btn');
+
+    function toggleMobileMenu() {
+      hamburgerBtn.classList.toggle('active');
+      navBar.classList.toggle('active');
+      mobileOverlay.classList.toggle('active');
+      document.body.style.overflow = navBar.classList.contains('active') ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+      hamburgerBtn.classList.remove('active');
+      navBar.classList.remove('active');
+      mobileOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Hamburger button click
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
+
+    // Mobile close button click
+    mobileCloseBtn.addEventListener('click', closeMobileMenu);
+
+    // Overlay click to close
+    mobileOverlay.addEventListener('click', closeMobileMenu);
+
+    // Close menu when clicking a nav button
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          closeMobileMenu();
+        }
+      });
+    });
+
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && navBar.classList.contains('active')) {
+        closeMobileMenu();
+      }
+    });
+
+    // Close menu on window resize to desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        closeMobileMenu();
+      }
+    });
+  </script>
+</body>
+
+</html>
