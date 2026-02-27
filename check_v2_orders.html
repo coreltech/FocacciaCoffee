@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Check Orders Items</title>
+</head>
+
+<body>
+    <h1>Checking Orders...</h1>
+    <pre id="output"></pre>
+    <script type="module">
+        import { supabase } from './src/core/supabase.js';
+
+        async function checkOrders() {
+            try {
+                const { data, error } = await supabase
+                    .from('v2_orders')
+                    .select('id, sale_date, is_preorder, status, v2_order_items (product_id, product_name, quantity)')
+                    .eq('is_preorder', true)
+                    .eq('status', 'Pendiente')
+                    .order('sale_date', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+
+                document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('output').innerText = 'ERROR: ' + err.message;
+            }
+        }
+
+        checkOrders();
+    </script>
+</body>
+
+</html>

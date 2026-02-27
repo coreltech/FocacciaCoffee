@@ -1,0 +1,42 @@
+# Task: Increase Decimal Precision to 4 Places
+
+- [ ] Search and Identify Locations
+    - [x] Search for `toFixed(2)` in V2 modules
+    - [x] Search for `NUMERIC(15,2)` in migrations
+- [x] Database Schema Update
+    - [x] Create migration to alter column precision from 2 to 4 decimals
+- [x] Frontend Display Update [x]
+    - [x] Create a centralized formatter utility for currencies and quantities
+    - [x] Update Dashboard display
+    - [x] Update Reports display
+    - [x] Update Settlement display
+    - [x] Update POS/Sales display
+    - [x] Update Purchases display
+    - [x] Update Treasury/Expenses display
+    - [x] Update Recipes/Supplies display (crucial for unit costs)
+- [x] Final V2 Precision Audit [x]
+    - [x] Correct V2 Price inputs
+    - [x] Correct V2 Stock/Alert inputs (step 0.0001)
+    - [x] Audit remaining V2 controllers (Sales, Production, Receivables)
+- [x] Debug V2 Catalog Costs [x]
+    - [x] Fix Recipe/Supply cost mapping in CatalogController
+    - [x] Fix regression on Catalog Edit handler
+    - [x] Add Cost and Margin columns to Master Catalog table
+- [x] Debug V2 Sales Totaling [x]
+    - [x] Identify why totals are not calculating or displaying in Sales module
+    - [x] Fix precision-related calculation errors in Sales controller
+    - [x] Verify cart and checkout totals
+- [x] Fix Sales Date Timezone [x]
+    - [x] Correct local date construction for POS sales
+    - [x] Ensure historical sales preserve intended calendar day
+    - [x] Verify display vs storage consistency
+- [x] Debug Treasury Multi-Currency [x]
+    - [x] Add USD/VES dual inputs to Treasury modal
+    - [x] Implement real-time rate conversion in Treasury controller
+    - [x] Add "Beneficiary / Location" field to records
+    - [x] Verify persistence and display accuracy
+- [x] Enhancements [x]
+    - [x] Add "Aportes" tab to Settlement module preview
+- [x] Verification [x]
+    - [x] Verify V2 calculations with 4 decimal places
+    - [x] Confirm V2 Database columns were updated via migration

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <pre id="out"></pre>
+    <script type="module">
+        import { supabase } from './src/core/supabase.js';
+        async function run() {
+            let log = "";
+            const t1 = await supabase.from('v2_suppliers').select('id').limit(1);
+            log += "Suppliers: " + (t1.error ? t1.error.message : "OK\n");
+
+            const t2 = await supabase.from('v2_purchases').select('id').limit(1);
+            log += "Purchases: " + (t2.error ? t2.error.message : "OK\n");
+
+            const t3 = await supabase.from('v2_purchase_items').select('id').limit(1);
+            log += "Items: " + (t3.error ? t3.error.message : "OK\n");
+
+            document.getElementById('out').innerText = log;
+        }
+        run();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <pre id="out">Loading...</pre>
+    <script type="module">
+        try {
+            const { loadPurchases } = await import('./src/v2/modules/purchases/purchases.controller.js');
+            document.getElementById('out').innerText = "Controller imported successfully!";
+        } catch (e) {
+            document.getElementById('out').innerText = "Error: " + e.message;
+        }
+    </script>
+</body>
+
+</html>
