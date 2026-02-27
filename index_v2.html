@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focaccia Base V2</title>
+
+  <!-- Estilos Core V2 -->
+  <link rel="stylesheet" href="./src/v2/ui/parallel-theme.css" />
+
+  <!-- Dependencias Externas (Gráficos/PDFs) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="erp-layout">
+
+    <!-- Sidebar Navegación -->
+    <aside class="erp-sidebar" id="sidebar">
+      <div class="erp-sidebar-header">
+        <h1>Focaccia<span>V2</span></h1>
+      </div>
+
+      <div class="erp-nav-group">
+        <div class="erp-nav-title">Operativo</div>
+        <a href="#" class="erp-nav-item active" data-route="dashboard">
+          <span>📊 Dashboard</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="pos">
+          <span>🛍️ Punto de Venta</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="cobranzas">
+          <span>🧾 Ventas y Cobros</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="clientes">
+          <span>👥 Clientes</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="tesoreria">
+          <span>💸 Tesorería (Gastos)</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="reportes">
+          <span>📈 Reportes</span>
+        </a>
+      </div>
+
+      <div class="erp-nav-group">
+        <div class="erp-nav-title">Producción (Form. Panadera)</div>
+        <a href="#" class="erp-nav-item" data-route="preventa">
+          <span>📋 Consolidar Pedidos</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="produccion">
+          <span>🥖 Producción V2</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="recetas">
+          <span>⚖️ Recetario (Form. P.)</span>
+        </a>
+      </div>
+
+      <div class="erp-nav-group">
+        <div class="erp-nav-title">Inventario Core</div>
+        <a href="#" class="erp-nav-item" data-route="catalogo">
+          <span>🍞 Catálogo Prod.</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="suministros">
+          <span>📦 Mat. Prima (Sum.)</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="compras">
+          <span>🛒 Reposición</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="kardex">
+          <span>📋 Kardex (Historial)</span>
+        </a>
+      </div>
+
+      <div class="erp-nav-group">
+        <div class="erp-nav-title">Configuración</div>
+        <a href="#" class="erp-nav-item" data-route="tasas">
+          <span>💱 Tasas y Cierre</span>
+        </a>
+        <a href="#" class="erp-nav-item" data-route="liquidacion">
+          <span>🤝 Liquidación (Socios)</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Área Principal de Trabajo -->
+    <main class="erp-main">
+      <header class="erp-topbar">
+        <div class="erp-topbar-title" id="topbar-title">Dashboard Principal</div>
+        <div class="erp-topbar-actions">
+          <button class="btn btn-outline" style="font-size: 0.8rem;">Modo Cajero</button>
+          <a href="/index.html?legacy=true" class="btn btn-primary"
+            style="font-size: 0.8rem; text-decoration:none;">Vuelve V1</a>
+        </div>
+      </header>
+
+      <!-- Contenedor Dinámico donde se inyectarán las vistas V2 -->
+      <section class="erp-workspace" id="app-workspace">
+        <!-- Dashboard Default Inicial -->
+        <h2 class="section-title">Vista General V2</h2>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-title">Pedidos (Dom-Mie)</span>
+            <span class="kpi-value">24</span>
+            <span class="kpi-trend positive">+3 vs semana ant.</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-title">Kilos de Masa a Producir</span>
+            <span class="kpi-value">18.5 Kg</span>
+            <span class="kpi-trend warning">Revisar Harina en Sum.</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-title">Stock Vitrina Venta Directa</span>
+            <span class="kpi-value">12 Und</span>
+            <span class="kpi-trend negative">Stock Bajo</span>
+          </div>
+        </div>
+
+        <div
+          style="background:var(--surface-color); padding: 20px; border-radius:var(--radius-lg); border: 1px solid var(--border-color); text-align:center; margin-top: 40px;">
+          <h3 style="color:var(--primary-color); margin-bottom: 10px;">¡Sistema V2 Configurado!</h3>
+          <p style="color:var(--text-muted); font-size: 0.95rem;">La estructura base (Cascarón UI) está lista para
+            enlazar los módulos dinámicamente.</p>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- MODALES GLOBALES V2 -->
+  <div id="modal-customer" class="modal-overlay">
+    <div class="modal-content glass animate-scale">
+      <h3 id="modal-customer-title">Añadir Cliente</h3>
+      <form id="form-customer-v2" class="erp-form mt-15">
+        <input type="hidden" id="cust-id">
+        <div class="form-group">
+          <label>Nombre Completo / Razón Social *</label>
+          <input type="text" id="cust-name" required class="form-control">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="cust-phone" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="cust-email" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Dirección (Para Deliveries)</label>
+          <textarea id="cust-address" rows="2" class="form-control"></textarea>
+        </div>
+        <div class="modal-actions mt-20" style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="btn btn-outline"
+            onclick="document.getElementById('modal-customer').classList.remove('active')">Cancelar</button>
+          <button type="submit" class="btn btn-success">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-quick-customer" class="modal-overlay">
+    <div class="modal-content glass animate-scale" style="max-width:400px;">
+      <h3>⚡ Nuevo Cliente Rápido</h3>
+      <form id="form-quick-customer" class="erp-form mt-15">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="q-cust-name" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Teléfono (Opcional)</label>
+          <input type="text" id="q-cust-phone" class="form-control">
+        </div>
+        <div class="modal-actions mt-20" style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="btn btn-outline"
+            onclick="document.getElementById('modal-quick-customer').classList.remove('active')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      /* Más oscuro para contraste */
+      display: flex;
+      opacity: 0;
+      /* Oculto por defecto */
+      pointer-events: none;
+      /* No interactivo por defecto */
+      transition: opacity 0.3s;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999999 !important;
+      /* Valor extremo */
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      position: relative;
+      color: #1a202c;
+    }
+
+    .animate-scale {
+      animation: modalScale 0.2s ease-out;
+    }
+
+    @keyframes modalScale {
+      from {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+
+  <!-- Router Core Temporal V2 -->
+  <script>
+    if (window.location.protocol === 'file:') {
+      const workspace = document.getElementById('app-workspace');
+      if (workspace) {
+        workspace.innerHTML = `
+          <div style="padding:40px; text-align:center; background:#fff5f5; border: 2px solid #feb2b2; border-radius:15px; margin:20px;">
+            <h2 style="color:#c53030; margin-bottom:15px;">⚠️ Protocolo Local Detectado</h2>
+            <p style="color:#742a2a; margin-bottom:10px;">Los navegadores modernos bloquean la V2 si se abre directamente como archivo (haciendo doble clic).</p>
+            <p style="font-weight:600;">Para que funcione, debes abrir la carpeta con un <strong>Servidor Local</strong>:</p>
+            <ul style="text-align:left; display:inline-block; margin-top:10px; color:#742a2a;">
+              <li>Si usas VS Code: Haz clic derecho en index_v2.html y elige <b>"Open with Live Server"</b>.</li>
+              <li>O usa el terminal: Ejecuta <code>npx serve</code> en esta carpeta.</li>
+            </ul>
+          </div>
+        `;
+      }
+    }
+  </script>
+  <script type="module" src="./src/v2/core/router.js"></script>
+</body>
+
+</html>

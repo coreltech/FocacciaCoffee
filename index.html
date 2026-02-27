@@ -89,6 +89,12 @@
 
   <script type="module">
     window.addEventListener('load', async () => {
+      // Redirección inmediata a V2 si no se solicita explícitamente la V1
+      if (!window.location.search.includes('legacy=true')) {
+        window.location.href = '/index_v2.html';
+        return;
+      }
+
       try {
         // Dynamic imports
         const { StateManager } = await import('./src/core/state.js');

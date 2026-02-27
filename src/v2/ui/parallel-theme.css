@@ -1,0 +1,412 @@
+/* ==========================================================
+   Focaccia & Coffee ERP V2 - Sistema de Diseño Core
+   ========================================================== */
+
+/* 1. Reset Global y Fuentes */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Paleta Neutral (Dark Sidebar / Light Main) */
+  --bg-dark: #1e293b;
+  /* Sidebar */
+  --bg-darker: #0f172a;
+  /* Sidebar Focus/Hover */
+  --bg-main: #f8fafc;
+  /* Workspace background */
+  --surface-color: #ffffff;
+  /* Cards y Modales */
+
+  /* Paleta Semántica (Stark contrast) */
+  --primary-color: #3b82f6;
+  /* Azul Focaccia (Activar botones, Links) */
+  --primary-hover: #2563eb;
+  --success-color: #10b981;
+  /* Aceptado, Finalizado, Ventas (+) */
+  --success-hover: #059669;
+  --danger-color: #ef4444;
+  /* Merma, Eliminado, Error */
+  --danger-hover: #dc2828;
+  --warning-color: #f59e0b;
+  /* Alertas de bajo inventario */
+
+  /* Textos */
+  --text-main: #334155;
+  --text-muted: #64748b;
+  --text-inverse: #f8fafc;
+
+  /* Bordes & Sombras (Glassmorphism sutil y bordes finos) */
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Espaciado Estandarizado */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.2s ease-in-out;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+/* ==========================================================
+   2. Layout Principal (Dashboard)
+   ========================================================== */
+.erp-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Sidebar Oscuro Moderno */
+.erp-sidebar {
+  width: 200px;
+  background-color: var(--bg-dark);
+  color: var(--text-inverse);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  /* Enable scrolling for long menus */
+}
+
+/* Scrollbar premium para el sidebar */
+.erp-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.erp-sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.erp-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.erp-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.erp-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.erp-sidebar-header h1 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.erp-sidebar-header span {
+  color: var(--primary-color);
+}
+
+.erp-nav-group {
+  margin-top: 24px;
+  padding: 0 12px;
+}
+
+.erp-nav-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-left: 12px;
+  font-weight: 600;
+}
+
+.erp-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  color: #cbd5e1;
+  transition: var(--transition);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  gap: 10px;
+}
+
+.erp-nav-item:hover,
+.erp-nav-item.active {
+  background-color: var(--bg-darker);
+  color: var(--text-inverse);
+}
+
+.erp-nav-item.active {
+  border-left: 4px solid var(--primary-color);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Main Workspace */
+.erp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.erp-topbar {
+  height: 60px;
+  background-color: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow-sm);
+  z-index: 50;
+}
+
+.erp-topbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.erp-topbar-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.erp-workspace {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* ==========================================================
+   3. KPIs y Componentes Globales
+   ========================================================== */
+
+/* Grid Widgets / Tarjetas de KPI */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.kpi-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kpi-trend {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.kpi-trend.positive {
+  color: var(--success-color);
+}
+
+.kpi-trend.negative {
+  color: var(--danger-color);
+}
+
+/* Standard Botones */
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: var(--success-hover);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-hover);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.btn-outline:hover {
+  border-color: var(--text-muted);
+  background-color: #f1f5f9;
+}
+
+/* Tipografía de Títulos Intermedia */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--primary-color);
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+/* Standard Inputs & Selects */
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.form-control {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-main);
+  background-color: var(--surface-color);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: var(--surface-color);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(20px);
+  transition: transform 0.3s;
+  padding: 24px;
+}
+
+.modal-overlay.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.modal-close:hover {
+  color: var(--danger-color);
+}
