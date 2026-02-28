@@ -243,6 +243,10 @@ export class V2Router {
           const { loadTreasury } = await import('../modules/treasury/treasury.controller.js');
           await loadTreasury(this.workspace);
         },
+        'preventa': async () => {
+          const { loadPreventa } = await import('../modules/preventa/preventa.controller.js');
+          await loadPreventa();
+        },
         'liquidacion': async () => {
           const { loadSettlement } = await import('../modules/settlement/settlement.controller.js');
           await loadSettlement(this.workspace);

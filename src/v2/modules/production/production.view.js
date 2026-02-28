@@ -296,42 +296,6 @@ export const ProductionView = {
         `;
     },
 
-    renderPendingOrders(orders, onBake) {
-        const container = document.getElementById('pending-orders-list');
-        if (!container) return;
-
-        if (orders.length === 0) {
-            container.innerHTML = `<p class="empty-state" style="text-align:center; padding:20px; opacity:0.6;">🎉 No hay encargos pendientes por procesar hoy.</p>`;
-            return;
-        }
-
-        container.innerHTML = orders.map(o => `
-            <div class="pending-item">
-                <div class="info">
-                    <strong style="display:block; font-size:1rem;">${o.name}</strong>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">Pedido en espera</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span style="font-weight:bold; color:var(--accent-color); font-size:1.2rem;">${o.pending}</span>
-                    <button class="btn btn-primary btn-sm btn-bake-pending" 
-                            data-id="${o.id}" 
-                            data-name="${o.name}" 
-                            data-qty="${o.pending}" 
-                            data-orders='${JSON.stringify(o.orderIds)}'
-                            style="padding:6px 12px;">🔥 Procesar</button>
-                </div>
-            </div>
-        `).join('');
-
-        if (onBake) {
-            container.querySelectorAll('.btn-bake-pending').forEach(btn => {
-                btn.onclick = () => {
-                    const orderIds = JSON.parse(btn.dataset.orders || '[]');
-                    onBake(btn.dataset.id, btn.dataset.name, parseFloat(btn.dataset.qty), orderIds);
-                };
-            });
-        }
-    },
 
     populateSelects(catalog, recipes) {
         const targetSelect = document.getElementById('prod-target-id');

@@ -12,7 +12,6 @@ let state = {
     catalog: [],
     recipes: [],
     logs: [],
-    pendingOrders: [],
     currentSource: 'vitrina', // 'vitrina' o 'preparaciones'
     currentComposition: [],    // Ingredientes del item seleccionado
     currentOrderIds: null,     // IDs de órdenes a completar
@@ -38,9 +37,7 @@ async function refreshData() {
     state.catalog = prodData.catalog || [];
     state.recipes = prodData.recipes || [];
     state.logs = prodData.logs || [];
-    state.pendingOrders = prodData.shoppingList || [];
 
-    ProductionView.renderPendingOrders(state.pendingOrders, handleBakePending);
     ProductionView.populateSelects(state.catalog, state.recipes);
     ProductionView.renderHistory(state.logs, handleDeleteLog);
 }
@@ -271,35 +268,6 @@ function bindEvents() {
     };
 }
 
-async function handleBakePending(catalogId, productName, qty, orderIds) {
-    if (!confirm(`¿Procesar ${qty} un. de ${productName} para pedidos?`)) return;
-
-    state.currentOrderIds = orderIds;
-    state.isFulfillingOrder = true;
-
-    // Redirigir a la pestaña Vitrina y seleccionar el producto
-    const tabVitrina = document.querySelector('[data-tab="vitrina"]');
-    if (tabVitrina) tabVitrina.click();
-
-    setTimeout(() => {
-        const select = document.getElementById('prod-target-id');
-        if (select) {
-            select.value = catalogId || '';
-            if (!select.value) {
-                // Buscar por texto si no hay ID
-                for (let opt of select.options) {
-                    if (opt.text.includes(productName)) {
-                        select.value = opt.value;
-                        break;
-                    }
-                }
-            }
-            select.dispatchEvent(new Event('change'));
-            document.getElementById('prod-actual-qty').value = qty;
-            document.getElementById('prod-actual-qty').dispatchEvent(new Event('input'));
-        }
-    }, 100);
-}
 
 async function handleDeleteLog(id) {
     if (confirm('¿Eliminar log? (Esto es solo auditoría, no revierte stock)')) {
