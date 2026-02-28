@@ -15,52 +15,53 @@ export const DashboardService = {
             startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
             const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
 
-            // 1. Promesas concurrentes para datos base
-            const [salesRes, pendingRes, stockRes, receivablesRes, topProductsRes] = await Promise.all([
-                // Ventas de la semana (Lo cobrado realmente en ventanilla/banco)
+            // 1. Promesas concurrentes para datos base (6 consultas)
+            const [paymentsRes, ordersRes, pendingRes, stockRes, receivablesRes, topProductsRes] = await Promise.all([
+                // 0. Pagos de la semana (Lo cobrado real - Cash Basis)
                 supabase.from('v2_order_payments')
                     .select('amount_usd, payment_date')
                     .gte('payment_date', `${startOfWeekStr}T00:00:00`),
 
-                // Totales de facturación (Opcional, para ver cuánto se facturó vs cobró)
+                // 1. Total Facturado de la semana (Lo emitido - Accrual Basis)
                 supabase.from('v2_orders')
                     .select('total_amount, sale_date')
                     .gte('sale_date', `${startOfWeekStr}T00:00:00`),
 
-                // Pedidos pendientes
+                // 2. Pedidos pendientes (Conteo rápido)
                 supabase.from('v2_orders')
                     .select('id', { count: 'exact', head: true })
                     .eq('status', 'Pendiente'),
 
-                // Suministros (para stock bajo)
+                // 3. Suministros (para stock bajo)
                 supabase.from('v2_supplies')
                     .select('name, stock, min_stock, measurement_unit'),
 
-                // Cuentas por Cobrar (Total balances de todas las órdenes)
+                // 4. Cuentas por Cobrar (Total balances histórico)
                 supabase.from('v2_orders')
                     .select('balance_due')
                     .gt('balance_due', 0),
 
-                // Top Productos (de la semana)
+                // 5. Top Productos (de la semana)
                 supabase.from('v2_order_items')
                     .select('product_name, quantity, total_price, v2_orders!inner(sale_date)')
                     .gte('v2_orders.sale_date', `${startOfWeekStr}T00:00:00`)
             ]);
 
-            const weeklySales = salesRes.data || [];
+            const weeklyPayments = paymentsRes.data || [];
+            const weeklyOrders = ordersRes.data || [];
 
             // Cálculos básicos
-            const collectedWeeklyUSD = (salesRes.data || []).reduce((sum, p) => sum + parseFloat(p.amount_usd), 0);
-            const totalWeeklyUSD = (pendingRes[1]?.data || []).reduce((sum, s) => sum + parseFloat(s.total_amount), 0); // Ajustado para el nuevo Promise.all si se cambia
+            const collectedWeeklyUSD = weeklyPayments.reduce((sum, p) => sum + parseFloat(p.amount_usd || 0), 0);
+            const totalWeeklyUSD = weeklyOrders.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0);
 
-            // KPI: Ticket Promedio
-            const avgTicket = weeklySales.length > 0 ? totalWeeklyUSD / weeklySales.length : 0;
+            // KPI: Ticket Promedio (Basado en facturación/órdenes)
+            const avgTicket = weeklyOrders.length > 0 ? totalWeeklyUSD / weeklyOrders.length : 0;
 
             // KPI: Por Cobrar (Total histórico acumulado)
-            const totalReceivables = (receivablesRes.data || []).reduce((acc, r) => acc + parseFloat(r.balance_due), 0);
+            const totalReceivables = (receivablesRes.data || []).reduce((acc, r) => acc + parseFloat(r.balance_due || 0), 0);
 
             // KPI: Stock Crítico
-            const lowStockItems = (stockRes.data || []).filter(s => parseFloat(s.stock) < parseFloat(s.min_stock));
+            const lowStockItems = (stockRes.data || []).filter(s => parseFloat(s.stock || 0) < parseFloat(s.min_stock || 0));
 
             // Análisis: Top 5 Productos
             const productMap = {};
@@ -68,8 +69,8 @@ export const DashboardService = {
                 if (!productMap[item.product_name]) {
                     productMap[item.product_name] = { name: item.product_name, qty: 0, total: 0 };
                 }
-                productMap[item.product_name].qty += parseFloat(item.quantity);
-                productMap[item.product_name].total += parseFloat(item.total_price);
+                productMap[item.product_name].qty += parseFloat(item.quantity || 0);
+                productMap[item.product_name].total += parseFloat(item.total_price || 0);
             });
 
             const topProducts = Object.values(productMap)
@@ -85,11 +86,11 @@ export const DashboardService = {
             }
 
             const salesTrend = last7Days.map(date => {
-                const daySales = weeklySales.filter(s => s.sale_date.startsWith(date));
+                const daySales = weeklyOrders.filter(s => s.sale_date && s.sale_date.startsWith(date));
                 return {
                     date,
-                    label: new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
-                    total: daySales.reduce((sum, s) => sum + parseFloat(s.total_amount), 0)
+                    label: new Date(date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+                    total: daySales.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0)
                 };
             });
 
