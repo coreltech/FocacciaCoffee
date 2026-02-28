@@ -173,6 +173,63 @@ function bindEvents() {
     // Escuchar el evento de borrar transacción desde la vista
     window.removeEventListener('Receivables:deleteOrder', handleDeleteOrder); // Prevenir duplicados
     window.addEventListener('Receivables:deleteOrder', handleDeleteOrder);
+
+    // Escuchar el evento de mostrar historial
+    window.removeEventListener('Receivables:showHistory', handleShowHistory);
+    window.addEventListener('Receivables:showHistory', handleShowHistory);
+}
+
+async function handleShowHistory(e) {
+    const { orderId, correlative, customer } = e.detail;
+
+    // UI Update
+    const modal = document.getElementById('modal-payment-history');
+    document.getElementById('history-correlative').innerText = correlative;
+    document.getElementById('history-customer').innerText = customer;
+
+    // Load Payments
+    const payments = await ReceivablesService.getOrderPayments(orderId);
+    renderHistoryTable(payments);
+
+    modal.classList.add('active');
+}
+
+function renderHistoryTable(payments) {
+    const tbody = document.getElementById('table-history-body');
+    if (!tbody) return;
+
+    if (payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-muted">No hay abonos registrados.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = payments.map(p => `
+        <tr>
+            <td>${Formatter.formatLocalDate(p.payment_date)}</td>
+            <td>${p.payment_method}</td>
+            <td class="text-success">${Formatter.formatCurrency(p.amount_usd)}</td>
+            <td>
+                <button class="btn-icon text-danger btn-delete-payment" data-id="${p.id}" data-order="${p.order_id}" title="Reversar Pago">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+
+    // Eventos de borrado granular
+    tbody.querySelectorAll('.btn-delete-payment').forEach(btn => {
+        btn.onclick = async () => {
+            if (confirm('¿Está seguro de que desea reversar este pago? Se restará del monto pagado y aumentará la deuda.')) {
+                const res = await ReceivablesService.deletePayment(btn.dataset.id);
+                if (res.success) {
+                    // Refrescar modal y vista principal
+                    const newPayments = await ReceivablesService.getOrderPayments(btn.dataset.order);
+                    renderHistoryTable(newPayments);
+                    await refreshData();
+                } else {
+                    alert('Error al reversar pago: ' + res.error);
+                }
+            }
+        };
+    });
 }
 
 async function handleDeleteOrder(e) {

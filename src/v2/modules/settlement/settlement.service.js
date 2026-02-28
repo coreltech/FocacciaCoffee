@@ -10,13 +10,13 @@ export const SettlementService = {
      */
     async getPreview(startDate, endDate) {
         try {
-            // 1. VENTAS (Ingresos - v2_orders)
+            // 1. VENTAS (Ingresos - v2_order_payments)
+            // Criterio de Caja: Se cuenta lo cobrado en el periodo, sin importar cuando se emitió la factura
             let salesQuery = supabase
-                .from('v2_orders')
-                .select('*, v2_customers(name), v2_order_items(*)')
-                .gte('sale_date', `${startDate}T00:00:00`)
-                .lte('sale_date', `${endDate}T23:59:59`)
-                .eq('payment_status', 'Pagado'); // Solo lo cobrado
+                .from('v2_order_payments')
+                .select('*, v2_orders(*, v2_customers(name))')
+                .gte('payment_date', `${startDate}T00:00:00`)
+                .lte('payment_date', `${endDate}T23:59:59`);
 
             // 2. COMPRAS (Egresos Insumos - v2_purchases)
             let purchasesQuery = supabase
@@ -57,7 +57,7 @@ export const SettlementService = {
             const contributions = contributionsRes.data || [];
 
             // --- Cálculos ---
-            const totalIncomes = sales.reduce((sum, s) => sum + parseFloat(s.amount_paid || 0), 0);
+            const totalIncomes = sales.reduce((sum, s) => sum + parseFloat(s.amount_usd || 0), 0);
             const totalPurchases = purchases.reduce((sum, p) => sum + parseFloat(p.total_usd || 0), 0);
             const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
@@ -138,12 +138,11 @@ export const SettlementService = {
 
             // 2. Marcar registros como liquidados (en paralelo para velocidad)
             const updates = [
-                // Ventas
-                supabase.from('v2_orders')
+                // Pagos de Ventas (Cash Basis)
+                supabase.from('v2_order_payments')
                     .update({ settlement_id: settlementId })
-                    .gte('sale_date', `${period.startDate}T00:00:00`)
-                    .lte('sale_date', `${period.endDate}T23:59:59`)
-                    .eq('payment_status', 'Pagado')
+                    .gte('payment_date', `${period.startDate}T00:00:00`)
+                    .lte('payment_date', `${period.endDate}T23:59:59`)
                     .is('settlement_id', null),
 
                 // Compras

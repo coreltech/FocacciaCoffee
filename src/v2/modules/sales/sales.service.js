@@ -128,6 +128,19 @@ export const SalesService = {
             const { error: itemsErr } = await supabase.from('v2_order_items').insert(itemsPayload);
             if (itemsErr) throw itemsErr;
 
+            // 4. Registrar pago inicial si existe (Cash Basis)
+            if (payment.totalPaidUSD > 0) {
+                const payments = payment.methods.map(m => ({
+                    order_id: orderId,
+                    amount_usd: m.usd || m.amount,
+                    payment_method: m.method,
+                    payment_date: orderPayload.sale_date
+                }));
+
+                const { error: payErr } = await supabase.from('v2_order_payments').insert(payments);
+                if (payErr) console.error('Error recording initial payment:', payErr);
+            }
+
             return { success: true };
         } catch (err) {
             console.error('POS Service Error:', err);

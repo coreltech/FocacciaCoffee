@@ -96,6 +96,37 @@ export const ReceivablesView = {
                 </div>
             </div>
 
+            <!-- Modal de Historial de Pagos -->
+            <div id="modal-payment-history" class="modal-overlay">
+                <div class="modal-content glass animate-scale" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Historial de Pagos</h3>
+                        <button class="modal-close" onclick="document.getElementById('modal-payment-history').classList.remove('active')">&times;</button>
+                    </div>
+                    <div class="p-15">
+                        <div id="history-order-info" class="mb-15 text-center">
+                            <h4 id="history-correlative" class="m-0">---</h4>
+                            <span id="history-customer" class="text-muted">---</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="erp-table sm">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Método</th>
+                                        <th>Monto ($)</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-history-body">
+                                    <!-- Abonos inyectados -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <style>
                 .filter-group { display: flex; gap: 10px; }
                 .pos-tab.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
@@ -104,6 +135,23 @@ export const ReceivablesView = {
                 .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
                 .badge-pagado { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
                 .badge-pendiente { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); }
+                
+                .btn-icon { 
+                    background: #f1f5f9; 
+                    border: 1px solid #e2e8f0; 
+                    border-radius: 4px; 
+                    padding: 4px 8px; 
+                    cursor: pointer; 
+                    transition: all 0.2s;
+                    font-size: 1.1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 35px;
+                    height: 35px;
+                }
+                .btn-icon:hover { background: #e2e8f0; transform: scale(1.1); }
+                .btn-history { color: var(--primary-color); }
             </style>
         `;
     },
@@ -142,7 +190,8 @@ export const ReceivablesView = {
                     </td>
                     <td><span class="badge ${statusClass}">${o.payment_status}</span></td>
                     <td>
-                        <div style="display: flex; gap: 5px; align-items: center; justify-content: center;">
+                        <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                            <button class="btn-icon btn-history" data-id="${o.id}" data-correlative="${o.correlative || 'S/N'}" data-customer="${clienteName}" title="Ver Historial de Pagos">📖</button>
                             ${showPayBtn ? `<button class="btn-icon btn-pay" data-id="${o.id}" data-debt="${o.balance_due}" title="Registrar Abono">💲</button>` : `<span class="text-success" style="width:32px; text-align:center;">✔</span>`}
                             <button class="btn-icon btn-delete text-danger" data-id="${o.id}" title="Eliminar Registro">🗑️</button>
                         </div>
@@ -152,6 +201,17 @@ export const ReceivablesView = {
         }).join('');
 
         // Agregar eventos a los botones generados dinámicamente
+        tbody.querySelectorAll('.btn-history').forEach(btn => {
+            btn.onclick = () => {
+                window.dispatchEvent(new CustomEvent('Receivables:showHistory', {
+                    detail: {
+                        orderId: btn.dataset.id,
+                        correlative: btn.dataset.correlative,
+                        customer: btn.dataset.customer
+                    }
+                }));
+            };
+        });
         tbody.querySelectorAll('.btn-pay').forEach(btn => {
             btn.onclick = () => onAbonarClick(btn.dataset.id, btn.dataset.debt);
         });

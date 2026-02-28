@@ -17,9 +17,14 @@ export const DashboardService = {
 
             // 1. Promesas concurrentes para datos base
             const [salesRes, pendingRes, stockRes, receivablesRes, topProductsRes] = await Promise.all([
-                // Ventas de la semana (Cobradas y Totales)
+                // Ventas de la semana (Lo cobrado realmente en ventanilla/banco)
+                supabase.from('v2_order_payments')
+                    .select('amount_usd, payment_date')
+                    .gte('payment_date', `${startOfWeekStr}T00:00:00`),
+
+                // Totales de facturación (Opcional, para ver cuánto se facturó vs cobró)
                 supabase.from('v2_orders')
-                    .select('total_amount, amount_paid, sale_date, payment_status')
+                    .select('total_amount, sale_date')
                     .gte('sale_date', `${startOfWeekStr}T00:00:00`),
 
                 // Pedidos pendientes
@@ -45,8 +50,8 @@ export const DashboardService = {
             const weeklySales = salesRes.data || [];
 
             // Cálculos básicos
-            const totalWeeklyUSD = weeklySales.reduce((sum, s) => sum + parseFloat(s.total_amount), 0);
-            const collectedWeeklyUSD = weeklySales.reduce((sum, s) => sum + parseFloat(s.amount_paid), 0);
+            const collectedWeeklyUSD = (salesRes.data || []).reduce((sum, p) => sum + parseFloat(p.amount_usd), 0);
+            const totalWeeklyUSD = (pendingRes[1]?.data || []).reduce((sum, s) => sum + parseFloat(s.total_amount), 0); // Ajustado para el nuevo Promise.all si se cambia
 
             // KPI: Ticket Promedio
             const avgTicket = weeklySales.length > 0 ? totalWeeklyUSD / weeklySales.length : 0;
