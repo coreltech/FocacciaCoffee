@@ -4,33 +4,60 @@
 import { PreventaService } from './preventa.service.js';
 import { PreventaView } from './preventa.view.js';
 
+let state = {
+    currentTab: 'orders',
+    orders: [],
+    consolidated: [],
+    shoppingList: []
+};
+
 export async function loadPreventa() {
     const container = document.getElementById('app-workspace');
     if (!container) return;
 
     PreventaView.render(container);
     await refreshData();
+    renderCurrentTab();
     bindEvents();
 }
 
 async function refreshData() {
-    const orders = await PreventaService.getPendingPreorders();
-    const consolidated = await PreventaService.getConsolidatedResume();
+    state.orders = await PreventaService.getPendingPreorders();
+    state.consolidated = await PreventaService.getConsolidatedResume();
+    state.shoppingList = await PreventaService.getShoppingList();
+}
 
-    PreventaView.renderOrders(orders);
-    PreventaView.renderConsolidated(consolidated, handleBakeAction);
+function renderCurrentTab() {
+    const content = document.getElementById('preventa-content');
+    if (!content) return;
+
+    if (state.currentTab === 'orders') {
+        PreventaView.renderOrdersTab(content, state.orders);
+    } else if (state.currentTab === 'production') {
+        PreventaView.renderProductionTab(content, state.consolidated, handleBakeAction);
+    } else if (state.currentTab === 'market') {
+        PreventaView.renderMarketTab(content, state.shoppingList);
+    }
 }
 
 function bindEvents() {
     const btnRefresh = document.getElementById('btn-refresh-preventa');
     if (btnRefresh) {
-        btnRefresh.onclick = () => refreshData();
+        btnRefresh.onclick = async () => {
+            await refreshData();
+            renderCurrentTab();
+        };
     }
 
-    const btnPrint = document.getElementById('btn-print-workshop');
-    if (btnPrint) {
-        btnPrint.onclick = () => window.print();
-    }
+    // Manejo de tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.currentTab = btn.dataset.tab;
+            renderCurrentTab();
+        };
+    });
 }
 
 /**
