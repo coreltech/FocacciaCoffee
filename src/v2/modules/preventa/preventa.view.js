@@ -100,8 +100,14 @@ export const PreventaView = {
         container.innerHTML = `
             <div class="card glass animate-fade-in">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h3 style="margin:0;">📦 Órdenes Individuales (Encargos)</h3>
-                    <span class="badge-count">${orders.length} Pedidos</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="margin:0;">📦 Órdenes Individuales (Encargos)</h3>
+                        <span class="badge-count">${orders.length} Pedidos</span>
+                    </div>
+                    <div class="export-actions">
+                        <button id="btn-export-orders-excel" class="btn btn-outline btn-sm">📊 Excel</button>
+                        <button id="btn-export-orders-pdf" class="btn btn-outline btn-sm">📄 PDF</button>
+                    </div>
                 </div>
                 <div class="table-container" style="max-height: 70vh; overflow-y:auto;">
                     <table class="erp-table">
@@ -130,7 +136,11 @@ export const PreventaView = {
             <div class="card glass animate-fade-in">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 style="margin:0;">🥐 Resumen de Producción (Productos)</h3>
-                    <button id="btn-print-workshop" class="btn btn-outline btn-sm">🖨️ Imprimir Pedidos</button>
+                    <div style="display:flex; gap:8px;">
+                        <button id="btn-export-prod-excel" class="btn btn-outline btn-sm">📊 Excel</button>
+                        <button id="btn-export-prod-pdf" class="btn btn-outline btn-sm">📄 PDF</button>
+                        <button id="btn-print-workshop" class="btn btn-outline btn-sm">🖨️ Imprimir Pedidos</button>
+                    </div>
                 </div>
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;">Cantidades totales de productos terminados para hornear hoy:</p>
                 <div class="table-container">
@@ -171,7 +181,11 @@ export const PreventaView = {
             <div class="card glass animate-fade-in">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 style="margin:0;">🛒 Lista de Mercado (Insumos)</h3>
-                    <button id="btn-print-market" class="btn btn-outline btn-sm">🖨️ Imprimir Lista</button>
+                    <div style="display:flex; gap:8px;">
+                        <button id="btn-export-market-excel" class="btn btn-outline btn-sm">📊 Excel</button>
+                        <button id="btn-export-market-pdf" class="btn btn-outline btn-sm">📄 PDF</button>
+                        <button id="btn-print-market" class="btn btn-outline btn-sm">🖨️ Imprimir Lista</button>
+                    </div>
                 </div>
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;">Totales de ingredientes necesarios desglosados (Referencial):</p>
                 <div class="table-container">

@@ -1,8 +1,6 @@
-/**
- * Controlador de Preventa y Consolidación (Orchestration Layer)
- */
 import { PreventaService } from './preventa.service.js';
 import { PreventaView } from './preventa.view.js';
+import { PreventaExporter } from './preventa.export.js';
 
 let state = {
     currentTab: 'orders',
@@ -38,6 +36,9 @@ function renderCurrentTab() {
     } else if (state.currentTab === 'market') {
         PreventaView.renderMarketTab(content, state.shoppingList);
     }
+
+    // Al renderizar contenido dinámico, debemos re-bindear eventos de esa pestaña
+    bindExportEvents();
 }
 
 function bindEvents() {
@@ -58,6 +59,29 @@ function bindEvents() {
             renderCurrentTab();
         };
     });
+}
+
+function bindExportEvents() {
+    // Órdenes
+    const btnExpOrdersExcel = document.getElementById('btn-export-orders-excel');
+    if (btnExpOrdersExcel) btnExpOrdersExcel.onclick = () => PreventaExporter.exportToExcel(state.orders, 'orders');
+
+    const btnExpOrdersPdf = document.getElementById('btn-export-orders-pdf');
+    if (btnExpOrdersPdf) btnExpOrdersPdf.onclick = () => PreventaExporter.exportToPDF(state.orders, 'orders');
+
+    // Producción
+    const btnExpProdExcel = document.getElementById('btn-export-prod-excel');
+    if (btnExpProdExcel) btnExpProdExcel.onclick = () => PreventaExporter.exportToExcel(state.consolidated, 'production');
+
+    const btnExpProdPdf = document.getElementById('btn-export-prod-pdf');
+    if (btnExpProdPdf) btnExpProdPdf.onclick = () => PreventaExporter.exportToPDF(state.consolidated, 'production');
+
+    // Mercado
+    const btnExpMarketExcel = document.getElementById('btn-export-market-excel');
+    if (btnExpMarketExcel) btnExpMarketExcel.onclick = () => PreventaExporter.exportToExcel(state.shoppingList, 'market');
+
+    const btnExpMarketPdf = document.getElementById('btn-export-market-pdf');
+    if (btnExpMarketPdf) btnExpMarketPdf.onclick = () => PreventaExporter.exportToPDF(state.shoppingList, 'market');
 }
 
 /**
