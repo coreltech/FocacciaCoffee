@@ -93,13 +93,6 @@ export const ProductionView = {
                             </div>
                         </div>
 
-                        <!-- PANEL DE PEDIDOS PENDIENTES -->
-                        <div class="card glass">
-                            <h3>📋 Encargos Pendientes (Por Hornear)</h3>
-                            <div id="pending-orders-list" class="pending-list" style="margin-top:15px;">
-                                <p class="loading">Sincronizando órdenes...</p>
-                            </div>
-                        </div>
 
                     </div>
 
