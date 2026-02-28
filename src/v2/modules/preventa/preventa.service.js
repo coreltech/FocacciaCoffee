@@ -75,7 +75,7 @@ export const PreventaService = {
             // 1. Obtener datos maestros para el desglose
             const [catalogRes, recipesRes] = await Promise.all([
                 supabase.from('v2_catalog').select('id, name, v2_catalog_composition(quantity, supply_id, recipe_id)'),
-                supabase.from('v2_recipes').select('id, name, expected_weight, v2_recipe_items(quantity, supply_id, sub_recipe_id)')
+                supabase.from('v2_recipes').select('id, name, expected_weight, v2_recipe_items!recipe_id(quantity, supply_id, sub_recipe_id)')
             ]);
 
             const catalogMap = (catalogRes.data || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
@@ -100,7 +100,8 @@ export const PreventaService = {
                 });
             };
 
-            const addToSupplies = async (supplyId, qty) => {
+            const addToSupplies = (supplyId, qty) => {
+                if (!supplyId) return;
                 if (!totalSupplies[supplyId]) {
                     // Si no tenemos el nombre, lo dejamos para el final o lo buscamos
                     totalSupplies[supplyId] = { qty: 0 };
@@ -119,8 +120,7 @@ export const PreventaService = {
                     product.v2_catalog_composition.forEach(comp => {
                         const totalNeeded = comp.quantity * orderQty;
                         if (comp.supply_id) {
-                            if (!totalSupplies[comp.supply_id]) totalSupplies[comp.supply_id] = { qty: 0 };
-                            totalSupplies[comp.supply_id].qty += totalNeeded;
+                            addToSupplies(comp.supply_id, totalNeeded);
                         } else if (comp.recipe_id) {
                             processRecipe(comp.recipe_id, totalNeeded);
                         }
