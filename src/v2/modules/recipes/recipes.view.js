@@ -175,6 +175,30 @@ export const RecipesView = {
         </div>
       </div>
 
+      <!-- Estilos Específicos para Móviles (Responsive) -->
+      <style>
+        @media (max-width: 768px) {
+            .v2-module-container > div[style*="display:flex; gap: 24px;"] {
+                flex-direction: column !important;
+            }
+            .kpi-card[style*="min-width:550px"] {
+                min-width: 100% !important;
+            }
+            form#form-new-recipe > div[style*="display:flex"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .form-group {
+                width: 100% !important;
+                margin-left: 0 !important;
+                margin-bottom: 10px !important;
+            }
+            #total-percent, #total-grams, #total-cost-usd {
+                font-size: 1.1rem !important;
+            }
+        }
+      </style>
+
       <!-- Modal de Lectura Cómoda para Instrucciones -->
        <div id="modal-view-instructions" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
           <div style="background: var(--bg-card, #ffffff); padding: 40px; border-radius: 16px; width: 90%; max-width: 700px; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color); position: relative; overflow-y: auto;">

@@ -239,6 +239,32 @@ export const SuppliesView = {
           </div>
         </div>
 
+        <!-- Estilos Específicos para Móviles -->
+        <style>
+          @media (max-width: 768px) {
+              .v2-module-container > div[style*="display:flex; gap: 24px;"] {
+                  flex-direction: column !important;
+              }
+              .kpi-card[style*="min-width:600px"], .kpi-card[style*="min-width:300px"] {
+                  min-width: 100% !important;
+              }
+              form#form-new-supply > div[style*="display:flex"],
+              form#form-edit-supply > div[style*="display:flex"] {
+                  flex-direction: column !important;
+              }
+              .form-group {
+                  width: 100% !important;
+              }
+              /* Ocultar columnas menos relevantes en móvil para la tabla larga */
+              #table-supplies th:nth-child(3),
+              #table-supplies td:nth-child(3),
+              #table-supplies th:nth-child(4),
+              #table-supplies td:nth-child(4) {
+                 display: none;
+              }
+          }
+        </style>
+
       </div>
     `;
   }

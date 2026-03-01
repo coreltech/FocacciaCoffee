@@ -178,7 +178,31 @@ export const CatalogView = {
             </form>
           </div>
 
-        </div>
+        <!-- Estilos Específicos para Móviles -->
+        <style>
+          @media (max-width: 768px) {
+              .v2-module-container > div[style*="display:flex; gap: 24px;"] {
+                  flex-direction: column !important;
+              }
+              .kpi-card[style*="min-width:550px"], .kpi-card[style*="min-width:340px"] {
+                  min-width: 100% !important;
+              }
+              form#form-new-product > div[style*="display:flex"] {
+                  flex-direction: column !important;
+              }
+              .form-group {
+                  width: 100% !important;
+              }
+              /* Ocultar columnas menos relevantes en móvil para la tabla larga */
+              #table-catalog th:nth-child(3),
+              #table-catalog td:nth-child(3),
+              #table-catalog th:nth-child(5),
+              #table-catalog td:nth-child(5) {
+                 display: none;
+              }
+          }
+        </style>
+
       </div>
     `;
   },
