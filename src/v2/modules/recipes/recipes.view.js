@@ -80,12 +80,12 @@ export const RecipesView = {
             
             <form id="form-new-recipe">
               
-              <div style="display:flex; gap:10px; margin-bottom: 20px;">
-                  <div class="form-group" style="flex:2;">
+              <div style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap: wrap;">
+                  <div class="form-group" style="flex:2; min-width: 200px;">
                     <label>Nombre de la Masa o Preparación</label>
                     <input type="text" class="form-control" id="rec-name" placeholder="Ej: Masa Madre Blanca 70% Hidrat." required>
                   </div>
-                  <div class="form-group" style="flex:1;">
+                  <div class="form-group" style="flex:1; min-width: 150px;">
                     <label>Tipo</label>
                     <select class="form-control" id="rec-type" required>
                       <option value="MASA">Masa / Mezcla</option>
@@ -98,19 +98,19 @@ export const RecipesView = {
               <!-- Ancla Base -->
               <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); padding: 15px; border-radius: var(--radius-md); margin-bottom: 20px;">
                   <h4 style="margin: 0 0 10px 0; color: var(--primary-color);">1. Ingrediente Ancla (El 100%)</h4>
-                  <div style="display:flex; gap:10px; align-items: end;">
-                      <div class="form-group" style="flex:2; margin:0;">
+                  <div style="display:flex; gap:10px; align-items: end; flex-wrap: wrap;">
+                      <div class="form-group" style="flex:2; min-width: 200px; margin:0;">
                          <label>Materia Prima Base</label>
                          <select class="form-control" id="rec-base-supply" required>
                             <option value="">Selecciona ingrediente (Harina, etc)...</option>
                             ${supplies.map(s => `<option value="${s.id}">${s.name} (${s.measurement_unit})</option>`).join('')}
                          </select>
                       </div>
-                      <div class="form-group" style="flex:1; margin:0;">
+                      <div class="form-group" style="flex:1; min-width: 120px; margin:0;">
                          <label>Peso de Prueba (g/ml)</label>
                          <input type="number" step="1" class="form-control" id="rec-base-weight" placeholder="Ej: 1000" required>
                       </div>
-                      <div class="form-group" style="flex:0.5; margin:0;">
+                      <div class="form-group" style="flex:0.5; min-width: 80px; margin:0;">
                          <label>% Base</label>
                          <input type="text" class="form-control" value="100%" disabled style="text-align:center; font-weight:bold; color:var(--primary-color);">
                       </div>
@@ -121,19 +121,19 @@ export const RecipesView = {
               <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
                   <h4 style="margin:0 0 10px 0; font-size: 1rem;">2. Agregar Ingredientes Relativos (%)</h4>
                   
-                  <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom: 15px;">
-                      <div class="form-group" style="flex:3; margin-bottom:0;">
+                  <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom: 15px; flex-wrap: wrap;">
+                      <div class="form-group" style="flex:3; min-width: 200px; margin-bottom:0;">
                           <label style="font-size:0.8rem; color:var(--text-muted);">Selecciona Insumo o Sub-Receta</label>
                           <select class="form-control" id="supply-selector">
                              <!-- Opciones cargadas vía JS: Grupos de Insumos y Grupos de Recetas -->
                           </select>
                       </div>
-                      <div class="form-group" style="flex:1; margin-bottom:0;">
+                      <div class="form-group" style="flex:1; min-width: 120px; margin-bottom:0;">
                           <label style="font-size:0.8rem; color:var(--text-muted);">Porcentaje (%)</label>
                           <input type="number" class="form-control" id="supply-percentage" placeholder="Ej. 2.5" step="0.01">
                       </div>
-                      <div class="form-group" style="margin-bottom:0;">
-                          <button type="button" class="btn btn-primary" id="btn-add-ingredient" style="padding: 10px 20px;">➕ Añadir</button>
+                      <div class="form-group" style="margin-bottom:0; flex-grow: 1;">
+                          <button type="button" class="btn btn-primary" id="btn-add-ingredient" style="padding: 10px 20px; width: 100%;">➕ Añadir</button>
                       </div>
                   </div>
 
@@ -147,7 +147,7 @@ export const RecipesView = {
               </div>
 
               <!-- Totales Dinámicos -->
-              <div style="border-top: 2px dashed var(--border-color); padding-top: 20px; margin-bottom: 20px; display:flex; justify-content: space-between; align-items:center;">
+              <div style="border-top: 2px dashed var(--border-color); padding-top: 20px; margin-bottom: 20px; display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 15px;">
                   <div>
                       <span style="display:block; font-size:0.8rem; color:var(--text-muted);">Sumatoria de Porcentajes</span>
                       <strong style="font-size:1.2rem;" id="total-percent">100%</strong>
@@ -184,7 +184,9 @@ export const RecipesView = {
             .kpi-card[style*="min-width:550px"] {
                 min-width: 100% !important;
             }
-            form#form-new-recipe > div[style*="display:flex"] {
+            form#form-new-recipe div[style*="align-items: end"],
+            form#form-new-recipe div[style*="align-items:flex-end"],
+            form#form-new-recipe div[style*="display:flex; gap:10px"] {
                 flex-direction: column !important;
                 align-items: stretch !important;
             }
