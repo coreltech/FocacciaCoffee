@@ -20,6 +20,9 @@
 <body>
   <div class="erp-layout">
 
+    <!-- Overlay Sidebar Movil -->
+    <div id="v2-sidebar-overlay" class="erp-sidebar-overlay"></div>
+
     <!-- Sidebar Navegación -->
     <aside class="erp-sidebar" id="sidebar">
       <div class="erp-sidebar-header">
@@ -91,7 +94,10 @@
     <!-- Área Principal de Trabajo -->
     <main class="erp-main">
       <header class="erp-topbar">
-        <div class="erp-topbar-title" id="topbar-title">Dashboard Principal</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="v2-hamburger-btn" class="erp-hamburger">☰</button>
+          <div class="erp-topbar-title" id="topbar-title">Dashboard Principal</div>
+        </div>
         <div class="erp-topbar-actions">
           <button class="btn btn-outline" style="font-size: 0.8rem;">Modo Cajero</button>
           <a href="/index_v1.html" class="btn btn-primary" style="font-size: 0.8rem; text-decoration:none;">Vuelve

@@ -216,6 +216,30 @@ export const DashboardView = {
 
                     .btn-outline-glass { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); color: var(--text-main); font-weight: 600; }
                     .btn-outline-glass:hover { background: rgba(0,0,0,0.07); }
+
+                    /* Mobile Optimization */
+                    @media (max-width: 768px) {
+                        .kpi-bento-grid {
+                            grid-template-columns: 1fr;
+                            grid-template-rows: auto;
+                            gap: 12px;
+                        }
+                        .main-kpi {
+                            grid-row: auto;
+                            padding: 20px !important;
+                            flex-direction: column;
+                            text-align: center;
+                        }
+                        .dashboard-main-grid {
+                            grid-template-columns: 1fr;
+                        }
+                        .chart-container, .pie-chart-container {
+                            min-height: auto;
+                        }
+                        .chart-wrapper {
+                            height: 220px;
+                        }
+                    }
                 </style>
             </div>
         `;

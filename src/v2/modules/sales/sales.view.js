@@ -197,6 +197,18 @@ export const SalesView = {
                 
                 .form-row { display: flex; gap: 10px; }
                 .center-block { margin-left: auto; margin-right: auto; }
+
+                /* Mobile POS Layout */
+                @media (max-width: 768px) {
+                    .pos-container { height: auto; min-height: 100vh; }
+                    .pos-tabs { flex-direction: column; gap: 5px; border-bottom: none; }
+                    .pos-tab { width: 100%; padding: 12px; border: 1px solid var(--border-color); }
+                    .pos-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+                    .pos-products-panel { height: 50vh; border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
+                    .pos-cart-panel { padding: 10px; height: auto; border: none; }
+                    .payment-row { grid-template-columns: 1fr; gap: 10px; }
+                    .form-row { flex-direction: column; gap: 5px; }
+                }
             </style>
         `;
     },

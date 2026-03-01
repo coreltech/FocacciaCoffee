@@ -1,0 +1,25 @@
+Es un dilema muy común en empresas familiares o de socios: quieres que ambos tengan "las llaves del negocio", pero te preocupa que un error humano en algo tan sensible como una receta (el corazón de tu producto) arruine la producción.
+
+Aquí te presento 3 estrategias, desde la más sencilla hasta la más profesional, para resolverlo sin que tu socio sienta que le estás quitando autoridad:
+
+1. El "Switch de Seguridad" (Nivel: Fácil)
+Podemos añadir un botón de bloqueo en la pantalla de recetas. Por defecto, las recetas estarían en modo "Solo Lectura".
+
+Cómo funciona: Para cambiar un ingrediente, el usuario debe hacer clic en un candado y aceptar un mensaje: "¿Estás seguro de que quieres modificar esta base? Un cambio aquí afectará todos los cálculos de producción y costos".
+Ventaja: Evita el "dedazo" accidental o que alguien edite pensando que está en otra pantalla. Es un recordatorio de la importancia de lo que está tocando.
+2. Log de Auditoría (Nivel: Intermedio - Recomendado)
+En lugar de prohibir, registramos todo. Es lo que hacen los sistemas contables serios.
+
+Cómo funciona: Creamos una tabla invisible llamada v2_audit_logs. Cada vez que alguien cambia una receta, el sistema guarda: Quién lo hizo, a qué hora, qué ingrediente cambió y cuál era el valor anterior.
+Ventaja: No le quitas poder. Si algo sale mal en la masa un miércoles, simplemente miras el historial: "Ah, mira, se cambió la levadura por error ayer. Vamos a ponerla como estaba". Da mucha paz mental saber que todo es reversible.
+3. Sistema de "Borrador y Aprobación" (Nivel: Avanzado)
+Si quieres el máximo control profesional:
+
+Cómo funciona: Cuando alguien edita una receta, el cambio no se aplica inmediatamente. Se guarda como una "Versión en Revisión". El sistema te avisa a ti: "Tu socio propuso un cambio en la Focaccia. ¿Deseas aplicarlo?".
+Ventaja: Garantiza que los dos están de acuerdo en cambios técnicos antes de que toquen el inventario real.
+Mi recomendación para ustedes:
+Yo implementaría el Log de Auditoría (Opción 2) combinada con un mensaje de advertencia (Opción 1).
+
+Esto mantiene la confianza entre socios (ambos pueden hacer todo), pero añade una capa de responsabilidad. Si tu socio comete un error, el sistema te servirá de "máquina del tiempo" para restaurar la receta original en segundos.
+
+¿Te gustaría que para la próxima sesión preparemos esta "máquina del tiempo" para tus recetas?

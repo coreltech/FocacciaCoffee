@@ -7,6 +7,9 @@ export class V2Router {
     this.workspace = document.getElementById('app-workspace');
     this.topbarTitle = document.getElementById('topbar-title');
     this.navItems = document.querySelectorAll('.erp-nav-item');
+    this.sidebar = document.getElementById('sidebar');
+    this.sidebarOverlay = document.getElementById('v2-sidebar-overlay');
+    this.hamburgerBtn = document.getElementById('v2-hamburger-btn');
     this.currentView = null;
 
     if (!this.workspace || !this.topbarTitle) {
@@ -134,6 +137,17 @@ export class V2Router {
   }
 
   init() {
+    // Manejo del menú Hamburguesa para móviles
+    if (this.hamburgerBtn && this.sidebar && this.sidebarOverlay) {
+      const toggleSidebar = () => {
+        this.sidebar.classList.toggle('active');
+        this.sidebarOverlay.classList.toggle('active');
+      };
+      
+      this.hamburgerBtn.addEventListener('click', toggleSidebar);
+      this.sidebarOverlay.addEventListener('click', toggleSidebar);
+    }
+
     // Event Delegation para el menú lateral
     this.navItems.forEach(item => {
       item.onclick = (e) => {
@@ -142,6 +156,12 @@ export class V2Router {
         // Manejo UI Activo
         this.navItems.forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
+
+        // Cerrar sidebar en móviles tras hacer clic
+        if (window.innerWidth <= 768 && this.sidebar && this.sidebarOverlay) {
+          this.sidebar.classList.remove('active');
+          this.sidebarOverlay.classList.remove('active');
+        }
 
         // Obtener ruta y título
         const route = item.getAttribute('data-route');
