@@ -12,7 +12,8 @@ let state = {
     catalog: [],
     recipes: [],
     logs: [],
-    currentSource: 'vitrina', // 'vitrina' o 'preparaciones'
+    shoppingList: [],
+    currentSource: 'vitrina', // 'vitrina', 'preparaciones', 'encargos'
     currentComposition: [],    // Ingredientes del item seleccionado
     currentOrderIds: null,     // IDs de órdenes a completar
     isFulfillingOrder: false  // Si es un encargo ya vendido
@@ -37,8 +38,9 @@ async function refreshData() {
     state.catalog = prodData.catalog || [];
     state.recipes = prodData.recipes || [];
     state.logs = prodData.logs || [];
+    state.shoppingList = prodData.shoppingList || [];
 
-    ProductionView.populateSelects(state.catalog, state.recipes);
+    ProductionView.populateSelects(state.catalog, state.recipes, state.shoppingList);
     ProductionView.renderHistory(state.logs, handleDeleteLog);
 }
 
@@ -61,8 +63,10 @@ function bindEvents() {
             // Reset form and rebuild select
             form.reset();
             sourceTypeInput.value = state.currentSource; // Re-asignar después del reset
+            state.currentOrderIds = null;
+            state.isFulfillingOrder = state.currentSource === 'encargos';
 
-            ProductionView.populateSelects(state.catalog, state.recipes);
+            ProductionView.populateSelects(state.catalog, state.recipes, state.shoppingList);
             ProductionView.renderSurgicalPanel([]);
             yieldStats.innerHTML = '';
         });
@@ -90,6 +94,20 @@ function bindEvents() {
                 type: c.supply_id ? 'SUPPLY' : 'RECIPE',
                 name: c.supply_id ? (c.v2_supplies?.name || 'Insumo') : (c.v2_recipes?.name || 'Sub-Receta'),
                 quantity: c.quantity
+            }));
+        } else if (state.currentSource === 'encargos') {
+            const selectedOption = targetSelect.options[targetSelect.selectedIndex];
+            expectedQty = parseFloat(selectedOption.dataset.pending) || 0;
+            state.currentOrderIds = JSON.parse(selectedOption.dataset.orders || '[]');
+
+            // Encargos son productos terminados de la vitrina
+            const rawComp = await CatalogService.getComposition(id);
+            composition = rawComp.map(c => ({
+                id: c.supply_id || c.recipe_id,
+                type: c.supply_id ? 'SUPPLY' : 'RECIPE',
+                name: c.supply_id ? (c.v2_supplies?.name || 'Insumo') : (c.v2_recipes?.name || 'Sub-Receta'),
+                // Here we scale the base quantity of 1 unit to the pending expected quantity
+                quantity: c.quantity * expectedQty
             }));
         } else {
             const recipe = state.recipes.find(x => x.id === id);
@@ -162,7 +180,7 @@ function bindEvents() {
             yieldStats.innerHTML = `
                 <div style="color:${color}; font-weight:bold;">
                     Eficiencia: ${efficiency.toFixed(1)}% <br>
-                    <span style="font-size:0.75rem;">Variación: ${diff > 0 ? '+' : ''}${diff.toFixed(2)} ${state.currentSource === 'vitrina' ? 'un' : 'g/ml'}</span>
+                    <span style="font-size:0.75rem;">Variación: ${diff > 0 ? '+' : ''}${diff.toFixed(2)} ${state.currentSource === 'preparaciones' ? 'g/ml' : 'un'}</span>
                 </div>
             `;
         } else {
@@ -206,6 +224,55 @@ function bindEvents() {
         };
     }
 
+    // 3.6 EXPORTACIÓN DE LOGS A EXCEL
+    const btnExportLogs = document.getElementById('btn-export-logs-csv');
+    if (btnExportLogs) {
+        btnExportLogs.onclick = () => {
+            const startDateStr = document.getElementById('filter-date-start').value;
+            const endDateStr = document.getElementById('filter-date-end').value;
+
+            let filteredLogs = [...state.logs];
+
+            if (startDateStr) {
+                const startDate = new Date(startDateStr);
+                startDate.setHours(0, 0, 0, 0);
+                filteredLogs = filteredLogs.filter(l => new Date(l.production_date) >= startDate);
+            }
+            if (endDateStr) {
+                const endDate = new Date(endDateStr);
+                endDate.setHours(23, 59, 59, 999);
+                filteredLogs = filteredLogs.filter(l => new Date(l.production_date) <= endDate);
+            }
+
+            if (filteredLogs.length === 0) {
+                alert("No hay registros en el rango de fechas seleccionado.");
+                return;
+            }
+
+            let csv = "Fecha,Hora,Tipo,Producto,Cant. Esperada,Cant. Real,Eficiencia %,Variacion\n";
+
+            filteredLogs.forEach(l => {
+                const dt = new Date(l.production_date);
+                const dateStr = dt.toLocaleDateString();
+                const timeStr = dt.toLocaleTimeString();
+                const typeInfo = l.recipe_id ? 'Prep. Intermedia' : 'Producto Final';
+                const name = `"${l.recipe_name || 'Tanda'}"`;
+                const expected = l.expected_quantity || 1;
+                const actual = l.actual_quantity || 0;
+                const efficiency = ((actual / expected) * 100).toFixed(2);
+                const variance = (actual - expected).toFixed(2);
+
+                csv += `${dateStr},${timeStr},${typeInfo},${name},${expected},${actual},${efficiency}%,${variance}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `Reporte_Produccion_${new Date().getTime()}.csv`);
+            link.click();
+        };
+    }
+
     // 4. REGISTRO QUIRÚRGICO (SUBMIT)
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -236,7 +303,7 @@ function bindEvents() {
         btn.disabled = true; btn.innerText = "Procesando...";
 
         const prodData = {
-            catalogId: state.currentSource === 'vitrina' ? targetId : null,
+            catalogId: (state.currentSource === 'vitrina' || state.currentSource === 'encargos') ? targetId : null,
             recipeId: state.currentSource === 'preparaciones' ? targetId : null,
             actualQty,
             expectedQty,

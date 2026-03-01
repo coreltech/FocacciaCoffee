@@ -37,6 +37,7 @@ export const ProductionView = {
                             <div class="tab-header" style="display:flex; background: rgba(0,0,0,0.1);">
                                 <button class="tab-btn active" data-tab="vitrina">🏪 Vitrina (Venta)</button>
                                 <button class="tab-btn" data-tab="preparaciones">🥣 Preparaciones (Masas)</button>
+                                <button class="tab-btn" data-tab="encargos" style="color: var(--warning-color);">🛒 Encargos Pendientes</button>
                             </div>
 
                             <div class="tab-content" style="padding: 20px;">
@@ -100,8 +101,16 @@ export const ProductionView = {
                     <div class="prod-column sidebar">
                         
                         <div class="card glass no-padding" style="overflow:hidden;">
-                            <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                            <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                                 <h3 style="margin:0;">🕒 Registro Histórico</h3>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <input type="date" id="filter-date-start" class="form-control" style="padding:4px; font-size:0.8rem;">
+                                    <span style="color:var(--text-muted); font-size:0.8rem;">a</span>
+                                    <input type="date" id="filter-date-end" class="form-control" style="padding:4px; font-size:0.8rem;">
+                                    <button class="btn btn-outline btn-sm" id="btn-export-logs-csv" title="Exportar Historial" style="padding:4px 8px; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
+                                        📥 <span class="hide-on-mobile">Excel</span>
+                                    </button>
+                                </div>
                             </div>
                             <div style="max-height: 80vh; overflow-y:auto;">
                                 <table class="erp-table small-table">
@@ -211,6 +220,7 @@ export const ProductionView = {
                     .override-row span:first-child { grid-column: 1 / -1; margin-bottom: 5px; }
                     .override-row input { text-align: left; }
                     #yield-stats { margin-top: 10px; }
+                    .hide-on-mobile { display: none !important; }
                 }
 
                 /* ESTILOS DE IMPRESIÓN (HOJA DE TALLER) */
@@ -305,7 +315,7 @@ export const ProductionView = {
     },
 
 
-    populateSelects(catalog, recipes) {
+    populateSelects(catalog, recipes, shoppingList) {
         const targetSelect = document.getElementById('prod-target-id');
         if (!targetSelect) return;
 
@@ -316,12 +326,17 @@ export const ProductionView = {
                 (catalog || []).map(p => `<option value="${p.id}" data-type="vitrina">${p.name}</option>`).join('');
             document.getElementById('label-prod-target').innerText = "Producto a Hornear:";
             document.getElementById('label-prod-qty').innerText = "Unidades Esperadas:";
-        } else {
+        } else if (type === 'preparaciones') {
             console.log(`[Diagnostic] Preparaciones encontradas: ${(recipes || []).length}`);
             targetSelect.innerHTML = '<option value="">Selecciona Preparación / Masa...</option>' +
                 (recipes || []).map(r => `<option value="${r.id}" data-type="preparaciones">${r.name}</option>`).join('');
             document.getElementById('label-prod-target').innerText = "Masa o Relleno a producir:";
             document.getElementById('label-prod-qty').innerText = "Rendimiento Teórico (g/ml):";
+        } else if (type === 'encargos') {
+            targetSelect.innerHTML = '<option value="">Selecciona un Encargo Pendiente...</option>' +
+                (shoppingList || []).map(item => `<option value="${item.id}" data-type="encargos" data-pending="${item.pending}" data-orders='${JSON.stringify(item.orderIds)}'>${item.name} (Faltan: ${item.pending})</option>`).join('');
+            document.getElementById('label-prod-target').innerText = "Encargo a Preparar:";
+            document.getElementById('label-prod-qty').innerText = "Unidades Requeridas:";
         }
     },
 
