@@ -109,12 +109,12 @@ export const CatalogView = {
                 </datalist>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                  <div class="form-group" style="flex:1;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                  <div class="form-group" style="flex:1; min-width: 150px;">
                     <label>Precio PV (USD)</label>
                     <input type="number" step="0.0001" class="form-control" id="cat-price" required>
                   </div>
-                  <div class="form-group" style="flex:1;">
+                  <div class="form-group" style="flex:1; min-width: 150px;">
                     <label>Stock Físico Vitrina</label>
                     <input type="number" step="1" class="form-control" id="cat-stock" value="0">
                   </div>
@@ -148,19 +148,19 @@ export const CatalogView = {
               <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
                   <h4 style="margin:0 0 10px 0; font-size: 1rem; color: var(--primary-color);">Composición (Masa + Adornos + Empaque)</h4>
                   
-                  <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom: 15px;">
-                      <div class="form-group" style="flex:3; margin-bottom:0;">
+                  <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom: 15px; flex-wrap: wrap;">
+                      <div class="form-group" style="flex:3; min-width: 200px; margin-bottom:0;">
                           <label style="font-size:0.8rem; color:var(--text-muted);">Masa o Insumo</label>
                           <select class="form-control" id="comp-selector">
                              <!-- Opciones cargadas vía JS desde el Controller -->
                           </select>
                       </div>
-                      <div class="form-group" style="flex:1; margin-bottom:0;">
+                      <div class="form-group" style="flex:1; min-width: 120px; margin-bottom:0;">
                           <label style="font-size:0.8rem; color:var(--text-muted);">Cantidad</label>
                           <input type="number" step="0.0001" class="form-control" id="comp-quantity" placeholder="Ej. 350">
                       </div>
-                      <div class="form-group" style="margin-bottom:0;">
-                          <button type="button" class="btn btn-primary" id="btn-add-comp-pill" style="padding: 10px 15px;">➕</button>
+                      <div class="form-group" style="margin-bottom:0; flex-grow: 1;">
+                          <button type="button" class="btn btn-primary" id="btn-add-comp-pill" style="padding: 10px 15px; width: 100%;">➕ Añadir</button>
                       </div>
                   </div>
 
@@ -187,8 +187,20 @@ export const CatalogView = {
               .kpi-card[style*="min-width:550px"], .kpi-card[style*="min-width:340px"] {
                   min-width: 100% !important;
               }
-              form#form-new-product > div[style*="display:flex"] {
+              form#form-new-product div[style*="display:flex"] {
                   flex-direction: column !important;
+                  align-items: stretch !important;
+              }
+              .comp-row {
+                  flex-direction: column !important;
+                  align-items: stretch !important;
+              }
+              .comp-row > div {
+                  width: 100% !important;
+              }
+              .comp-row .btn-remove-comp {
+                  width: 100%;
+                  margin-top: 5px;
               }
               .form-group {
                   width: 100% !important;
@@ -210,14 +222,14 @@ export const CatalogView = {
   // Generador de Fila Dinámica de Componente JS
   generateComponentRow(optionsHtml) {
     return `
-      <div class="comp-row form-group" style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: var(--bg-main); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="flex:2; margin:0;">
+      <div class="comp-row form-group" style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: var(--bg-main); padding: 10px; border-radius: var(--radius-sm); flex-wrap: wrap;">
+          <div style="flex:2; min-width: 180px; margin:0;">
              <select class="form-control row-item" required>
                 <option value="">Seleccionar Masa o Insumo...</option>
                 ${optionsHtml}
              </select>
           </div>
-          <div style="flex:1; margin:0; display:flex; align-items:center;">
+          <div style="flex:1; min-width: 120px; margin:0; display:flex; align-items:center;">
              <input type="number" step="0.0001" class="form-control row-qty" placeholder="Cantidad" required>
           </div>
           <div>
