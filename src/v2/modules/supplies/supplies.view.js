@@ -52,8 +52,8 @@ export const SuppliesView = {
                 <input type="text" class="form-control" id="sup-name" required>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                  <div class="form-group" style="flex:1;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                  <div class="form-group" style="flex:1; min-width: 200px;">
                     <label>Categoría (Escribe o Selecciona)</label>
                     <input list="category-options" id="sup-cat" class="form-control" placeholder="Ej: Vegetales..." required>
                     <datalist id="category-options">
@@ -67,19 +67,19 @@ export const SuppliesView = {
                   </div>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                   <label>Stock Inicial</label>
                   <input type="number" step="0.0001" class="form-control" id="sup-stock" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                   <label>Alerta Mínima</label>
                   <input type="number" step="0.0001" class="form-control" id="sup-min" required>
                 </div>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:2;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:2; min-width: 200px;">
                   <label>Unidad de Medida (Compra)</label>
                   <select class="form-control" id="sup-unit" required>
                     <option value="Kg">Kilogramos (Kg)</option>
@@ -91,16 +91,16 @@ export const SuppliesView = {
                 </div>
               </div>
 
-               <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1.5;">
+               <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:1.5; min-width: 150px;">
                   <label>Precio Compra</label>
                   <input type="number" step="0.0001" class="form-control" id="sup-price" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                     <label>Por (Cant)</label>
                     <input type="number" step="0.01" class="form-control" id="sup-format" placeholder="Ej: 200" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                   <label>Moneda</label>
                   <select class="form-control" id="sup-currency">
                     <option value="USD">USD ($)</option>
@@ -183,12 +183,12 @@ export const SuppliesView = {
                 <input type="text" class="form-control" id="edit-sup-name" required>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:1; min-width: 200px;">
                   <label>Categoría</label>
                   <input type="text" id="edit-sup-cat" class="form-control" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 200px;">
                   <label>Unidad de Medida</label>
                   <select class="form-control" id="edit-sup-unit" required>
                     <option value="g">Gramos (g)</option>
@@ -198,19 +198,19 @@ export const SuppliesView = {
                 </div>
               </div>
 
-              <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
+              <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                   <label>Stock Actual</label>
                   <input type="number" step="0.0001" class="form-control" id="edit-sup-stock" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                   <label>Alerta Mínima</label>
                   <input type="number" step="0.0001" class="form-control" id="edit-sup-min" required>
                 </div>
               </div>
 
-               <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1.5;">
+               <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <div class="form-group" style="flex:1.5; min-width: 200px;">
                   <label>Costo Pago</label>
                   <div style="display: flex; gap: 5px;">
                     <input type="number" step="0.0001" class="form-control" id="edit-sup-price" required style="flex: 2;">
@@ -221,11 +221,11 @@ export const SuppliesView = {
                   </div>
                   <div id="edit-sup-price-converted" style="font-size: 0.75rem; color: var(--primary-color); margin-top: 5px; font-weight: 600;"></div>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 120px;">
                     <label>Formato (Cant)</label>
                     <input type="number" step="0.01" class="form-control" id="edit-sup-format" placeholder="Ej: 200" required>
                 </div>
-                <div class="form-group" style="flex:1;">
+                <div class="form-group" style="flex:1; min-width: 150px;">
                   <label>Proveedor Favorito</label>
                   <input type="text" class="form-control" id="edit-sup-supplier">
                 </div>
@@ -248,8 +248,8 @@ export const SuppliesView = {
               .kpi-card[style*="min-width:600px"], .kpi-card[style*="min-width:300px"] {
                   min-width: 100% !important;
               }
-              form#form-new-supply > div[style*="display:flex"],
-              form#form-edit-supply > div[style*="display:flex"] {
+              form#form-new-supply div[style*="display:flex"],
+              form#form-edit-supply div[style*="display:flex"] {
                   flex-direction: column !important;
               }
               .form-group {
