@@ -198,6 +198,21 @@ export const ProductionView = {
                     border-color: var(--primary-color) !important;
                 }
 
+                /* MÓVIL (Responsive) */
+                @media (max-width: 768px) {
+                    .module-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px; }
+                    .module-header h1 { font-size: 1.3rem; line-height: 1.2; }
+                    .production-main-grid { grid-template-columns: 1fr; padding: 0 10px; gap: 15px; }
+                    .form-row { flex-direction: column !important; gap: 10px !important; }
+                    .form-group { width: 100%; margin-bottom: 5px; }
+                    #surgical-panel > div:first-child { flex-direction: column; align-items: flex-start !important; }
+                    .export-tools { margin-top: 10px; width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+                    .override-row { grid-template-columns: 1fr 1fr; }
+                    .override-row span:first-child { grid-column: 1 / -1; margin-bottom: 5px; }
+                    .override-row input { text-align: left; }
+                    #yield-stats { margin-top: 10px; }
+                }
+
                 /* ESTILOS DE IMPRESIÓN (HOJA DE TALLER) */
                 @media print {
                     @page { margin: 1cm; }
